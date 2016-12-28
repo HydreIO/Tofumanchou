@@ -1,0 +1,51 @@
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+group = 'fr.aresrpg.tofumanchou'
+
+version = '1.0'
+
+compileJava.options.encoding='UTF-8'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+sourceSets {
+	main { java { srcDirs 'src/main/java'
+		} }
+}
+
+task fatJar(type: Jar) {
+	baseName = project.name
+	from {
+		configurations.include.collect {
+			it.isDirectory() ? it : zipTree(it)
+		}
+	}
+	with jar
+}
+
+configurations {
+	include
+	compile.extendsFrom include
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	maven {
+		url 'https://artifactory.aresrpg.fr/libraries';
+
+		credentials {
+			username project.hasProperty('aresuser') ? aresuser : System.getenv('aresuser')
+			password project.hasProperty('arespass') ? arespass : System.getenv('arespass')
+		}
+	}
+}
+
+dependencies {
+	compile 'org.yaml:snakeyaml:1.17'
+	compile 'fr.aresrpg:AresCommons:0.7'
+}
+
+
