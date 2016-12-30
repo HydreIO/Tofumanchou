@@ -2,14 +2,14 @@ package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.dofus.protocol.DofusConnection;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
-import fr.aresrpg.dofus.structures.PlayerRestriction;
-import fr.aresrpg.dofus.structures.Rank;
+import fr.aresrpg.dofus.structures.*;
 import fr.aresrpg.dofus.structures.game.Alignement;
 import fr.aresrpg.dofus.structures.item.Accessory;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
@@ -21,8 +21,7 @@ import fr.aresrpg.tofumanchou.infra.io.ManchouBridge;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 
@@ -66,6 +65,9 @@ public class ManchouPerso implements Perso {
 	private int spellsPoints;
 	private int energy;
 	private int energyMax;
+	private List<String> offlineFriends = new ArrayList<>();
+	private List<Friend> onlineFriends = new ArrayList<>();
+	private Map<Chat, Boolean> channels = new HashMap<>();
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -633,6 +635,48 @@ public class ManchouPerso implements Perso {
 	@Override
 	public int getXpMax() {
 		return xpHight;
+	}
+
+	@Override
+	public List<String> getOfflinesFriends() {
+		return offlineFriends;
+	}
+
+	@Override
+	public List<Friend> getOnlineFriends() {
+		return onlineFriends;
+	}
+
+	/**
+	 * @param offlineFriends
+	 *            the offlineFriends to set
+	 */
+	public void setOfflineFriends(List<String> offlineFriends) {
+		this.offlineFriends = offlineFriends;
+	}
+
+	/**
+	 * @param onlineFriends
+	 *            the onlineFriends to set
+	 */
+	public void setOnlineFriends(List<Friend> onlineFriends) {
+		this.onlineFriends = onlineFriends;
+	}
+
+	@Override
+	public Map<Chat, Boolean> getChannels() {
+		return channels;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		if (obj instanceof Entity) {
+			Entity e = (Entity) obj;
+			return e.getUUID() == uuid;
+		}
+		return false;
 	}
 
 }

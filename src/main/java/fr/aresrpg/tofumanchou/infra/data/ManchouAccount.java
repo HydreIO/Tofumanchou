@@ -23,6 +23,7 @@ public class ManchouAccount implements Account {
 	private Logger logger = new LoggerBuilder(String.valueOf(id)).setUseConsoleHandler(false, true, Option.none(), Option.none()).build();
 	private String hc;
 	private DofusConnection connection;
+	private ManchouBank bank;
 
 	public ManchouAccount(int id, SocketAddress adress, String accountName, String pass, Perso perso) {
 		this.id = id;
@@ -143,6 +144,11 @@ public class ManchouAccount implements Account {
 	@Override
 	public Logger getLogger() {
 		return logger;
+	}
+
+	@Override
+	public ManchouBank getBank() {
+		return this.bank;
 	}
 
 }

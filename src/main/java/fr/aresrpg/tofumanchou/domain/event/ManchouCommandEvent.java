@@ -5,6 +5,7 @@ import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.command.Command;
 
 /**
+ * An event triggered when a input in the console is writed
  * 
  * @since
  */

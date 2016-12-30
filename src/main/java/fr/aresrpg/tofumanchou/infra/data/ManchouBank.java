@@ -1,7 +1,5 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
-import fr.aresrpg.dofus.structures.EquipmentPosition;
-import fr.aresrpg.dofus.structures.character.Character;
 import fr.aresrpg.dofus.structures.item.ItemCategory;
 import fr.aresrpg.dofus.util.StringJoiner;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
@@ -15,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
  * 
  * @since
  */
-public class PlayerInventory implements Inventory {
+public class ManchouBank implements Inventory {
 
 	private ConcurrentMap<Long, Item> contents = new ConcurrentHashMap<>(); // itemUid | item
 	private int kamas;
@@ -62,20 +60,6 @@ public class PlayerInventory implements Inventory {
 	@Override
 	public String toString() {
 		return "Inventory [contents=" + contents + ", kamas=" + kamas + "]";
-	}
-
-	public void parseCharacter(Character c) {
-		if (c.getItems() == null) return;
-		Arrays.stream(c.getItems())
-				.map(i -> new ManchouItem(i.getUid(), "", "", null, i.getItemTypeId(), i.getQuantity(), i.getPosition(), i.getEffects(), i.getPrice(), i.getSkin(), i.getRemainingHours(), 0))
-				.forEach(i -> getContents().put(i.getUUID(), i));
-	}
-
-	public Item getItemAtPos(EquipmentPosition pos) {
-		Item i = null;
-		for (Item e : getContents().values())
-			if (e.getPosition() == pos.getPosition()) return i;
-		return null;
 	}
 
 	public Item getHeaviestItem() {

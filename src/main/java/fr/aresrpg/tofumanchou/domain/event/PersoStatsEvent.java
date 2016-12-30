@@ -11,6 +11,7 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
 import java.util.Map;
 
 /**
+ * An event triggered when the server send a statistique update
  * 
  * @since
  */
@@ -75,6 +76,150 @@ public class PersoStatsEvent implements Event<PersoStatsEvent> {
 		this.initiative = initiative;
 		this.prospection = prospection;
 		this.stats = stats;
+		this.extradatas = extradatas;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param xp
+	 *            the xp to set
+	 */
+	public void setXp(int xp) {
+		this.xp = xp;
+	}
+
+	/**
+	 * @param xpMin
+	 *            the xpMin to set
+	 */
+	public void setXpMin(int xpMin) {
+		this.xpMin = xpMin;
+	}
+
+	/**
+	 * @param xpMax
+	 *            the xpMax to set
+	 */
+	public void setXpMax(int xpMax) {
+		this.xpMax = xpMax;
+	}
+
+	/**
+	 * @param kamas
+	 *            the kamas to set
+	 */
+	public void setKamas(int kamas) {
+		this.kamas = kamas;
+	}
+
+	/**
+	 * @param statsPoints
+	 *            the statsPoints to set
+	 */
+	public void setStatsPoints(int statsPoints) {
+		this.statsPoints = statsPoints;
+	}
+
+	/**
+	 * @param spellsPoints
+	 *            the spellsPoints to set
+	 */
+	public void setSpellsPoints(int spellsPoints) {
+		this.spellsPoints = spellsPoints;
+	}
+
+	/**
+	 * @param alignment
+	 *            the alignment to set
+	 */
+	public void setAlignment(Alignement alignment) {
+		this.alignment = alignment;
+	}
+
+	/**
+	 * @param fakeAlignment
+	 *            the fakeAlignment to set
+	 */
+	public void setFakeAlignment(Alignement fakeAlignment) {
+		this.fakeAlignment = fakeAlignment;
+	}
+
+	/**
+	 * @param rank
+	 *            the rank to set
+	 */
+	public void setRank(Rank rank) {
+		this.rank = rank;
+	}
+
+	/**
+	 * @param life
+	 *            the life to set
+	 */
+	public void setLife(int life) {
+		this.life = life;
+	}
+
+	/**
+	 * @param lifeMax
+	 *            the lifeMax to set
+	 */
+	public void setLifeMax(int lifeMax) {
+		this.lifeMax = lifeMax;
+	}
+
+	/**
+	 * @param energy
+	 *            the energy to set
+	 */
+	public void setEnergy(int energy) {
+		this.energy = energy;
+	}
+
+	/**
+	 * @param energyMax
+	 *            the energyMax to set
+	 */
+	public void setEnergyMax(int energyMax) {
+		this.energyMax = energyMax;
+	}
+
+	/**
+	 * @param initiative
+	 *            the initiative to set
+	 */
+	public void setInitiative(int initiative) {
+		this.initiative = initiative;
+	}
+
+	/**
+	 * @param prospection
+	 *            the prospection to set
+	 */
+	public void setProspection(int prospection) {
+		this.prospection = prospection;
+	}
+
+	/**
+	 * @param stats
+	 *            the stats to set
+	 */
+	public void setStats(Map<Stat, StatValue> stats) {
+		this.stats = stats;
+	}
+
+	/**
+	 * @param extradatas
+	 *            the extradatas to set
+	 */
+	public void setExtradatas(String extradatas) {
 		this.extradatas = extradatas;
 	}
 

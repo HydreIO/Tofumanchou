@@ -2,6 +2,7 @@ package fr.aresrpg.tofumanchou.domain.data;
 
 import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
+import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
 
 import java.net.SocketAddress;
 
@@ -22,5 +23,7 @@ public interface Account {
 	Perso getPerso();
 
 	Logger getLogger();
+
+	Inventory getBank();
 
 }

@@ -5,6 +5,7 @@ import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 
 /**
+ * An event triggered when the position in queue to connect on a server is updated
  * 
  * @since
  */
@@ -19,8 +20,23 @@ public class ServerQueuePositionEvent implements Event<ServerQueuePositionEvent>
 	 * @param position
 	 */
 	public ServerQueuePositionEvent(Account client, int position) {
-		super();
 		this.client = client;
+		this.position = position;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param position
+	 *            the position to set
+	 */
+	public void setPosition(int position) {
 		this.position = position;
 	}
 

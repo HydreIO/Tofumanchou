@@ -6,6 +6,7 @@ import fr.aresrpg.dofus.protocol.account.server.AccountLoginErrPacket.Error;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 
 /**
+ * An event triggered when the login return an error
  * 
  * @since
  */
@@ -27,6 +28,38 @@ public class LoginErrorEvent implements Event<LoginErrorEvent> {
 		this.client = client;
 		this.error = error;
 		this.minutes = minutes;
+		this.version = version;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param error
+	 *            the error to set
+	 */
+	public void setError(Error error) {
+		this.error = error;
+	}
+
+	/**
+	 * @param minutes
+	 *            the minutes to set
+	 */
+	public void setMinutes(int minutes) {
+		this.minutes = minutes;
+	}
+
+	/**
+	 * @param version
+	 *            the version to set
+	 */
+	public void setVersion(String version) {
 		this.version = version;
 	}
 

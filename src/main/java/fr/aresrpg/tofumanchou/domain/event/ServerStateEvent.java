@@ -10,6 +10,7 @@ import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 
 /**
+ * An event triggered when a server change his state
  * 
  * @since
  */
@@ -22,6 +23,22 @@ public class ServerStateEvent implements Event<ServerStateEvent> {
 	public ServerStateEvent(Account client, Server s) {
 		this.client = client;
 		this.server = s;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param server
+	 *            the server to set
+	 */
+	public void setServer(Server server) {
+		this.server = server;
 	}
 
 	/**
@@ -47,7 +64,7 @@ public class ServerStateEvent implements Event<ServerStateEvent> {
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 }

@@ -5,6 +5,7 @@ import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 
 /**
+ * An event triggered when the position in queue to connect on realm is updated
  * 
  * @since
  */
@@ -30,6 +31,54 @@ public class RealmQueuePositionEvent implements Event<RealmQueuePositionEvent> {
 		this.totalSub = totalSub;
 		this.totalNoSub = totalNoSub;
 		this.positionInQueue = positionInQueue;
+		this.sub = sub;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param position
+	 *            the position to set
+	 */
+	public void setPosition(int position) {
+		this.position = position;
+	}
+
+	/**
+	 * @param totalSub
+	 *            the totalSub to set
+	 */
+	public void setTotalSub(int totalSub) {
+		this.totalSub = totalSub;
+	}
+
+	/**
+	 * @param totalNoSub
+	 *            the totalNoSub to set
+	 */
+	public void setTotalNoSub(int totalNoSub) {
+		this.totalNoSub = totalNoSub;
+	}
+
+	/**
+	 * @param positionInQueue
+	 *            the positionInQueue to set
+	 */
+	public void setPositionInQueue(int positionInQueue) {
+		this.positionInQueue = positionInQueue;
+	}
+
+	/**
+	 * @param sub
+	 *            the sub to set
+	 */
+	public void setSub(boolean sub) {
 		this.sub = sub;
 	}
 

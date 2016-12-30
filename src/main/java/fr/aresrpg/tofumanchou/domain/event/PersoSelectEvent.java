@@ -6,6 +6,7 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 
 /**
+ * An event triggered when the server confirm the selection of a perso
  * 
  * @since
  */
@@ -20,8 +21,23 @@ public class PersoSelectEvent implements Event<PersoSelectEvent> {
 	 * @param perso
 	 */
 	public PersoSelectEvent(Account client, Perso perso) {
-		super();
 		this.client = client;
+		this.perso = perso;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param perso
+	 *            the perso to set
+	 */
+	public void setPerso(Perso perso) {
 		this.perso = perso;
 	}
 

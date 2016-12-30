@@ -8,12 +8,12 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class TemplateEvent implements Event<TemplateEvent> {
+public class ZaapGuiLeaveEvent implements Event<ZaapGuiLeaveEvent> {
 
-	private static final EventBus<TemplateEvent> BUS = new EventBus<>(TemplateEvent.class);
+	private static final EventBus<ZaapGuiLeaveEvent> BUS = new EventBus<>(ZaapGuiLeaveEvent.class);
 	private Account client;
 
-	public TemplateEvent(Account client) {
+	public ZaapGuiLeaveEvent(Account client) {
 		this.client = client;
 	}
 
@@ -25,7 +25,7 @@ public class TemplateEvent implements Event<TemplateEvent> {
 	}
 
 	@Override
-	public EventBus<TemplateEvent> getBus() {
+	public EventBus<ZaapGuiLeaveEvent> getBus() {
 		return BUS;
 	}
 

@@ -5,6 +5,7 @@ import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 
 /**
+ * An event triggered when the perso lvl up
  * 
  * @since
  */
@@ -20,6 +21,22 @@ public class LevelUpEvent implements Event<LevelUpEvent> {
 	 */
 	public LevelUpEvent(Account client, int newLvl) {
 		this.client = client;
+		this.newLvl = newLvl;
+	}
+
+	/**
+	 * @param client
+	 *            the client to set
+	 */
+	public void setClient(Account client) {
+		this.client = client;
+	}
+
+	/**
+	 * @param newLvl
+	 *            the newLvl to set
+	 */
+	public void setNewLvl(int newLvl) {
 		this.newLvl = newLvl;
 	}
 

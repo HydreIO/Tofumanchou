@@ -63,6 +63,7 @@ import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.*;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.domain.io.Proxy.ProxyConnectionType;
@@ -160,75 +161,90 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(HelloConnectionPacket pkt) {
 		log(pkt);
 		client.setHc(pkt.getHashKey());
-		transmit(pkt);
 		if (isBot()) {
 			sendPkt(new AccountAuthPacket()
 					.setPseudo(client.getAccountName())
 					.setHashedPassword(Crypt.hash(client.getPassword(), pkt.getHashKey()))
 					.setVersion("1.29.1"));
 		}
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(HelloGamePacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isBot()) sendPkt(new AccountTicketPacket().setTicket(ticket));
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountKeyPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isBot()) sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
+		transmit(pkt);
 	}
 
 	@Override
-	public void handle(FriendListPacket pkt) { // TODO
+	public void handle(FriendListPacket pkt) {
 		log(pkt);
+		getPerso().setOfflineFriends(pkt.getOfflineFriends());
+		getPerso().setOnlineFriends(pkt.getOnlineFriends());
+		FriendListsEvent friendListsEvent = new FriendListsEvent(client, pkt.getOfflineFriends(), pkt.getOnlineFriends());
+		friendListsEvent.send();
+		pkt.setOfflineFriends(friendListsEvent.getOfflinesFriends());
+		pkt.setOnlineFriends(friendListsEvent.getOnlinesFriends());
 		transmit(pkt);
-		if (!pkt.getOfflineFriends().isEmpty()) getFriendHandler().forEach(h -> h.onOfflineFriends(pkt.getOfflineFriends()));
-		if (!pkt.getOnlineFriends().isEmpty()) getFriendHandler().forEach(h -> h.onOnlineFriends(pkt.getOnlineFriends()));
 	}
 
 	@Override
 	public void handle(AccountRegionalVersionPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isBot()) {
 			sendPkt(new AccountGetGiftsPacket().setLanguage("fr"));
 			sendPkt(new AccountIdentityPacket().setIdentity(Crypt.getRandomNetworkKey()));
 			sendPkt(new AccountGetCharactersPacket());
 		}
+		transmit(pkt);
 	}
 
 	@Override
-	public void handle(ChatMessageOkPacket pkt) { // TODO
+	public void handle(ChatMessageOkPacket pkt) {
 		log(pkt);
+		ChatMsgEvent event = new ChatMsgEvent(client, pkt.getChat(), pkt.getPlayerId(), pkt.getPseudo(), pkt.getMsg());
+		event.send();
+		pkt.setChat(event.getChat());
+		pkt.setPlayerId(event.getPlayerId());
+		pkt.setPseudo(event.getPseudo());
+		pkt.setMsg(event.getMsg());
 		transmit(pkt);
-		getChatHandler().forEach(h -> h.onMsg(pkt.getChat(), pkt.getPlayerId(), pkt.getPseudo(), pkt.getMsg()));
 	}
 
 	@Override
-	public void handle(ChatSubscribeChannelPacket pkt) {// TODO
+	public void handle(ChatSubscribeChannelPacket pkt) {
 		log(pkt);
+		Arrays.stream(pkt.getChannels()).forEach(c -> getPerso().getChannels().put(c, pkt.isAdd()));
+		if (pkt.isAdd()) {
+			ChannelSubscribeEvent event = new ChannelSubscribeEvent(client, pkt.getChannels());
+			event.send();
+			pkt.setChannels(event.getChannels());
+		} else {
+			ChannelUnsubscribeEvent event = new ChannelUnsubscribeEvent(client, pkt.getChannels());
+			event.send();
+			pkt.setChannels(event.getChannels());
+		}
 		transmit(pkt);
-		Arrays.stream(pkt.getChannels()).forEach(c -> getPerso().getChatInfos().getChats().put(c, pkt.isAdd()));
-		if (pkt.isAdd()) getChatHandler().forEach(h -> h.onSubscribeChannel(pkt.getChannels()));
-		else getChatHandler().forEach(h -> h.onUnsubscribe(pkt.getChannels()));
 	}
 
 	@Override
-	public void handle(ZaapLeavePacket pkt) {// TODO
+	public void handle(ZaapLeavePacket pkt) {
 		log(pkt);
+		new ZaapGuiLeaveEvent(client).send();
 		transmit(pkt);
-		getZaapHandler().forEach(ZaapServerHandler::onLeaveZaap);
 	}
 
 	@Override
 	public void handle(AccountCharactersListPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (pkt.getCharacters() != null && pkt.getCharacters().length != 0) this.current = Server.fromId(pkt.getCharacters()[0].getServerId());
 		if (isBot())
 			for (AvailableCharacter c : pkt.getCharacters())
@@ -244,6 +260,12 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				p.setDeathCount(c.getDeathCount());
 				p.setLvlMax(c.getLvlMax());
 			}
+		CharacterListEvent event = new CharacterListEvent(client, pkt.getSubscriptionTime(), pkt.getPersoTot(), pkt.getCharacters());
+		event.send();
+		pkt.setSubscriptionTime(event.getSubscriptionTime());
+		pkt.setPersoTot(event.getPersoTot());
+		pkt.setCharacters(event.getCharacters());
+		transmit(pkt);
 	}
 
 	@Override
@@ -255,7 +277,6 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(AccountHostPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		for (DofusServer s : pkt.getServers())
 			if (s.getId() == Server.ERATZ.getId()) {
 				Manchou.ERATZ.setState(s.getState());
@@ -266,20 +287,25 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				Manchou.HENUAL.setServerPopulation(s.getServerPopulation());
 				new ServerStateEvent(client, Server.HENUAL).send();
 			}
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountLoginErrPacket pkt) {
 		log(pkt);
+		LoginErrorEvent event = new LoginErrorEvent(client, pkt.getErr(), pkt.getTime(), pkt.getVersion());
+		event.send();
+		pkt.setErr(event.getError());
+		pkt.setTime(event.getMinutes());
+		pkt.setVersion(event.getVersion());
 		transmit(pkt);
-		new LoginErrorEvent(client, pkt.getErr(), pkt.getTime(), pkt.getVersion()).send();
 	}
 
 	@Override
 	public void handle(AccountLoginOkPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		pkt.setAdmin(true);
+		transmit(pkt);
 	}
 
 	@Override
@@ -291,15 +317,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(AccountQuestionPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isBot()) Executors.SCHEDULED.schedule(() -> sendPkt(new AccountListServersPacket()), 2, TimeUnit.SECONDS);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountQueuePosition pkt) {
 		log(pkt);
+		RealmQueuePositionEvent event = new RealmQueuePositionEvent(client, pkt.getPosition(), pkt.getTotalSubscriber(), pkt.getTotalNoSubscribed(), pkt.getPositionInQueue(), pkt.isSubscribed());
+		event.send();
+		pkt.setPosition(event.getPosition());
+		pkt.setPositionInQueue(event.getPositionInQueue());
+		pkt.setSubscribed(event.isSub());
+		pkt.setTotalNoSubscribed(event.getTotalNoSub());
+		pkt.setTotalSubscriber(event.getTotalSub());
 		transmit(pkt);
-		new RealmQueuePositionEvent(client, pkt.getPosition(), pkt.getTotalSubscriber(), pkt.getTotalNoSubscribed(), pkt.getPositionInQueue(), pkt.isSubscribed()).send();
 	}
 
 	@Override
@@ -311,22 +343,22 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(AccountSelectCharacterOkPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isMitm()) client.setPerso(new ManchouPerso(client, pkt.getCharacter().getPseudo(), current));
 		((PlayerInventory) getPerso().getInventory()).parseCharacter(pkt.getCharacter());
+		new PersoSelectEvent(client, getPerso()).send();
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountServerEncryptedHostPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		this.ticket = pkt.getTicketKey();
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountServerHostPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		this.ticket = pkt.getTicketKey();
 		if (isBot()) {
 			client.getConnection().closeConnection();
@@ -349,19 +381,22 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(AccountServerListPacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		new SubscriptionAndPersoNumberEvent(client, pkt.getSubscriptionDuration(), pkt.getCharacters()).send();
+		SubscriptionAndPersoNumberEvent event = new SubscriptionAndPersoNumberEvent(client, pkt.getSubscriptionDuration(), pkt.getCharacters());
+		event.send();
+		pkt.setCharacters(event.getCharacters());
+		pkt.setSubscriptionDuration(event.getSubTime());
 		if (isBot()) sendPkt(new AccountAccessServerPacket().setServerId(getPerso().getServer().getId()));
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(AccountTicketOkPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (isBot()) {
 			sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
 			sendPkt(new AccountRegionalVersionPacket());
 		}
+		transmit(pkt);
 	}
 
 	@Override
@@ -371,26 +406,33 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCreatePacket pkt) { // TODO
+	public void handle(ExchangeCreatePacket pkt) {
 		log(pkt);
+		ExchangeCreateEvent event = new ExchangeCreateEvent(client, pkt.getType(), pkt.getData(), pkt.isSuccess());
+		event.send();
+		pkt.setType(event.getType());
+		pkt.setData(event.getData());
+		pkt.setSuccess(event.isSuccess());
 		transmit(pkt);
-		getPerso().getAbilities().getBaseAbility().getStates().currentInventory = pkt.getType();
-		getExchangeHandler().forEach(h -> h.onCreate(pkt.getType(), pkt.getData()));
 	}
 
 	@Override
 	public void handle(ExchangeListPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		switch (pkt.getInvType()) {
 			case BANK:
-				getAccount().getBanque().setKamas(pkt.getKamas());
-				getAccount().getBanque().updateContent(pkt.getItems());
+				client.getBank().setKamas(pkt.getKamas());
+				client.getBank().updateContent(pkt.getItems());
 				break;
 			default:
 				break;
 		}
-		getExchangeHandler().forEach(h -> h.onInventoryList(pkt.getInvType(), pkt.getItems(), pkt.getKamas()));
+		ExchangeListEvent event = new ExchangeListEvent(client, pkt.getInvType(), pkt.getItems(), pkt.getKamas());
+		event.send();
+		pkt.setInvType(event.getInvType());
+		pkt.setItems(event.getItems());
+		pkt.setKamas(event.getKamas());
+		transmit(pkt);
 	}
 
 	@Override
@@ -404,22 +446,22 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(Aks0MessagePacket pkt) {
 		log(pkt);
 		transmit(pkt);
-
 	}
 
 	@Override
 	public void handle(GuildStatPacket pkt) {
 		log(pkt);
+		GuildStatsEvent event = new GuildStatsEvent(client, pkt.getGuild());
+		event.send();
+		pkt.setGuild(event.getGuild());
 		transmit(pkt);
-		getGuildHandler().forEach(h -> h.onGuildStats(pkt.getGuild()));
 	}
 
 	@Override
 	public void handle(InfoMessagePacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (pkt.getMessage() == null) return;
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		ManchouMap fight = (ManchouMap) getPerso().getMap();
 		switch (pkt.getMessage()) {
 			case FIGHT_ATTRIBUTE_ALLOW_GROUP_ACTIVE:
 				fight.setGroupBlocked(true);
@@ -447,76 +489,95 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				break;
 			case EARN_KAMAS:
 				int kamas = Integer.parseInt(pkt.getExtraDatas());
-				getAccount().getBanque().addKamas(kamas);
+				client.getBank().addKamas(kamas);
 				break;
 			default:
 				break;
 		}
-		getInfoHandler().forEach(h -> h.onInfos(pkt.getType(), pkt.getMessageId(), pkt.getExtraDatas()));
+		InfoMessageEvent event = new InfoMessageEvent(client, pkt.getType(), pkt.getMessageId(), pkt.getExtraDatas());
+		event.send();
+		pkt.setType(event.getType());
+		pkt.setMessageId(event.getMessageId());
+		pkt.setExtraDatas(event.getExtraDatas());
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(MountXpPacket pkt) {
 		log(pkt);
+		MountXpEvent event = new MountXpEvent(client, pkt.getPercent());
+		event.send();
+		pkt.setPercent(event.getPercent());
 		transmit(pkt);
-		getMountHandler().forEach(h -> h.onMountXp(pkt.getPercent()));
 	}
 
 	@Override
 	public void handle(SpecializationSetPacket pkt) {
 		log(pkt);
+		SpecializationEvent event = new SpecializationEvent(client, pkt.getSpecialization());
+		event.send();
+		pkt.setSpecialization(event.getSpecialization());
 		transmit(pkt);
-		getSpecializationHandler().forEach(h -> h.onSpecializationSet(pkt.getSpecialization()));
 	}
 
 	@Override
 	public void handle(SpellChangeOptionPacket pkt) {
 		log(pkt);
+		SpellOptionEvent event = new SpellOptionEvent(client, pkt.canUseAllSpell());
+		event.send();
+		pkt.setCanUseAllSpell(event.canUseAllSpells());
 		transmit(pkt);
-		getSpellServerHandler().forEach(h -> h.onSpellChangeOption(pkt.canUseAllSpell()));
 	}
 
 	@Override
 	public void handle(SpellListPacket pkt) {
 		log(pkt);
+		pkt.getSpells().forEach(s -> {
+			Spells type = Spells.valueOf(s.getId());
+			getPerso().getSpells().put(type, new ManchouSpell(type, s.getLevel(), s.getPosition()));
+		});
+		SpellListEvent event = new SpellListEvent(client, pkt.getSpells());
+		event.send();
+		pkt.setSpells(event.getSpells());
 		transmit(pkt);
-		getPerso().getStatsInfos().updateSpells(pkt.getSpells());
-		getSpellServerHandler().forEach(h -> h.onSpellList(pkt.getSpells()));
 	}
 
 	@Override
 	public void handle(SubareaListPacket pkt) {
 		log(pkt);
+		SubareaEvent event = new SubareaEvent(client, pkt.getSubareas());
+		event.send();
+		pkt.setSubareas(event.getSubareas());
 		transmit(pkt);
-		getSubareaServerHandler().forEach(h -> h.onSubareaList(pkt.getSubareas()));
 	}
 
 	@Override
 	public void handle(ZaapCreatePacket pkt) {
 		log(pkt);
+		ZaapGuiOpenEvent event = new ZaapGuiOpenEvent(client, pkt.getRespawnWaypoint(), pkt.getWaypoints());
+		event.send();
+		pkt.setRespawnWaypoint(event.getRespawnWaypoint());
+		pkt.setWaypoints(event.getWaypoints());
 		transmit(pkt);
-		getZaapHandler().forEach(h -> h.onDiscover(pkt.getRespawnWaypoint(), pkt.getWaypoints()));
 	}
 
 	@Override
 	public void handle(ZaapUseErrorPacket pkt) {
 		log(pkt);
+		new ZaapUseErrorEvent(client).send();
 		transmit(pkt);
-		getZaapHandler().forEach(ZaapServerHandler::onZaapError);
 	}
 
 	@Override
 	public void handle(GameActionFinishPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getGameActionHandler().forEach(h -> h.onActionFinish(pkt.getAckId(), pkt.getCharacterId()));
 	}
 
 	@Override
 	public void handle(GameActionStartPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getGameActionHandler().forEach(h -> h.onActionStart(pkt.getCharacterId()));
 	}
 
 	@Override
