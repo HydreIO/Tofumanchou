@@ -59,6 +59,13 @@ public class ManchouPerso implements Perso {
 	private String[] emblem;
 	private PlayerRestriction restrictions;
 	private Inventory inventory;
+	private int xp;
+	private int xpLow;
+	private int xpHight;
+	private int statsPoints;
+	private int spellsPoints;
+	private int energy;
+	private int energyMax;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -88,166 +95,8 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public String getPseudo() {
-		// TODO
-		return null;
-	}
-
-	public void setUuid(long uuid) {
-		this.uuid = uuid;
-	}
-
-	public void setLvl(int lvl) {
-		this.lvl = lvl;
-	}
-
-	public void setLvlMax(int lvlMax) {
-		this.lvlMax = lvlMax;
-	}
-
-	@Override
-	public Classe getClasse() {
-		return classe;
-	}
-
-	@Override
-	public EntityColor getColors() {
-		return colors;
-	}
-
-	@Override
-	public Genre getSex() {
-		return genre;
-	}
-
-	@Override
-	public int getLevel() {
-		return this.lvl;
-	}
-
-	@Override
-	public int getLife() {
-		return this.life;
-	}
-
-	@Override
-	public int getLifeMax() {
-		return this.lifeMax;
-	}
-
-	@Override
-	public int getInitiative() {
-		return this.initiative;
-	}
-
-	@Override
-	public Alignement getAlignement() {
-		return this.alignement;
-	}
-
-	@Override
-	public Rank getRank() {
-		return this.rank;
-	}
-
-	@Override
-	public int getProspection() {
-		return this.prospection;
-	}
-
-	@Override
-	public Map<Stat, StatValue> getStats() {
-		return this.stats;
-	}
-
-	@Override
 	public StatValue getStat(Stat stat) {
 		return stats.get(stat);
-	}
-
-	@Override
-	public Accessory[] getAccessories() {
-		return this.accessories;
-	}
-
-	@Override
-	public Server getServer() {
-		return this.server;
-	}
-
-	@Override
-	public boolean isMerchant() {
-		return this.merchant;
-	}
-
-	@Override
-	public boolean isDead() {
-		return this.dead;
-	}
-
-	@Override
-	public int getDeathCount() {
-		return this.deathCount;
-	}
-
-	@Override
-	public int getLvlMax() {
-		return this.lvlMax;
-	}
-
-	@Override
-	public int getGuild() {
-		return this.guild;
-	}
-
-	@Override
-	public int getTeam() {
-		return this.team;
-	}
-
-	@Override
-	public int getAura() {
-		return this.aura;
-	}
-
-	@Override
-	public int getEmot() {
-		return this.emot;
-	}
-
-	@Override
-	public int getEmotTimer() {
-		return this.emotTimer;
-	}
-
-	@Override
-	public String getGuildName() {
-		return this.guildName;
-	}
-
-	@Override
-	public String[] getEmblem() {
-		return this.emblem;
-	}
-
-	@Override
-	public PlayerRestriction getRestriction() {
-		return this.restrictions;
-	}
-
-	@Override
-	public long getUUID() {
-		return this.uuid;
-	}
-
-	@Override
-	public Account getAccount() {
-		return this.account;
-	}
-
-	@Override
-	public Inventory getInventory() {
-		return this.inventory;
 	}
 
 	public void setColors(int color1, int color2, int color3) {
@@ -258,20 +107,532 @@ public class ManchouPerso implements Perso {
 		this.accessories = Arrays.stream(accessories).mapToObj(i -> new Accessory(-1, i, -1)).toArray(Accessory[]::new);
 	}
 
-	public void setMerchant(boolean mrcht) {
-		this.merchant = mrcht;
+	/**
+	 * @return the account
+	 */
+	public ManchouAccount getAccount() {
+		return account;
 	}
 
-	public void setServer(Server srv) {
-		this.server = srv;
+	/**
+	 * @param account
+	 *            the account to set
+	 */
+	public void setAccount(ManchouAccount account) {
+		this.account = account;
 	}
 
-	public void setDead(boolean d) {
-		this.dead = d;
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(long uuid) {
+		this.uuid = uuid;
 	}
 
-	public void setDeathCount(int dc) {
-		this.deathCount = dc;
+	/**
+	 * @return the server
+	 */
+	public Server getServer() {
+		return server;
+	}
+
+	/**
+	 * @param server
+	 *            the server to set
+	 */
+	public void setServer(Server server) {
+		this.server = server;
+	}
+
+	/**
+	 * @return the pseudo
+	 */
+	public String getPseudo() {
+		return pseudo;
+	}
+
+	/**
+	 * @param pseudo
+	 *            the pseudo to set
+	 */
+	public void setPseudo(String pseudo) {
+		this.pseudo = pseudo;
+	}
+
+	/**
+	 * @param lvl
+	 *            the lvl to set
+	 */
+	public void setLvl(int lvl) {
+		this.lvl = lvl;
+	}
+
+	/**
+	 * @return the lvlMax
+	 */
+	public int getLvlMax() {
+		return lvlMax;
+	}
+
+	/**
+	 * @param lvlMax
+	 *            the lvlMax to set
+	 */
+	public void setLvlMax(int lvlMax) {
+		this.lvlMax = lvlMax;
+	}
+
+	/**
+	 * @return the classe
+	 */
+	public Classe getClasse() {
+		return classe;
+	}
+
+	/**
+	 * @param classe
+	 *            the classe to set
+	 */
+	public void setClasse(Classe classe) {
+		this.classe = classe;
+	}
+
+	/**
+	 * @return the colors
+	 */
+	public EntityColor getColors() {
+		return colors;
+	}
+
+	/**
+	 * @param colors
+	 *            the colors to set
+	 */
+	public void setColors(EntityColor colors) {
+		this.colors = colors;
+	}
+
+	/**
+	 * @param genre
+	 *            the genre to set
+	 */
+	public void setGenre(Genre genre) {
+		this.genre = genre;
+	}
+
+	/**
+	 * @return the life
+	 */
+	public int getLife() {
+		return life;
+	}
+
+	/**
+	 * @param life
+	 *            the life to set
+	 */
+	public void setLife(int life) {
+		this.life = life;
+	}
+
+	/**
+	 * @return the lifeMax
+	 */
+	public int getLifeMax() {
+		return lifeMax;
+	}
+
+	/**
+	 * @param lifeMax
+	 *            the lifeMax to set
+	 */
+	public void setLifeMax(int lifeMax) {
+		this.lifeMax = lifeMax;
+	}
+
+	/**
+	 * @return the initiative
+	 */
+	public int getInitiative() {
+		return initiative;
+	}
+
+	/**
+	 * @param initiative
+	 *            the initiative to set
+	 */
+	public void setInitiative(int initiative) {
+		this.initiative = initiative;
+	}
+
+	/**
+	 * @return the alignement
+	 */
+	public Alignement getAlignement() {
+		return alignement;
+	}
+
+	/**
+	 * @param alignement
+	 *            the alignement to set
+	 */
+	public void setAlignement(Alignement alignement) {
+		this.alignement = alignement;
+	}
+
+	/**
+	 * @return the rank
+	 */
+	public Rank getRank() {
+		return rank;
+	}
+
+	/**
+	 * @param rank
+	 *            the rank to set
+	 */
+	public void setRank(Rank rank) {
+		this.rank = rank;
+	}
+
+	/**
+	 * @return the prospection
+	 */
+	public int getProspection() {
+		return prospection;
+	}
+
+	/**
+	 * @param prospection
+	 *            the prospection to set
+	 */
+	public void setProspection(int prospection) {
+		this.prospection = prospection;
+	}
+
+	/**
+	 * @return the stats
+	 */
+	public Map<Stat, StatValue> getStats() {
+		return stats;
+	}
+
+	/**
+	 * @param stats
+	 *            the stats to set
+	 */
+	public void setStats(Map<Stat, StatValue> stats) {
+		this.stats = stats;
+	}
+
+	/**
+	 * @return the accessories
+	 */
+	public Accessory[] getAccessories() {
+		return accessories;
+	}
+
+	/**
+	 * @param accessories
+	 *            the accessories to set
+	 */
+	public void setAccessories(Accessory[] accessories) {
+		this.accessories = accessories;
+	}
+
+	/**
+	 * @return the merchant
+	 */
+	public boolean isMerchant() {
+		return merchant;
+	}
+
+	/**
+	 * @param merchant
+	 *            the merchant to set
+	 */
+	public void setMerchant(boolean merchant) {
+		this.merchant = merchant;
+	}
+
+	/**
+	 * @return the dead
+	 */
+	public boolean isDead() {
+		return dead;
+	}
+
+	/**
+	 * @param dead
+	 *            the dead to set
+	 */
+	public void setDead(boolean dead) {
+		this.dead = dead;
+	}
+
+	/**
+	 * @return the deathCount
+	 */
+	public int getDeathCount() {
+		return deathCount;
+	}
+
+	/**
+	 * @param deathCount
+	 *            the deathCount to set
+	 */
+	public void setDeathCount(int deathCount) {
+		this.deathCount = deathCount;
+	}
+
+	/**
+	 * @return the guild
+	 */
+	public int getGuild() {
+		return guild;
+	}
+
+	/**
+	 * @param guild
+	 *            the guild to set
+	 */
+	public void setGuild(int guild) {
+		this.guild = guild;
+	}
+
+	/**
+	 * @return the team
+	 */
+	public int getTeam() {
+		return team;
+	}
+
+	/**
+	 * @param team
+	 *            the team to set
+	 */
+	public void setTeam(int team) {
+		this.team = team;
+	}
+
+	/**
+	 * @return the aura
+	 */
+	public int getAura() {
+		return aura;
+	}
+
+	/**
+	 * @param aura
+	 *            the aura to set
+	 */
+	public void setAura(int aura) {
+		this.aura = aura;
+	}
+
+	/**
+	 * @return the emot
+	 */
+	public int getEmot() {
+		return emot;
+	}
+
+	/**
+	 * @param emot
+	 *            the emot to set
+	 */
+	public void setEmot(int emot) {
+		this.emot = emot;
+	}
+
+	/**
+	 * @return the emotTimer
+	 */
+	public int getEmotTimer() {
+		return emotTimer;
+	}
+
+	/**
+	 * @param emotTimer
+	 *            the emotTimer to set
+	 */
+	public void setEmotTimer(int emotTimer) {
+		this.emotTimer = emotTimer;
+	}
+
+	/**
+	 * @return the guildName
+	 */
+	public String getGuildName() {
+		return guildName;
+	}
+
+	/**
+	 * @param guildName
+	 *            the guildName to set
+	 */
+	public void setGuildName(String guildName) {
+		this.guildName = guildName;
+	}
+
+	/**
+	 * @return the emblem
+	 */
+	public String[] getEmblem() {
+		return emblem;
+	}
+
+	/**
+	 * @param emblem
+	 *            the emblem to set
+	 */
+	public void setEmblem(String[] emblem) {
+		this.emblem = emblem;
+	}
+
+	/**
+	 * @param restrictions
+	 *            the restrictions to set
+	 */
+	public void setRestrictions(PlayerRestriction restrictions) {
+		this.restrictions = restrictions;
+	}
+
+	/**
+	 * @return the inventory
+	 */
+	public Inventory getInventory() {
+		return inventory;
+	}
+
+	/**
+	 * @param inventory
+	 *            the inventory to set
+	 */
+	public void setInventory(Inventory inventory) {
+		this.inventory = inventory;
+	}
+
+	/**
+	 * @return the xp
+	 */
+	public int getXp() {
+		return xp;
+	}
+
+	/**
+	 * @param xp
+	 *            the xp to set
+	 */
+	public void setXp(int xp) {
+		this.xp = xp;
+	}
+
+	/**
+	 * @param xpLow
+	 *            the xpLow to set
+	 */
+	public void setXpLow(int xpLow) {
+		this.xpLow = xpLow;
+	}
+
+	/**
+	 * @param xpHight
+	 *            the xpHight to set
+	 */
+	public void setXpHight(int xpHight) {
+		this.xpHight = xpHight;
+	}
+
+	/**
+	 * @return the statsPoints
+	 */
+	public int getStatsPoints() {
+		return statsPoints;
+	}
+
+	/**
+	 * @param statsPoints
+	 *            the statsPoints to set
+	 */
+	public void setStatsPoints(int statsPoints) {
+		this.statsPoints = statsPoints;
+	}
+
+	/**
+	 * @return the spellsPoints
+	 */
+	public int getSpellsPoints() {
+		return spellsPoints;
+	}
+
+	/**
+	 * @param spellsPoints
+	 *            the spellsPoints to set
+	 */
+	public void setSpellsPoints(int spellsPoints) {
+		this.spellsPoints = spellsPoints;
+	}
+
+	/**
+	 * @return the energy
+	 */
+	public int getEnergy() {
+		return energy;
+	}
+
+	/**
+	 * @param energy
+	 *            the energy to set
+	 */
+	public void setEnergy(int energy) {
+		this.energy = energy;
+	}
+
+	/**
+	 * @return the energyMax
+	 */
+	public int getEnergyMax() {
+		return energyMax;
+	}
+
+	/**
+	 * @param energyMax
+	 *            the energyMax to set
+	 */
+	public void setEnergyMax(int energyMax) {
+		this.energyMax = energyMax;
+	}
+
+	@Override
+	public Genre getSex() {
+		return genre;
+	}
+
+	@Override
+	public int getLevel() {
+		return lvl;
+	}
+
+	@Override
+	public PlayerRestriction getRestriction() {
+		return restrictions;
+	}
+
+	@Override
+	public long getUUID() {
+		return uuid;
+	}
+
+	@Override
+	public int getXpMin() {
+		return xpLow;
+	}
+
+	@Override
+	public int getXpMax() {
+		return xpHight;
 	}
 
 }

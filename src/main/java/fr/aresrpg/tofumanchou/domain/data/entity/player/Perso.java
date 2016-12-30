@@ -15,4 +15,18 @@ public interface Perso extends Player {
 
 	void connect();
 
+	int getXp();
+
+	int getXpMin();
+
+	int getXpMax();
+
+	int getStatsPoints();
+
+	int getSpellsPoints();
+
+	int getEnergy();
+
+	int getEnergyMax();
+
 }

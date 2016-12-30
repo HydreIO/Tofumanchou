@@ -12,6 +12,7 @@ import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.dofus.protocol.*;
+import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.dofus.protocol.account.AccountKeyPacket;
 import fr.aresrpg.dofus.protocol.account.AccountRegionalVersionPacket;
 import fr.aresrpg.dofus.protocol.account.client.*;
@@ -47,6 +48,7 @@ import fr.aresrpg.dofus.protocol.subarea.server.SubareaListPacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
+import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.character.AvailableCharacter;
 import fr.aresrpg.dofus.structures.game.*;
 import fr.aresrpg.dofus.structures.item.Interractable;
@@ -56,17 +58,23 @@ import fr.aresrpg.dofus.structures.job.JobInfo;
 import fr.aresrpg.dofus.structures.map.*;
 import fr.aresrpg.dofus.structures.server.DofusServer;
 import fr.aresrpg.dofus.structures.server.Server;
+import fr.aresrpg.dofus.structures.stat.Stat;
+import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.*;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.Account;
-import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
+import fr.aresrpg.tofumanchou.domain.io.Proxy.ProxyConnectionType;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
+import fr.aresrpg.tofumanchou.infra.config.Variables;
 import fr.aresrpg.tofumanchou.infra.data.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +88,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	private ManchouAccount client;
 	private ManchouProxy proxy;
 	private String ticket;
+	private Server current;
 
 	public BaseServerPacketHandler(Account client) {
 		Objects.requireNonNull(client);
@@ -220,6 +229,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountCharactersListPacket pkt) {
 		log(pkt);
 		transmit(pkt);
+		if (pkt.getCharacters() != null && pkt.getCharacters().length != 0) this.current = Server.fromId(pkt.getCharacters()[0].getServerId());
 		if (isBot())
 			for (AvailableCharacter c : pkt.getCharacters())
 			if (client.getPerso().getPseudo().equals(c.getPseudo())) {
@@ -302,7 +312,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountSelectCharacterOkPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		((PlayerInventory)getPerso().getInventory()).parseCharacter(pkt.getCharacter());
+		if (isMitm()) client.setPerso(new ManchouPerso(client, pkt.getCharacter().getPseudo(), current));
+		((PlayerInventory) getPerso().getInventory()).parseCharacter(pkt.getCharacter());
 	}
 
 	@Override
@@ -310,7 +321,6 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		transmit(pkt);
 		this.ticket = pkt.getTicketKey();
-		forEachAccountHandlers(h -> h.onReceiveServerHost(pkt.getIp(), pkt.getPort(), this));
 	}
 
 	@Override
@@ -318,32 +328,50 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		transmit(pkt);
 		this.ticket = pkt.getTicketKey();
-		forEachAccountHandlers(h -> h.onReceiveServerHost(pkt.getIp(), pkt.getPort(), this));
+		if (isBot()) {
+			client.getConnection().closeConnection();
+			client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
+			client.getConnection().start();
+		} else {
+			String ip = pkt.getIp();
+			ServerSocketChannel srvchannel = ServerSocketChannel.open();
+			srvchannel.bind(new InetSocketAddress(0));
+			int localPort = srvchannel.socket().getLocalPort();
+			getProxy().getLocalConnection().send(new AccountServerHostPacket().setIp(Variables.PASSERELLE_IP).setPort(localPort).setTicketKey(pkt.getTicketKey()));
+			getProxy().changeConnection(new DofusConnection<>("Local", srvchannel.accept(), getProxy().getLocalHandler(), Bound.CLIENT),
+					ProxyConnectionType.LOCAL);
+			getProxy().changeConnection(
+					new DofusConnection<>("Remote", SocketChannel.open(new InetSocketAddress(ip, pkt.getPort())), getProxy().getRemoteHandler(), Bound.SERVER),
+					ProxyConnectionType.REMOTE);
+		}
 	}
 
 	@Override
 	public void handle(AccountServerListPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		forEachAccountHandlers(h -> h.onReceiveServerPersoCount(pkt.getSubscriptionDuration(), pkt.getCharacters()));
+		new SubscriptionAndPersoNumberEvent(client, pkt.getSubscriptionDuration(), pkt.getCharacters()).send();
+		if (isBot()) sendPkt(new AccountAccessServerPacket().setServerId(getPerso().getServer().getId()));
 	}
 
 	@Override
 	public void handle(AccountTicketOkPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getAccountHandler().forEach(h -> h.onTicketOk(pkt.getKey(), pkt.getData()));
+		if (isBot()) {
+			sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
+			sendPkt(new AccountRegionalVersionPacket());
+		}
 	}
 
 	@Override
 	public void handle(AccountTicketPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getAccountHandler().forEach(h -> h.onTicket(pkt.getTicket()));
 	}
 
 	@Override
-	public void handle(ExchangeCreatePacket pkt) {
+	public void handle(ExchangeCreatePacket pkt) { // TODO
 		log(pkt);
 		transmit(pkt);
 		getPerso().getAbilities().getBaseAbility().getStates().currentInventory = pkt.getType();
@@ -921,63 +949,77 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountStatsPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		Perso p = getPerso();
-		StatsInfo s = p.getStatsInfos();
-		s.setXp(pkt.getXp());
-		s.setMinXp(pkt.getXpLow());
-		s.setMaxXp(pkt.getXpHigh());
-		p.getInventory().setKamas(pkt.getKama());
-		s.setStatsPoint(pkt.getBonusPoints());
-		s.setSpellsPoints(pkt.getBonusPointsSpell());
-		p.getPvpInfos().setAlignment(pkt.getAlignment());
-		p.getPvpInfos().setRank(pkt.getRank());
-		s.setLife(pkt.getLife());
-		s.setLifeMax(pkt.getLifeMax());
-		s.setEnergy(pkt.getEnergy());
-		s.setEnergyMax(pkt.getEnergyMax());
-		s.setInitiative(pkt.getInitiative());
-		s.setProspection(pkt.getProspection());
-		s.setStats(pkt.getStats());
-		getAccountHandler().forEach(AccountServerHandler::onStatsUpdate);
+		ManchouPerso s = getPerso();
+		int xp = pkt.getXp();
+		int xpLow = pkt.getXpLow();
+		int xpHight = pkt.getXpHigh();
+		int kamas = pkt.getKama();
+		int bonuspts = pkt.getBonusPoints();
+		int spellpts = pkt.getBonusPointsSpell();
+		Alignement align = pkt.getAlignment();
+		Rank rank = pkt.getRank();
+		int life = pkt.getLife();
+		int lifemax = pkt.getLifeMax();
+		int energy = pkt.getEnergy();
+		int energymax = pkt.getEnergyMax();
+		int init = pkt.getInitiative();
+		int pp = pkt.getProspection();
+		Map<Stat, StatValue> stats = pkt.getStats();
+		s.setXp(xp);
+		s.setXpLow(xpLow);
+		s.setXpHight(xpHight);
+		s.getInventory().setKamas(kamas);
+		s.setStatsPoints(bonuspts);
+		s.setSpellsPoints(spellpts);
+		s.setAlignement(align);
+		s.setRank(rank);
+		s.setLife(life);
+		s.setLifeMax(lifemax);
+		s.setEnergy(energy);
+		s.setEnergyMax(energymax);
+		s.setInitiative(init);
+		s.setProspection(pp);
+		new PersoStatsEvent(client, xp, xpLow, xpHight, kamas, bonuspts, spellpts, align, pkt.getFakeAlignment(), rank, life, lifemax, energy, energymax, init, pp, stats, pkt.getExtradatas()).send();
 	}
 
 	@Override
 	public void handle(AccountNewLevelPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getAccountHandler().forEach(h -> h.onNewLvl(pkt.getNewlvl()));
+		getPerso().setLvl(pkt.getNewlvl());
+		new LevelUpEvent(client, pkt.getNewlvl()).send();
 	}
 
 	@Override
 	public void handle(AccountServerQueuePacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getAccountHandler().forEach(h -> h.onServerQueue(pkt.getPosition()));
+		new ServerQueuePositionEvent(client, pkt.getPosition());
 	}
 
 	@Override
-	public void handle(ExchangeCraftPacket pkt) {
+	public void handle(ExchangeCraftPacket pkt) { // TODO
 		log(pkt);
 		transmit(pkt);
 		getExchangeHandler().forEach(h -> h.onCraft(pkt.getResult()));
 	}
 
 	@Override
-	public void handle(ExchangeLocalMovePacket pkt) {
+	public void handle(ExchangeLocalMovePacket pkt) { // TODO
 		log(pkt);
 		transmit(pkt);
 		getExchangeHandler().forEach(h -> h.onLocalMove(pkt.getItemType(), pkt.getItemAmount(), pkt.getLocalKama()));
 	}
 
 	@Override
-	public void handle(ExchangeDistantMovePacket pkt) {
+	public void handle(ExchangeDistantMovePacket pkt) { // TODO
 		log(pkt);
 		transmit(pkt);
 		getExchangeHandler().forEach(h -> h.onDistantMove(pkt.getMoved(), pkt.isAdd(), pkt.getKamas(), pkt.getRemainingHours()));
 	}
 
 	@Override
-	public void handle(ExchangeCoopMovePacket pkt) {
+	public void handle(ExchangeCoopMovePacket pkt) { // TODO
 		log(pkt);
 		transmit(pkt);
 		getExchangeHandler().forEach(h -> h.onCoopMove(pkt.getMoved(), pkt.getKamas(), pkt.isAdd()));
