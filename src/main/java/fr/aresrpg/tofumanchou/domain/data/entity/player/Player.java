@@ -3,10 +3,12 @@ package fr.aresrpg.tofumanchou.domain.data.entity.player;
 import fr.aresrpg.dofus.structures.PlayerRestriction;
 import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.game.Alignement;
+import fr.aresrpg.dofus.structures.item.Accessory;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
-import fr.aresrpg.tofumanchou.domain.data.entity.*;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
 import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
 
@@ -34,8 +36,6 @@ public interface Player extends Entity {
 
 	int getInitiative();
 
-	void setInitiative();
-
 	Alignement getAlignement();
 
 	Rank getRank();
@@ -46,7 +46,7 @@ public interface Player extends Entity {
 
 	StatValue getStat(Stat stat);
 
-	EntityAccessory[] getAccessories();
+	Accessory[] getAccessories();
 
 	Server getServer();
 

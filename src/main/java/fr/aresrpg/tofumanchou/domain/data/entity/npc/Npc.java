@@ -1,7 +1,9 @@
 package fr.aresrpg.tofumanchou.domain.data.entity.npc;
 
 import fr.aresrpg.dofus.structures.Orientation;
-import fr.aresrpg.tofumanchou.domain.data.entity.*;
+import fr.aresrpg.dofus.structures.item.Accessory;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
 
 /**
@@ -24,7 +26,7 @@ public interface Npc extends Entity {
 
 	EntityColor getColors();
 
-	EntityAccessory[] getAccesories();
+	Accessory[] getAccesories();
 
 	int getExtraClip();
 

@@ -1,0 +1,1210 @@
+/*******************************************************************************
+ * BotFather (C) - Dofus 1.29
+ * This class is part of an AresRPG Project.
+ *
+ * @author Sceat {@literal <sceat@aresrpg.fr>}
+ * 
+ *         Created 2016
+ *******************************************************************************/
+package fr.aresrpg.tofumanchou.infra.io;
+
+import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
+
+import fr.aresrpg.commons.domain.event.Event;
+import fr.aresrpg.dofus.protocol.*;
+import fr.aresrpg.dofus.protocol.account.AccountKeyPacket;
+import fr.aresrpg.dofus.protocol.account.AccountRegionalVersionPacket;
+import fr.aresrpg.dofus.protocol.account.client.*;
+import fr.aresrpg.dofus.protocol.account.server.*;
+import fr.aresrpg.dofus.protocol.aks.Aks0MessagePacket;
+import fr.aresrpg.dofus.protocol.basic.server.BasicConfirmPacket;
+import fr.aresrpg.dofus.protocol.chat.ChatSubscribeChannelPacket;
+import fr.aresrpg.dofus.protocol.chat.server.ChatMessageOkPacket;
+import fr.aresrpg.dofus.protocol.dialog.DialogLeavePacket;
+import fr.aresrpg.dofus.protocol.dialog.server.*;
+import fr.aresrpg.dofus.protocol.exchange.server.*;
+import fr.aresrpg.dofus.protocol.fight.server.*;
+import fr.aresrpg.dofus.protocol.friend.server.FriendListPacket;
+import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
+import fr.aresrpg.dofus.protocol.game.actions.client.GameAcceptDuelAction;
+import fr.aresrpg.dofus.protocol.game.actions.client.GameRefuseDuelAction;
+import fr.aresrpg.dofus.protocol.game.actions.server.*;
+import fr.aresrpg.dofus.protocol.game.movement.*;
+import fr.aresrpg.dofus.protocol.game.server.*;
+import fr.aresrpg.dofus.protocol.guild.server.GuildStatPacket;
+import fr.aresrpg.dofus.protocol.hello.server.HelloConnectionPacket;
+import fr.aresrpg.dofus.protocol.hello.server.HelloGamePacket;
+import fr.aresrpg.dofus.protocol.info.server.*;
+import fr.aresrpg.dofus.protocol.item.server.*;
+import fr.aresrpg.dofus.protocol.job.server.*;
+import fr.aresrpg.dofus.protocol.mount.server.MountXpPacket;
+import fr.aresrpg.dofus.protocol.party.PartyRefusePacket;
+import fr.aresrpg.dofus.protocol.party.server.*;
+import fr.aresrpg.dofus.protocol.specialization.server.SpecializationSetPacket;
+import fr.aresrpg.dofus.protocol.spell.server.SpellChangeOptionPacket;
+import fr.aresrpg.dofus.protocol.spell.server.SpellListPacket;
+import fr.aresrpg.dofus.protocol.subarea.server.SubareaListPacket;
+import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
+import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
+import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
+import fr.aresrpg.dofus.structures.character.AvailableCharacter;
+import fr.aresrpg.dofus.structures.game.*;
+import fr.aresrpg.dofus.structures.item.Interractable;
+import fr.aresrpg.dofus.structures.item.Item;
+import fr.aresrpg.dofus.structures.job.Job;
+import fr.aresrpg.dofus.structures.job.JobInfo;
+import fr.aresrpg.dofus.structures.map.*;
+import fr.aresrpg.dofus.structures.server.DofusServer;
+import fr.aresrpg.dofus.structures.server.Server;
+import fr.aresrpg.dofus.util.*;
+import fr.aresrpg.tofumanchou.domain.Manchou;
+import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
+import fr.aresrpg.tofumanchou.domain.event.*;
+import fr.aresrpg.tofumanchou.domain.io.Proxy;
+import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
+import fr.aresrpg.tofumanchou.infra.data.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 
+ * @since
+ */
+public class BaseServerPacketHandler implements ServerPacketHandler {
+
+	private ManchouAccount client;
+	private ManchouProxy proxy;
+	private String ticket;
+
+	public BaseServerPacketHandler(Account client) {
+		Objects.requireNonNull(client);
+		this.client = (ManchouAccount) client;
+	}
+
+	public BaseServerPacketHandler(Proxy proxy) {
+		Objects.requireNonNull(proxy);
+		this.proxy = (ManchouProxy) proxy;
+		this.client = (ManchouAccount) proxy.getClient();
+	}
+
+	public ManchouProxy getProxy() {
+		return proxy;
+	}
+
+	public ManchouAccount getClient() {
+		return client;
+	}
+
+	public ManchouPerso getPerso() {
+		return (ManchouPerso) client.getPerso();
+	}
+
+	public void setClient(Account client) {
+		this.client = (ManchouAccount) client;
+	}
+
+	public String getTicket() {
+		return ticket;
+	}
+
+	public void setTicket(String ticket) {
+		this.ticket = ticket;
+	}
+
+	public boolean isMitm() {
+		return proxy != null;
+	}
+
+	public boolean isBot() {
+		return !isMitm();
+	}
+
+	private void transmit(Packet pkt) {
+		if (isBot()) return;
+		proxy.getLocalConnection().send(pkt);
+	}
+
+	private void sendPkt(Packet pkt) {
+		getClient().getConnection().send(pkt);
+	}
+
+	private void event(Event event) {
+		if (client == null) throw new NullPointerException("The client cannot be null !");
+		event.send();
+	}
+
+	protected void log(Packet pkt) {
+		if (getPerso() == null) LOGGER.info("[RCV:]< " + pkt);
+		else LOGGER.info("[" + getPerso().getPseudo() + ":RCV:]< " + pkt);
+	}
+
+	@Override
+	public void register(DofusConnection<?> connection) {
+	}
+
+	@Override
+	public void handle(HelloConnectionPacket pkt) {
+		log(pkt);
+		client.setHc(pkt.getHashKey());
+		transmit(pkt);
+		if (isBot()) {
+			sendPkt(new AccountAuthPacket()
+					.setPseudo(client.getAccountName())
+					.setHashedPassword(Crypt.hash(client.getPassword(), pkt.getHashKey()))
+					.setVersion("1.29.1"));
+		}
+	}
+
+	@Override
+	public void handle(HelloGamePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (isBot()) sendPkt(new AccountTicketPacket().setTicket(ticket));
+	}
+
+	@Override
+	public void handle(AccountKeyPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (isBot()) sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
+	}
+
+	@Override
+	public void handle(FriendListPacket pkt) { // TODO
+		log(pkt);
+		transmit(pkt);
+		if (!pkt.getOfflineFriends().isEmpty()) getFriendHandler().forEach(h -> h.onOfflineFriends(pkt.getOfflineFriends()));
+		if (!pkt.getOnlineFriends().isEmpty()) getFriendHandler().forEach(h -> h.onOnlineFriends(pkt.getOnlineFriends()));
+	}
+
+	@Override
+	public void handle(AccountRegionalVersionPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (isBot()) {
+			sendPkt(new AccountGetGiftsPacket().setLanguage("fr"));
+			sendPkt(new AccountIdentityPacket().setIdentity(Crypt.getRandomNetworkKey()));
+			sendPkt(new AccountGetCharactersPacket());
+		}
+	}
+
+	@Override
+	public void handle(ChatMessageOkPacket pkt) { // TODO
+		log(pkt);
+		transmit(pkt);
+		getChatHandler().forEach(h -> h.onMsg(pkt.getChat(), pkt.getPlayerId(), pkt.getPseudo(), pkt.getMsg()));
+	}
+
+	@Override
+	public void handle(ChatSubscribeChannelPacket pkt) {// TODO
+		log(pkt);
+		transmit(pkt);
+		Arrays.stream(pkt.getChannels()).forEach(c -> getPerso().getChatInfos().getChats().put(c, pkt.isAdd()));
+		if (pkt.isAdd()) getChatHandler().forEach(h -> h.onSubscribeChannel(pkt.getChannels()));
+		else getChatHandler().forEach(h -> h.onUnsubscribe(pkt.getChannels()));
+	}
+
+	@Override
+	public void handle(ZaapLeavePacket pkt) {// TODO
+		log(pkt);
+		transmit(pkt);
+		getZaapHandler().forEach(ZaapServerHandler::onLeaveZaap);
+	}
+
+	@Override
+	public void handle(AccountCharactersListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (isBot())
+			for (AvailableCharacter c : pkt.getCharacters())
+			if (client.getPerso().getPseudo().equals(c.getPseudo())) {
+				ManchouPerso p = getPerso();
+				p.setUuid(c.getId());
+				p.setLvl(c.getLevel());
+				p.setColors(c.getColor1(), c.getColor2(), c.getColor3());
+				p.setAccessories(c.getAccessories());
+				p.setMerchant(c.isMerchant());
+				p.setServer(Server.fromId(c.getServerId()));
+				p.setDead(c.isDead());
+				p.setDeathCount(c.getDeathCount());
+				p.setLvlMax(c.getLvlMax());
+			}
+	}
+
+	@Override
+	public void handle(AccountCommunityPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(AccountHostPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (DofusServer s : pkt.getServers())
+			if (s.getId() == Server.ERATZ.getId()) {
+				Manchou.ERATZ.setState(s.getState());
+				Manchou.ERATZ.setServerPopulation(s.getServerPopulation());
+				new ServerStateEvent(client, Server.ERATZ).send();
+			} else {
+				Manchou.HENUAL.setState(s.getState());
+				Manchou.HENUAL.setServerPopulation(s.getServerPopulation());
+				new ServerStateEvent(client, Server.HENUAL).send();
+			}
+	}
+
+	@Override
+	public void handle(AccountLoginErrPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		new LoginErrorEvent(client, pkt.getErr(), pkt.getTime(), pkt.getVersion()).send();
+	}
+
+	@Override
+	public void handle(AccountLoginOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		pkt.setAdmin(true);
+	}
+
+	@Override
+	public void handle(AccountPseudoPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(AccountQuestionPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (isBot()) Executors.SCHEDULED.schedule(() -> sendPkt(new AccountListServersPacket()), 2, TimeUnit.SECONDS);
+	}
+
+	@Override
+	public void handle(AccountQueuePosition pkt) {
+		log(pkt);
+		transmit(pkt);
+		new RealmQueuePositionEvent(client, pkt.getPosition(), pkt.getTotalSubscriber(), pkt.getTotalNoSubscribed(), pkt.getPositionInQueue(), pkt.isSubscribed()).send();
+	}
+
+	@Override
+	public void handle(AccountRestrictionsPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(AccountSelectCharacterOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		((PlayerInventory)getPerso().getInventory()).parseCharacter(pkt.getCharacter());
+	}
+
+	@Override
+	public void handle(AccountServerEncryptedHostPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		this.ticket = pkt.getTicketKey();
+		forEachAccountHandlers(h -> h.onReceiveServerHost(pkt.getIp(), pkt.getPort(), this));
+	}
+
+	@Override
+	public void handle(AccountServerHostPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		this.ticket = pkt.getTicketKey();
+		forEachAccountHandlers(h -> h.onReceiveServerHost(pkt.getIp(), pkt.getPort(), this));
+	}
+
+	@Override
+	public void handle(AccountServerListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		forEachAccountHandlers(h -> h.onReceiveServerPersoCount(pkt.getSubscriptionDuration(), pkt.getCharacters()));
+	}
+
+	@Override
+	public void handle(AccountTicketOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getAccountHandler().forEach(h -> h.onTicketOk(pkt.getKey(), pkt.getData()));
+	}
+
+	@Override
+	public void handle(AccountTicketPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getAccountHandler().forEach(h -> h.onTicket(pkt.getTicket()));
+	}
+
+	@Override
+	public void handle(ExchangeCreatePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getAbilities().getBaseAbility().getStates().currentInventory = pkt.getType();
+		getExchangeHandler().forEach(h -> h.onCreate(pkt.getType(), pkt.getData()));
+	}
+
+	@Override
+	public void handle(ExchangeListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		switch (pkt.getInvType()) {
+			case BANK:
+				getAccount().getBanque().setKamas(pkt.getKamas());
+				getAccount().getBanque().updateContent(pkt.getItems());
+				break;
+			default:
+				break;
+		}
+		getExchangeHandler().forEach(h -> h.onInventoryList(pkt.getInvType(), pkt.getItems(), pkt.getKamas()));
+	}
+
+	@Override
+	public void handle(BasicConfirmPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		// useless
+	}
+
+	@Override
+	public void handle(Aks0MessagePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+
+	}
+
+	@Override
+	public void handle(GuildStatPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGuildHandler().forEach(h -> h.onGuildStats(pkt.getGuild()));
+	}
+
+	@Override
+	public void handle(InfoMessagePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (pkt.getMessage() == null) return;
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		switch (pkt.getMessage()) {
+			case FIGHT_ATTRIBUTE_ALLOW_GROUP_ACTIVE:
+				fight.setGroupBlocked(true);
+				break;
+			case FIGHT_ATTRIBUTE_ALLOW_GROUP_NOT_ACTIVE:
+				fight.setGroupBlocked(false);
+				break;
+			case FIGHT_ATTRIBUTE_DENY_ACTIVE:
+				fight.setBlocked(true);
+				break;
+			case FIGHT_ATTRIBUTE_DENY_NOT_ACTIVE:
+				fight.setBlocked(false);
+				break;
+			case FIGHT_ATTRIBUTE_DENY_SPECTATE_ACTIVE:
+				fight.setSpecBlocked(true);
+				break;
+			case FIGHT_ATTRIBUTE_DENY_SPECTATE_NOT_ACTIVE:
+				fight.setSpecBlocked(false);
+				break;
+			case FIGHT_ATTRIBUTE_NEED_HELP_ACTIVE:
+				fight.setHelpNeeded(true);
+				break;
+			case FIGHT_ATTRIBUTE_NEED_HELP_NOT_ACTIVE:
+				fight.setHelpNeeded(false);
+				break;
+			case EARN_KAMAS:
+				int kamas = Integer.parseInt(pkt.getExtraDatas());
+				getAccount().getBanque().addKamas(kamas);
+				break;
+			default:
+				break;
+		}
+		getInfoHandler().forEach(h -> h.onInfos(pkt.getType(), pkt.getMessageId(), pkt.getExtraDatas()));
+	}
+
+	@Override
+	public void handle(MountXpPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getMountHandler().forEach(h -> h.onMountXp(pkt.getPercent()));
+	}
+
+	@Override
+	public void handle(SpecializationSetPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getSpecializationHandler().forEach(h -> h.onSpecializationSet(pkt.getSpecialization()));
+	}
+
+	@Override
+	public void handle(SpellChangeOptionPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getSpellServerHandler().forEach(h -> h.onSpellChangeOption(pkt.canUseAllSpell()));
+	}
+
+	@Override
+	public void handle(SpellListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getStatsInfos().updateSpells(pkt.getSpells());
+		getSpellServerHandler().forEach(h -> h.onSpellList(pkt.getSpells()));
+	}
+
+	@Override
+	public void handle(SubareaListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getSubareaServerHandler().forEach(h -> h.onSubareaList(pkt.getSubareas()));
+	}
+
+	@Override
+	public void handle(ZaapCreatePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getZaapHandler().forEach(h -> h.onDiscover(pkt.getRespawnWaypoint(), pkt.getWaypoints()));
+	}
+
+	@Override
+	public void handle(ZaapUseErrorPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getZaapHandler().forEach(ZaapServerHandler::onZaapError);
+	}
+
+	@Override
+	public void handle(GameActionFinishPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameActionHandler().forEach(h -> h.onActionFinish(pkt.getAckId(), pkt.getCharacterId()));
+	}
+
+	@Override
+	public void handle(GameActionStartPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameActionHandler().forEach(h -> h.onActionStart(pkt.getCharacterId()));
+	}
+
+	@Override
+	public void handle(GameEffectPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameHandler().forEach(h -> h.onEffect(pkt.getEffect(), pkt.getEntities()));
+	}
+
+	@Override
+	public void handle(GameEndPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getFightInfos().getCurrentFight().setEnded(true);
+		getGameHandler().forEach(h -> h.onFightEnd(pkt));
+		Executors.SCHEDULED.schedule(() -> {
+			TheBotFather.LOGGER.success("Switch en mode normal !");
+			getPerso().getMind().getBlocker().resume();
+		} , 2, TimeUnit.SECONDS);
+	}
+
+	@Override
+	public void handle(GameFightChallengePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameHandler().forEach(h -> h.onFightChallenge(pkt.getChallenge()));
+	}
+
+	@Override
+	public void handle(GameJoinPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		TheBotFather.LOGGER.debug("Current receive thread = " + Thread.currentThread().getName());
+		if (pkt.getState() == GameType.FIGHT) {
+			getPerso().getFightInfos().setCurrentFight(Fight.fromGame(pkt.getFightType(), pkt.isSpectator(), pkt.getStartTimer(), pkt.isDuel()));
+			getPerso().getFightInfos().notifyFightStart();
+			getGameHandler().forEach(h -> getPerso().getFightInfos().getFightsOnMap().forEach(h::onFightRemoved));
+			getPerso().getFightInfos().getFightsOnMap().clear();
+		}
+		getGameHandler().forEach(h -> h.onFightJoin(pkt.getState(), pkt.getFightType(), pkt.isSpectator(), pkt.getStartTimer(), pkt.isCancelButton(), pkt.isDuel()));
+	}
+
+	@Override
+	public void handle(GameMapDataPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		DofusMap m = null;
+		try {
+			InputStream downloadMap = Maps.downloadMap(pkt.getMapId(), pkt.getSubid());
+			Map<String, Object> extractVariable = SwfVariableExtractor.extractVariable(downloadMap);
+			m = Maps.loadMap(extractVariable, pkt.getDecryptKey(), c -> {
+				if (Interractable.isInterractable(c.getLayerObject2Num())) return new Ressource(Interractable.fromId(c.getLayerObject2Num()), c);
+				return c;
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+		BotMap bm = MapsManager.getOrCreate(m);
+		bm.getRessources().clear();
+		getPerso().getMapInfos().setMap(bm);
+		for (Cell c : bm.getDofusMap().getCells())
+			if (c instanceof Ressource) bm.getRessources().add((Ressource) c);
+		MapView.setTitle(getPerso().getPseudo() + " | " + bm.getInfos());
+		getPerso().getDebugView().setOnCellClick(a -> Executors.FIXED.execute(() -> {
+			System.out.println(bm.getDofusMap().getCell(a));
+			getPerso().getNavigation().moveToCell(a);
+		}));
+		getPerso().getDebugView().setPath(null);
+		getPerso().getDebugView().setMap(bm.getDofusMap());
+		getGameHandler().forEach(h -> h.onMap(bm));
+	}
+
+	@Override
+	public void handle(GameMapFramePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (Cell cell : getPerso().getMapInfos().getMap().getDofusMap().getCells())
+			for (Entry<Integer, Frame> i : pkt.getFrames().entrySet())
+				if (cell.getId() == i.getKey()) {
+					cell.applyFrame(i.getValue());
+				}
+	}
+
+	@Override
+	public void handle(GameMovementPacket gameMovementPacket) {
+		log(gameMovementPacket);
+		if (gameMovementPacket.getType() == GameMovementType.REMOVE) {
+			gameMovementPacket.getActors().forEach(v -> {
+				MovementRemoveActor actor = (MovementRemoveActor) (Object) v.getSecond();
+				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().removeEntity(actor.getId());
+				else getPerso().getMapInfos().getMap().removeActor(actor.getId());
+				getGameHandler().forEach(h -> h.onEntityLeave(actor.getId()));
+				getPerso().getDebugView().removeActor(actor.getId());
+			});
+			return;
+		}
+		gameMovementPacket.getActors().forEach(e -> {
+			switch (e.getFirst()) {
+				case DEFAULT:
+					MovementPlayer player = (MovementPlayer) (Object) e.getSecond();
+					if (player.getId() == getPerso().getId()) {
+						if (player.isFight()) getPerso().getStatsInfos().setLvl(player.getPlayerInFight().getLvl());
+						getPerso().getMapInfos().setCellId(player.getCellId());
+						getPerso().getNavigation().notifyMovementEnd();
+					}
+					if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().addEntity(player, player.getPlayerInFight().getTeam());
+					else getPerso().getMapInfos().getMap().entityUpdate(player);
+					getPerso().getDebugView().addPlayer(player.getId(), player.getCellId());
+					getGameHandler().forEach(h -> h.onPlayerMove(player));
+					return;
+				case CREATE_INVOCATION:
+				case CREATE_MONSTER:
+					MovementMonster mob = (MovementMonster) (Object) e.getSecond();
+					if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().addEntity(mob, mob.getTeam());
+					else getPerso().getMapInfos().getMap().entityUpdate(mob);
+					getPerso().getDebugView().addMob(mob.getId(), mob.getCellId());
+					getGameHandler().forEach(h -> h.onMobMove(mob));
+					return;
+				case CREATE_MONSTER_GROUP:
+					MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getSecond();
+					getPerso().getMapInfos().getMap().entityUpdate(mobs);
+					getPerso().getDebugView().addMob(mobs.getId(), mobs.getCellId());
+					getGameHandler().forEach(h -> h.onMobGroupMove(mobs));
+					return;
+				case CREATE_NPC:
+					MovementNpc npc = (MovementNpc) (Object) e.getSecond();
+					getPerso().getMapInfos().getMap().entityUpdate(npc);
+					getPerso().getDebugView().addNpc(npc.getId(), npc.getCellId());
+					getGameHandler().forEach(h -> h.onNpcMove(npc));
+					return;
+				default:
+					break;
+			}
+		});
+	}
+
+	@Override
+	public void handle(GamePositionsPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		pkt.getPositions().forEach(p -> getPerso().getFightInfos().getCurrentFight().entityMove(p.getEntityId(), p.getPosition()));
+		getGameHandler().forEach(h -> pkt.getPositions().forEach(p -> h.onEntityFightPositionChange(p.getEntityId(), p.getPosition())));
+	}
+
+	@Override
+	public void handle(GamePositionStartPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight f = getPerso().getFightInfos().getCurrentFight();
+		f.setPlaceTeam0(pkt.getPlacesTeam0());
+		f.setPlaceTeam1(pkt.getPlacesTeam1());
+	}
+
+	@Override
+	public void handle(GameServerActionPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		switch (pkt.getType()) {
+			case ERROR:
+				getGameActionHandler().forEach(GameActionServerHandler::onActionError);
+				break;
+			case LIFE_CHANGE:
+				GameLifeChangeAction actionl = (GameLifeChangeAction) pkt.getAction();
+				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityLife(actionl.getEntity(), actionl.getLife());
+				getGameActionHandler().forEach(h -> h.onEntityLifeChange(actionl.getEntity(), actionl.getLife()));
+				break;
+			case PA_CHANGE:
+				GamePaChangeAction actionpa = (GamePaChangeAction) pkt.getAction();
+				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityPa(actionpa.getEntity(), actionpa.getPa());
+				getGameActionHandler().forEach(h -> h.onEntityPaChange(actionpa.getEntity(), actionpa.getPa()));
+				break;
+			case PM_CHANGE:
+				GamePmChangeAction actionpm = (GamePmChangeAction) pkt.getAction();
+				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityPm(actionpm.getEntity(), actionpm.getPm());
+				getGameActionHandler().forEach(h -> h.onEntityPmChange(actionpm.getEntity(), actionpm.getPm()));
+				break;
+			case KILL:
+				GameKillAction actionk = (GameKillAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onEntityKilled(actionk.getKilled()));
+				break;
+			case SUMMON:
+				GameSummonAction actions = (GameSummonAction) pkt.getAction();
+				actions.getSummoned().forEach(s -> {
+					if (s instanceof MovementPlayer) {
+						MovementPlayer pl = (MovementPlayer) s;
+						getPerso().getFightInfos().getCurrentFight().addEntity(pl, pl.getPlayerInFight().getTeam());
+					} else if (s instanceof MovementMonster) {
+						MovementMonster mo = (MovementMonster) s;
+						getPerso().getFightInfos().getCurrentFight().addEntity(mo, mo.getTeam());
+					}
+				});
+				getGameActionHandler().forEach(h -> actions.getSummoned().forEach(h::onEntitySummoned));
+				break;
+			case FIGHT_JOIN_ERROR:
+				GameJoinErrorAction actionj = (GameJoinErrorAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onFightJoinError(actionj.getError()));
+				break;
+			case MOVE:
+				GameMoveAction actionm = (GameMoveAction) pkt.getAction();
+				int cell = actionm.getPath().get(actionm.getPath().size() - 1).getCellId();
+				getPerso().getDebugView().addEntity(pkt.getEntityId(), cell);
+				if (pkt.getEntityId() == getPerso().getId()) {
+					getPerso().getMapInfos().setCellId(cell);
+					getPerso().getBotInfos().setLastMove(System.currentTimeMillis());
+				}
+				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().entityMove(pkt.getEntityId(), cell);
+				getGameActionHandler().forEach(h -> h.onEntityMove(pkt.getEntityId(), actionm.getPath()));
+				break;
+			case DUEL_SERVER_ASK:
+				GameDuelServerAction actiond = (GameDuelServerAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onDuel(pkt.getEntityId(), actiond.getTargetId()));
+				break;
+			case ACCEPT_DUEL:
+				GameAcceptDuelAction actionda = (GameAcceptDuelAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onPlayerAcceptDuel(pkt.getEntityId(), actionda.getTargetId()));
+				break;
+			case REFUSE_DUEL:
+				GameRefuseDuelAction actiondr = (GameRefuseDuelAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onPlayerRefuseDuel(pkt.getEntityId(), actiondr.getTargetId()));
+				break;
+			case SPELL_LAUNCHED:
+				GameSpellLaunchedAction actionsp = (GameSpellLaunchedAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onSpellLaunched(actionsp.getSpellId(), actionsp.getCellId(), actionsp.getLvl()));
+				break;
+			case HARVEST_TIME:
+				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
+				getGameActionHandler().forEach(h -> h.onHarvestTime(actionh.getTime(), pkt.getEntityId()));
+				break;
+			case TACLE:
+				getGameActionHandler().forEach(GameActionServerHandler::onTacle);
+				break;
+			default:
+				break;
+		}
+	}
+
+	@Override
+	public void handle(GameServerReadyPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameHandler().forEach(h -> h.onPlayerReadyToFight(pkt.getEntityId(), pkt.isReady()));
+	}
+
+	@Override
+	public void handle(GameStartToPlayPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameHandler().forEach(GameServerHandler::onFightStart);
+	}
+
+	@Override
+	public void handle(GameTurnFinishPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		if (fight == null) {
+			LOGGER.severe(
+					"TurnFinishPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+			return;
+		}
+		getGameHandler().forEach(h -> h.onEntityTurnEnd(pkt.getEntityId()));
+	}
+
+	@Override
+	public void handle(GameTurnListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		if (fight == null) {
+			LOGGER.severe(
+					"TurnListPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+			return;
+		}
+		getGameHandler().forEach(h -> h.onFightTurnInfos(pkt.getTurns()));
+	}
+
+	@Override
+	public void handle(GameTurnMiddlePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		if (fight == null) {
+			LOGGER.severe(
+					"TurnMiddlePacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+			return;
+		}
+		for (FightEntity e : pkt.getEntities())
+			fight.addEntity(e);
+		getGameHandler().forEach(h -> h.onFighterInfos(pkt.getEntities()));
+	}
+
+	@Override
+	public void handle(GameTurnReadyPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		if (fight == null) {
+			LOGGER.severe(
+					"TurnReadyPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+			return;
+		}
+		getGameHandler().forEach(h -> h.onEntityTurnReady(pkt.getEntityId()));
+	}
+
+	@Override
+	public void handle(GameTurnStartPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Fight fight = getPerso().getFightInfos().getCurrentFight();
+		if (fight == null) {
+			LOGGER.severe(
+					"TurnStartPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+			return;
+		}
+		fight.setCurrentTurn(pkt.getCharacterId());
+		getPerso().getAbilities().getFightAbility().getBotThread().unpause();
+		getGameHandler().forEach(h -> h.onEntityTurnStart(pkt.getCharacterId(), pkt.getTime()));
+	}
+
+	@Override
+	public void handle(ExchangeRequestOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onExchangeRequestOk(pkt.getPlayerId(), pkt.getTargetId(), pkt.getExchange()));
+	}
+
+	@Override
+	public void handle(DialogLeavePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getDialogHandler().forEach(DialogServerHandler::onDialogLeave);
+	}
+
+	@Override
+	public void handle(DialogCreateOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getAbilities().getBaseAbility().getBotThread().unpause();
+		getDialogHandler().forEach(h -> h.onDialogCreate(pkt.getNpcId()));
+	}
+
+	@Override
+	public void handle(DialogQuestionPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getDialogHandler().forEach(h -> h.onQuestion(pkt.getQuestion(), pkt.getQuestionParam(), pkt.getResponse()));
+	}
+
+	@Override
+	public void handle(DialogPausePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getDialogHandler().forEach(DialogServerHandler::onDialogPause);
+	}
+
+	@Override
+	public void handle(ExchangeReadyPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onExchangeReady(pkt.getExtraData()));
+	}
+
+	@Override
+	public void handle(ItemAddOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (Item i : pkt.getItems())
+			getPerso().getInventory().getContents().put(i.getUid(), i); // on add direct car quand c juste une update de quantité il y a un autre packet
+		getItemHandler().forEach(h -> h.onItemsAdd(pkt.getItems()));
+	}
+
+	@Override
+	public void handle(ItemAddErrorPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getItemHandler().forEach(h -> h.onItemAddError(pkt.getResult()));
+	}
+
+	@Override
+	public void handle(ItemDropErrorPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getItemHandler().forEach(h -> h.onItemDropError(pkt.getResult()));
+	}
+
+	@Override
+	public void handle(ItemRemovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		System.out.println("Item remove id : " + pkt.getItemuid());
+		getPerso().getInventory().getContents().remove(pkt.getItemuid());
+		getItemHandler().forEach(h -> h.onItemRemove(pkt.getItemuid()));
+	}
+
+	@Override
+	public void handle(ItemQuantityUpdatePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getInventory().getItem(pkt.getItemUid()).setQuantity(pkt.getAmount());
+		getItemHandler().forEach(h -> h.onItemQuantityUpdate(pkt.getItemUid(), pkt.getAmount()));
+	}
+
+	@Override
+	public void handle(ItemMovementConfirmPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getInventory().getItem(pkt.getItemUid()).setPosition(pkt.getPosition());
+		getItemHandler().forEach(h -> h.onItemMove(pkt.getItemUid(), pkt.getPosition()));
+	}
+
+	@Override
+	public void handle(ItemToolPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getBotInfos().updateCurrentJob(pkt.getJobId());
+		getItemHandler().forEach(h -> h.onItemToolEquip(pkt.getJobId()));
+	}
+
+	@Override
+	public void handle(ItemWeightPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPerso().getStatsInfos().setPods(pkt.getCurrentWeight());
+		getPerso().getStatsInfos().setMaxPods(pkt.getMaxWeight());
+		getItemHandler().forEach(h -> h.onPodsUpdate(pkt.getCurrentWeight(), pkt.getMaxWeight()));
+	}
+
+	@Override
+	public void handle(AccountStatsPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		Perso p = getPerso();
+		StatsInfo s = p.getStatsInfos();
+		s.setXp(pkt.getXp());
+		s.setMinXp(pkt.getXpLow());
+		s.setMaxXp(pkt.getXpHigh());
+		p.getInventory().setKamas(pkt.getKama());
+		s.setStatsPoint(pkt.getBonusPoints());
+		s.setSpellsPoints(pkt.getBonusPointsSpell());
+		p.getPvpInfos().setAlignment(pkt.getAlignment());
+		p.getPvpInfos().setRank(pkt.getRank());
+		s.setLife(pkt.getLife());
+		s.setLifeMax(pkt.getLifeMax());
+		s.setEnergy(pkt.getEnergy());
+		s.setEnergyMax(pkt.getEnergyMax());
+		s.setInitiative(pkt.getInitiative());
+		s.setProspection(pkt.getProspection());
+		s.setStats(pkt.getStats());
+		getAccountHandler().forEach(AccountServerHandler::onStatsUpdate);
+	}
+
+	@Override
+	public void handle(AccountNewLevelPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getAccountHandler().forEach(h -> h.onNewLvl(pkt.getNewlvl()));
+	}
+
+	@Override
+	public void handle(AccountServerQueuePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getAccountHandler().forEach(h -> h.onServerQueue(pkt.getPosition()));
+	}
+
+	@Override
+	public void handle(ExchangeCraftPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onCraft(pkt.getResult()));
+	}
+
+	@Override
+	public void handle(ExchangeLocalMovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onLocalMove(pkt.getItemType(), pkt.getItemAmount(), pkt.getLocalKama()));
+	}
+
+	@Override
+	public void handle(ExchangeDistantMovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onDistantMove(pkt.getMoved(), pkt.isAdd(), pkt.getKamas(), pkt.getRemainingHours()));
+	}
+
+	@Override
+	public void handle(ExchangeCoopMovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onCoopMove(pkt.getMoved(), pkt.getKamas(), pkt.isAdd()));
+	}
+
+	@Override
+	public void handle(ExchangeStorageMovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		switch (getPerso().getAbilities().getBaseAbility().getStates().currentInventory) {
+			case BANK:
+				if (pkt.getMoved() != null) {
+					if (pkt.isAdd()) getAccount().getBanque().getContents().put(pkt.getMoved().getUid(), pkt.getMoved());
+					else {
+						Map<Long, Item> contents = getAccount().getBanque().getContents();
+						Item moved = pkt.getMoved();
+						Item itemInBank = contents.get(moved.getUid());
+						if (moved.getQuantity() >= itemInBank.getQuantity()) contents.remove(moved.getUid());
+						else itemInBank.setQuantity(itemInBank.getQuantity() - moved.getQuantity());
+					}
+				}
+				if (pkt.getKamas() != -1) getAccount().getBanque().setKamas(pkt.getKamas());
+				break;
+			default:
+				break;
+		}
+		getExchangeHandler().forEach(h -> h.onStorageMove(pkt.getMoved(), pkt.getKamas(), pkt.isAdd()));
+	}
+
+	@Override
+	public void handle(ExchangeShopMovePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onShopMove(pkt.getMoved(), pkt.isAdd()));
+	}
+
+	@Override
+	public void handle(ExchangeCraftPublicPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onCraftPublic(pkt.isCraftPublicMode(), pkt.getItemid(), pkt.getMultiCraftSkill()));
+	}
+
+	@Override
+	public void handle(ExchangeSellToNpcResultPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onSellToNpc(pkt.isSuccess()));
+	}
+
+	@Override
+	public void handle(ExchangeBuyToNpcResultPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onBuyToNpc(pkt.isSuccess()));
+	}
+
+	@Override
+	public void handle(ExchangeCraftLoopPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onCraftLoop(pkt.getIndex()));
+	}
+
+	@Override
+	public void handle(ExchangeCraftLoopEndPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onCraftLoopEnd(pkt.getResult()));
+	}
+
+	@Override
+	public void handle(ExchangeLeaveResultPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getExchangeHandler().forEach(h -> h.onLeave(pkt.isSuccess()));
+	}
+
+	@Override
+	public void handle(PartyRefusePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(PartyServerHandler::onPlayerRefuse);
+	}
+
+	@Override
+	public void handle(PartyInviteRequestOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> h.onInvitePlayerInGroup(pkt.getInviter(), pkt.getInvited()));
+	}
+
+	@Override
+	public void handle(PartyInviteRequestErrorPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> h.onInviteFail(pkt.getReason()));
+	}
+
+	@Override
+	public void handle(PartyLeaderPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> h.onGroupLeaderUpdate(pkt.getLeaderId()));
+	}
+
+	@Override
+	public void handle(PartyCreateOkPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(PartyServerHandler::onJoinGroupOk);
+	}
+
+	@Override
+	public void handle(PartyCreateErrorPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> h.onJoinGroupError(pkt.getReason()));
+	}
+
+	@Override
+	public void handle(PartyPlayerLeavePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> h.onPlayerLeaveGroup(pkt.getPlayer()));
+	}
+
+	@Override
+	public void handle(PartyFollowReceivePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (pkt.isSuccess())
+			getPartyHandler().forEach(h -> h.onFollow(pkt.getFollowed()));
+		else getPartyHandler().forEach(PartyServerHandler::onStopFollow);
+	}
+
+	@Override
+	public void handle(PartyMovementPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getPartyHandler().forEach(h -> Arrays.stream(pkt.getMembers()).forEach(m -> h.onPartyMemberUpdate(pkt.getMove(), m)));
+	}
+
+	@Override
+	public void handle(GameTeamPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getGameHandler().forEach(h -> h.onFightTeams(pkt.getFirstId(), pkt.getEntities()));
+	}
+
+	@Override
+	public void handle(JobSkillsPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (Job j : pkt.getJobs())
+			getPerso().getBotInfos().getJobs().add(new DofusJob(j.getType()));
+		getJobHandler().forEach(h -> Arrays.stream(pkt.getJobs()).forEach(h::onPlayerJobInfo));
+	}
+
+	@Override
+	public void handle(JobXpPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (JobInfo j : pkt.getInfos())
+			for (DofusJob job : getPerso().getBotInfos().getJobs())
+				if (j.getJob() == job.getType()) {
+					job.setLvl(j.getLvl());
+					job.setMaxXp(j.getXpMax());
+					job.setMinXp(j.getXpMin());
+					job.setXp(j.getXp());
+				}
+		getPerso().getAbilities().getBaseAbility().getBotThread().unpause();
+		getJobHandler().forEach(h -> Arrays.stream(pkt.getInfos()).forEach(h::onJobXp));
+	}
+
+	@Override
+	public void handle(JobLevelPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		for (DofusJob j : getPerso().getBotInfos().getJobs())
+			if (j.getType() == pkt.getJob()) j.setLvl(pkt.getLvl());
+		getJobHandler().forEach(h -> h.onJobLvl(pkt.getJob(), pkt.getLvl()));
+	}
+
+	@Override
+	public void handle(GameSpawnPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		if (pkt.isCreated()) {
+			getPerso().getFightInfos().getFightsOnMap().add(pkt.getFight());
+			getGameHandler().forEach(h -> h.onFightSpawn(pkt.getFight()));
+		}
+	}
+
+	@Override
+	public void handle(FightCountPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getFightHandler().forEach(h -> h.onFightCount(pkt.getCount()));
+	}
+
+	@Override
+	public void handle(FightListPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getFightHandler().forEach(h -> pkt.getFights().forEach(h::onFightInfos));
+	}
+
+	@Override
+	public void handle(FightDetailsPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getFightHandler().forEach(h -> h.onFightDetails(pkt.getDetailsId(), pkt.getT0(), pkt.getT1()));
+	}
+
+	@Override
+	public void handle(InfoCompassPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getInfoHandler().forEach(h -> h.onCompass(pkt.getX(), pkt.getY()));
+	}
+
+	@Override
+	public void handle(InfoCoordinatePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+		getInfoHandler().forEach(h -> pkt.getPlayers().forEach(h::onFollowedPlayerMove));
+	}
+
+}

@@ -1,6 +1,7 @@
 package fr.aresrpg.tofumanchou.domain.data.item;
 
 import fr.aresrpg.dofus.structures.game.Effect;
+import fr.aresrpg.dofus.structures.item.ItemCategory;
 
 /**
  * 
@@ -18,6 +19,10 @@ public interface Item {
 
 	int getAmount();
 
+	int getPods();
+
+	ItemCategory getCategory();
+
 	int getPosition();
 
 	Effect[] getEffects();
@@ -27,5 +32,11 @@ public interface Item {
 	int getSkin();
 
 	int getRemainingHours();
+
+	boolean isStackableWith(Item i);
+
+	void setAmount(int i);
+
+	String showInfos();
 
 }

@@ -1,7 +1,9 @@
 package fr.aresrpg.tofumanchou.domain.data.entity.mob;
 
 import fr.aresrpg.dofus.structures.Orientation;
-import fr.aresrpg.tofumanchou.domain.data.entity.*;
+import fr.aresrpg.dofus.structures.item.Accessory;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 
 /**
  * 
@@ -23,7 +25,7 @@ public interface Mob extends Entity {
 
 	EntityColor getColors();
 
-	EntityAccessory[] getAccessories();
+	Accessory[] getAccessories();
 
 	int getLife();
 

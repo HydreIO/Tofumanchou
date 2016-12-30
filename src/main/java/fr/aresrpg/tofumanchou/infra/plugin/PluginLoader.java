@@ -27,6 +27,12 @@ public class PluginLoader {
 		return instance;
 	}
 
+	public void unloadPlugins() {
+		LOGGER.warning("Disabling plugins..");
+		plugins.forEach(ManchouPlugin::onDisable);
+		LOGGER.warning("All plugins disabled !");
+	}
+
 	public void loadPlugins() throws IOException {
 		File loc = new File("plugins");
 		File[] flist = loc.listFiles(new FileFilter() {

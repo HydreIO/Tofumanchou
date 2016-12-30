@@ -73,8 +73,7 @@ public class Configurations {
 					t = getConf().get(an.value() + f.getName(), f.get(null));
 					f.set(null, t);
 				} catch (Exception e) {
-					LOGGER.info("Unable to set field " + f.getName() + " with type " + t);
-					e.printStackTrace();
+					LOGGER.error(e, "Unable to set field " + f.getName() + " with type " + t);
 				}
 			});
 		}
@@ -86,7 +85,7 @@ public class Configurations {
 				try {
 					getConf().set(an.value() + f.getName(), f.get(null));
 				} catch (Exception e) {
-					e.printStackTrace();
+					LOGGER.error(e, "Unable to apply config !");
 				}
 			});
 			save();
