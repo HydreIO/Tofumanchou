@@ -15,12 +15,6 @@ public interface Mob extends Entity {
 
 	int getPowerLvl();
 
-	int getCellId();
-
-	int getScaleX();
-
-	int getScaleY();
-
 	Orientation getOrientation();
 
 	EntityColor getColors();

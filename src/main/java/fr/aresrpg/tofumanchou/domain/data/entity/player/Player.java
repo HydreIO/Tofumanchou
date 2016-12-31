@@ -1,6 +1,5 @@
 package fr.aresrpg.tofumanchou.domain.data.entity.player;
 
-import fr.aresrpg.dofus.structures.PlayerRestriction;
 import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.game.Alignement;
 import fr.aresrpg.dofus.structures.item.Accessory;
@@ -72,6 +71,6 @@ public interface Player extends Entity {
 
 	String[] getEmblem();
 
-	PlayerRestriction getRestriction();
+	String getRestriction();
 
 }

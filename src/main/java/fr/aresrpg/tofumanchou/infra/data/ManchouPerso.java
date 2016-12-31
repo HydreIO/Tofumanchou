@@ -2,18 +2,22 @@ package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.dofus.protocol.DofusConnection;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
+import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer;
+import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer.PlayerInFight;
+import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer.PlayerOutsideFight;
 import fr.aresrpg.dofus.structures.*;
 import fr.aresrpg.dofus.structures.game.Alignement;
+import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.structures.item.Accessory;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.Spell;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
-import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
-import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
+import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.io.BaseServerPacketHandler;
@@ -31,6 +35,7 @@ public class ManchouPerso implements Perso {
 
 	private ManchouAccount account;
 	private long uuid;
+	private int cellId;
 	private Server server;
 	private String pseudo;
 	private int lvl;
@@ -56,7 +61,7 @@ public class ManchouPerso implements Perso {
 	private int emotTimer;
 	private String guildName;
 	private String[] emblem;
-	private PlayerRestriction restrictions;
+	private String restrictions;
 	private Inventory inventory;
 	private int xp;
 	private int xpLow;
@@ -68,11 +73,71 @@ public class ManchouPerso implements Perso {
 	private List<String> offlineFriends = new ArrayList<>();
 	private List<Friend> onlineFriends = new ArrayList<>();
 	private Map<Chat, Boolean> channels = new HashMap<>();
+	private Set<Effect> effects;
+	private ManchouMap map;
+	private Map<Spells, Spell> spells;
+	private int scaleX;
+	private int scaleY;
+	private Orientation orientation;
+	private int sprite;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
 		this.pseudo = pseudo;
 		this.server = server;
+	}
+
+	public MovementPlayer serialize() {
+		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, genre.ordinal(), alignement, rank.getValue(), null, null);
+		if (!getMap().isEnded()) {
+			PlayerInFight inf = new PlayerInFight(lvl, colors.getFirstColor(), colors.getSecondColor(), colors.getThirdColor(), accessories, life, getStat(Stat.PA).getTotal(),
+					getStat(Stat.PM).getTotal(), null, team);
+			int[] resi = new int[7];
+			resi[0] = getStat(Stat.RES_NEUTRE_PER).getTotal();
+			resi[1] = getStat(Stat.RES_TERRE_PER).getTotal();
+			resi[2] = getStat(Stat.RES_FEU_PER).getTotal();
+			resi[3] = getStat(Stat.RES_EAU_PER).getTotal();
+			resi[4] = getStat(Stat.RES_AIR_PER).getTotal();
+			resi[5] = getStat(Stat.ESQUIVE_PA).getTotal();
+			resi[6] = getStat(Stat.ESQUIVE_PM).getTotal();
+			inf.setResis(resi);
+			pl.setPlayerInFight(inf);
+		} else {
+			PlayerOutsideFight pof = new PlayerOutsideFight(colors.getFirstColor(), colors.getSecondColor(), colors.getThirdColor(), accessories, aura, emot, emotTimer, guildName, emblem,
+					restrictions);
+			pl.setPlayerOutsideFight(pof);
+		}
+		return pl;
+	}
+
+	public void updateMovement(MovementPlayer player) {
+		if (player.getId() != uuid) throw new IllegalArgumentException("Bad player !");
+		cellId = player.getCellId();
+		pseudo = player.getPseudo();
+		scaleX = player.getScaleX();
+		scaleY = player.getScaleY();
+		orientation = player.getOrientation();
+		genre = Genre.valueOf(player.getSex());
+		sprite = player.getSprite();
+		alignement = player.getAlignement();
+		if (player.isFight()) {
+			PlayerInFight inf = player.getPlayerInFight();
+			lvl = inf.getLvl();
+			colors = new ManchouColors(inf.getColor1(), inf.getColor2(), inf.getColor3());
+			accessories = inf.getAccessories();
+			life = inf.getLife();
+			team = inf.getTeam();
+		} else {
+			PlayerOutsideFight of = player.getPlayerOutsideFight();
+			colors = new ManchouColors(of.getColor1(), of.getColor2(), of.getColor3());
+			accessories = of.getAccessories();
+			aura = of.getAura();
+			emot = of.getEmot();
+			emotTimer = of.getEmotTimer();
+			guildName = of.getGuildname();
+			emblem = of.getEmblem();
+			restrictions = of.getRestrictions();
+		}
 	}
 
 	@Override
@@ -273,6 +338,14 @@ public class ManchouPerso implements Perso {
 	 */
 	public Alignement getAlignement() {
 		return alignement;
+	}
+
+	/**
+	 * @param map
+	 *            the map to set
+	 */
+	public void setMap(ManchouMap map) {
+		this.map = map;
 	}
 
 	/**
@@ -494,14 +567,6 @@ public class ManchouPerso implements Perso {
 	}
 
 	/**
-	 * @param restrictions
-	 *            the restrictions to set
-	 */
-	public void setRestrictions(PlayerRestriction restrictions) {
-		this.restrictions = restrictions;
-	}
-
-	/**
 	 * @return the inventory
 	 */
 	public Inventory getInventory() {
@@ -618,11 +683,6 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public PlayerRestriction getRestriction() {
-		return restrictions;
-	}
-
-	@Override
 	public long getUUID() {
 		return uuid;
 	}
@@ -677,6 +737,54 @@ public class ManchouPerso implements Perso {
 			return e.getUUID() == uuid;
 		}
 		return false;
+	}
+
+	@Override
+	public Set<Effect> getEffects() {
+		return effects;
+	}
+
+	@Override
+	public ManchouMap getMap() {
+		return map;
+	}
+
+	@Override
+	public Map<Spells, Spell> getSpells() {
+		return spells;
+	}
+
+	@Override
+	public int getCellId() {
+		return cellId;
+	}
+
+	/**
+	 * @param cellId
+	 *            the cellId to set
+	 */
+	public void setCellId(int cellId) {
+		this.cellId = cellId;
+	}
+
+	@Override
+	public String getRestriction() {
+		return restrictions;
+	}
+
+	@Override
+	public int getScaleX() {
+		return scaleX;
+	}
+
+	@Override
+	public int getScaleY() {
+		return scaleY;
+	}
+
+	@Override
+	public Orientation getOrientation() {
+		return orientation;
 	}
 
 }

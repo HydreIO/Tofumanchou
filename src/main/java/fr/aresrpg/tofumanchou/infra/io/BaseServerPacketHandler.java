@@ -11,6 +11,7 @@ package fr.aresrpg.tofumanchou.infra.io;
 import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.event.Event;
+import fr.aresrpg.commons.domain.util.ArrayUtils;
 import fr.aresrpg.dofus.protocol.*;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.dofus.protocol.account.AccountKeyPacket;
@@ -30,6 +31,7 @@ import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
 import fr.aresrpg.dofus.protocol.game.actions.client.GameAcceptDuelAction;
 import fr.aresrpg.dofus.protocol.game.actions.client.GameRefuseDuelAction;
 import fr.aresrpg.dofus.protocol.game.actions.server.*;
+import fr.aresrpg.dofus.protocol.game.client.GameCreatePacket;
 import fr.aresrpg.dofus.protocol.game.movement.*;
 import fr.aresrpg.dofus.protocol.game.server.*;
 import fr.aresrpg.dofus.protocol.guild.server.GuildStatPacket;
@@ -51,11 +53,10 @@ import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
 import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.character.AvailableCharacter;
 import fr.aresrpg.dofus.structures.game.*;
-import fr.aresrpg.dofus.structures.item.Interractable;
 import fr.aresrpg.dofus.structures.item.Item;
 import fr.aresrpg.dofus.structures.job.Job;
 import fr.aresrpg.dofus.structures.job.JobInfo;
-import fr.aresrpg.dofus.structures.map.*;
+import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.dofus.structures.server.DofusServer;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
@@ -63,6 +64,7 @@ import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.*;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
@@ -77,7 +79,6 @@ import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -583,83 +584,91 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameEffectPacket pkt) {
 		log(pkt);
+		Set<Entity> ents = new HashSet<>();
+		for (Entity e : getPerso().getMap().getEntities().values()) {
+			if (!ArrayUtils.contains(e.getUUID(), pkt.getEntities())) continue;
+			e.getEffects().add(pkt.getEffect());
+			ents.add(e);
+		}
+		EntitiesReceiveSpellEffectEvent event = new EntitiesReceiveSpellEffectEvent(client, ents, pkt.getEffect());
+		event.send();
+		pkt.setEffect(event.getEffect());
+		pkt.setEntities(event.getEntities().stream().mapToLong(Entity::getUUID).toArray());
 		transmit(pkt);
-		getGameHandler().forEach(h -> h.onEffect(pkt.getEffect(), pkt.getEntities()));
 	}
 
 	@Override
 	public void handle(GameEndPacket pkt) {
 		log(pkt);
+		getPerso().getMap().getEntities().clear();
+		FightEndEvent event = new FightEndEvent(client, pkt.getDuration(), pkt.getFirstPlayerId(), pkt.getBonus(), pkt.getResult());
+		event.send();
+		pkt.setBonus(event.getBonus());
+		pkt.setDuration(event.getDuration());
+		pkt.setFirstPlayerId(event.getFightId());
+		pkt.setResult(event.getResult());
+		if (isBot()) sendPkt(new GameCreatePacket().setGameType(GameType.SOLO));
 		transmit(pkt);
-		getPerso().getFightInfos().getCurrentFight().setEnded(true);
-		getGameHandler().forEach(h -> h.onFightEnd(pkt));
-		Executors.SCHEDULED.schedule(() -> {
-			TheBotFather.LOGGER.success("Switch en mode normal !");
-			getPerso().getMind().getBlocker().resume();
-		} , 2, TimeUnit.SECONDS);
 	}
 
 	@Override
 	public void handle(GameFightChallengePacket pkt) {
 		log(pkt);
+		FightChallengeEvent event = new FightChallengeEvent(client, pkt.getChallenge());
+		event.send();
+		pkt.setChallenge(event.getChallenge());
 		transmit(pkt);
-		getGameHandler().forEach(h -> h.onFightChallenge(pkt.getChallenge()));
 	}
 
 	@Override
 	public void handle(GameJoinPacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		TheBotFather.LOGGER.debug("Current receive thread = " + Thread.currentThread().getName());
 		if (pkt.getState() == GameType.FIGHT) {
-			getPerso().getFightInfos().setCurrentFight(Fight.fromGame(pkt.getFightType(), pkt.isSpectator(), pkt.getStartTimer(), pkt.isDuel()));
-			getPerso().getFightInfos().notifyFightStart();
-			getGameHandler().forEach(h -> getPerso().getFightInfos().getFightsOnMap().forEach(h::onFightRemoved));
-			getPerso().getFightInfos().getFightsOnMap().clear();
-		}
-		getGameHandler().forEach(h -> h.onFightJoin(pkt.getState(), pkt.getFightType(), pkt.isSpectator(), pkt.getStartTimer(), pkt.isCancelButton(), pkt.isDuel()));
+			ManchouMap map = getPerso().getMap();
+			map.setEnded(false);
+			map.setFightType(pkt.getFightType());
+			map.setSpectator(pkt.isSpectator());
+			map.setStartTimer(pkt.getStartTimer());
+			map.setDuel(pkt.isDuel());
+			map.getFightsOnMap().clear();
+			FightJoinEvent event = new FightJoinEvent(client, pkt.getFightType(), pkt.isSpectator(), pkt.getStartTimer(), pkt.isCancelButton(), pkt.isDuel());
+			event.send();
+			pkt.setFightType(event.getFightType());
+			pkt.setSpectator(event.isSpectator());
+			pkt.setStartTimer(event.getStartTimer());
+			pkt.setCancelButton(event.isCancelButton());
+			pkt.setDuel(event.isDuel());
+		} else new GameJoinEvent(client).send();
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(GameMapDataPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		DofusMap m = null;
 		try {
 			InputStream downloadMap = Maps.downloadMap(pkt.getMapId(), pkt.getSubid());
 			Map<String, Object> extractVariable = SwfVariableExtractor.extractVariable(downloadMap);
-			m = Maps.loadMap(extractVariable, pkt.getDecryptKey(), c -> {
-				if (Interractable.isInterractable(c.getLayerObject2Num())) return new Ressource(Interractable.fromId(c.getLayerObject2Num()), c);
-				return c;
-			});
+			m = Maps.loadMap(extractVariable, pkt.getDecryptKey());
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
-		BotMap bm = MapsManager.getOrCreate(m);
-		bm.getRessources().clear();
-		getPerso().getMapInfos().setMap(bm);
-		for (Cell c : bm.getDofusMap().getCells())
-			if (c instanceof Ressource) bm.getRessources().add((Ressource) c);
-		MapView.setTitle(getPerso().getPseudo() + " | " + bm.getInfos());
-		getPerso().getDebugView().setOnCellClick(a -> Executors.FIXED.execute(() -> {
-			System.out.println(bm.getDofusMap().getCell(a));
-			getPerso().getNavigation().moveToCell(a);
-		}));
-		getPerso().getDebugView().setPath(null);
-		getPerso().getDebugView().setMap(bm.getDofusMap());
-		getGameHandler().forEach(h -> h.onMap(bm));
+		ManchouMap map = ManchouMap.fromDofusMap(m);
+		getPerso().setMap(map);
+		new MapJoinEvent(client, map).send();
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(GameMapFramePacket pkt) {
 		log(pkt);
+		pkt.getFrames().forEach((id, frame) -> {
+			ManchouCell cell = getPerso().getMap().getCells()[id];
+			cell.applyFrame(frame);
+			if (cell.isRessource() && cell.isRessourceSpawned()) new RessourceSpawnEvent(client, cell).send(); // event asynchrone
+		});
 		transmit(pkt);
-		for (Cell cell : getPerso().getMapInfos().getMap().getDofusMap().getCells())
-			for (Entry<Integer, Frame> i : pkt.getFrames().entrySet())
-				if (cell.getId() == i.getKey()) {
-					cell.applyFrame(i.getValue());
-				}
 	}
 
 	@Override
@@ -668,10 +677,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		if (gameMovementPacket.getType() == GameMovementType.REMOVE) {
 			gameMovementPacket.getActors().forEach(v -> {
 				MovementRemoveActor actor = (MovementRemoveActor) (Object) v.getSecond();
-				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().removeEntity(actor.getId());
-				else getPerso().getMapInfos().getMap().removeActor(actor.getId());
-				getGameHandler().forEach(h -> h.onEntityLeave(actor.getId()));
-				getPerso().getDebugView().removeActor(actor.getId());
+				getPerso().getMap().getEntities().remove(actor.getId());
 			});
 			return;
 		}
@@ -679,15 +685,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			switch (e.getFirst()) {
 				case DEFAULT:
 					MovementPlayer player = (MovementPlayer) (Object) e.getSecond();
-					if (player.getId() == getPerso().getId()) {
-						if (player.isFight()) getPerso().getStatsInfos().setLvl(player.getPlayerInFight().getLvl());
-						getPerso().getMapInfos().setCellId(player.getCellId());
-						getPerso().getNavigation().notifyMovementEnd();
-					}
-					if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().addEntity(player, player.getPlayerInFight().getTeam());
-					else getPerso().getMapInfos().getMap().entityUpdate(player);
-					getPerso().getDebugView().addPlayer(player.getId(), player.getCellId());
-					getGameHandler().forEach(h -> h.onPlayerMove(player));
+					if (player.getId() == getPerso().getUUID()) getPerso().updateMovement(player);
+					else getPerso().getMap().getEntities().put(player.getId(), ManchouPlayerEntity.parseMovement(player));
 					return;
 				case CREATE_INVOCATION:
 				case CREATE_MONSTER:

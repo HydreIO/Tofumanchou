@@ -1,12 +1,12 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.dofus.structures.game.FightType;
+import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.domain.data.map.Cell;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 
@@ -20,9 +20,10 @@ public class ManchouMap implements Carte {
 	private int width;
 	private int height;
 	private int backgroundId;
+	private boolean outdoor;
 	private int musicId;
-	private Cell[] cells;
-	private Map<Long, Entity> entities;
+	private ManchouCell[] cells;
+	private Map<Long, Entity> entities = new HashMap<>();
 	private FightType fightType;
 	private int[] team0Places;
 	private int[] team1Places;
@@ -32,6 +33,68 @@ public class ManchouMap implements Carte {
 	private boolean helpNeeded;
 	private boolean ended;
 	private Entity currentTurn;
+	private boolean spectator;
+	private int startTimer;
+	private boolean duel;
+	private Set<Integer> fightsOnMap;
+	private int capabilities;
+
+	public static ManchouMap fromDofusMap(DofusMap map) {
+		ManchouMap m = new ManchouMap();
+		m.mapid = map.getId();
+		m.x = ;
+		m.y = ;
+		m.width = map.getWidth();
+		m.height = map.getHeight();
+		m.backgroundId = map.getBackgroundId();
+		m.musicId = map.getMusicId();
+		m.cells = parseCells(map.getCells(), map.getWidth(),map.getHeight());
+		m.outdoor = map.isOutdoor();
+		m.capabilities = map.getCapabilities();
+		return m;
+	}
+
+	private static ManchouCell[] parseCells(fr.aresrpg.dofus.structures.map.Cell[] cells, int width, int height) {
+		return Arrays.stream(cells).map(l -> ManchouCell.parseCell(l, width, height)).toArray(ManchouCell[]::new);
+	}
+
+	/**
+	 * @return the spectator
+	 */
+	public boolean isSpectator() {
+		return spectator;
+	}
+
+	/**
+	 * @return the outdoor
+	 */
+	@Override
+	public boolean isOutdoor() {
+		return outdoor;
+	}
+
+	/**
+	 * @param outdoor
+	 *            the outdoor to set
+	 */
+	public void setOutdoor(boolean outdoor) {
+		this.outdoor = outdoor;
+	}
+
+	/**
+	 * @param spectator
+	 *            the spectator to set
+	 */
+	public void setSpectator(boolean spectator) {
+		this.spectator = spectator;
+	}
+
+	/**
+	 * @return the mapid
+	 */
+	public int getMapid() {
+		return mapid;
+	}
 
 	@Override
 	public int getMapId() {
@@ -69,7 +132,7 @@ public class ManchouMap implements Carte {
 	}
 
 	@Override
-	public Cell[] getCells() {
+	public ManchouCell[] getCells() {
 		return cells;
 	}
 
@@ -268,10 +331,62 @@ public class ManchouMap implements Carte {
 	}
 
 	@Override
+	public int getFightStartTimer() {
+		return startTimer;
+	}
+
+	@Override
+	public boolean isDuel() {
+		return duel;
+	}
+
+	/**
+	 * @return the startTimer
+	 */
+	public int getStartTimer() {
+		return startTimer;
+	}
+
+	/**
+	 * @param startTimer
+	 *            the startTimer to set
+	 */
+	public void setStartTimer(int startTimer) {
+		this.startTimer = startTimer;
+	}
+
+	/**
+	 * @param duel
+	 *            the duel to set
+	 */
+	public void setDuel(boolean duel) {
+		this.duel = duel;
+	}
+
+	@Override
+	public Set<Integer> getFightsOnMap() {
+		return fightsOnMap;
+	}
+
+	@Override
+	public int getCapabilities() {
+		return capabilities;
+	}
+
+	/**
+	 * @param capabilities
+	 *            the capabilities to set
+	 */
+	public void setCapabilities(int capabilities) {
+		this.capabilities = capabilities;
+	}
+
+	@Override
 	public String toString() {
 		return "ManchouMap [mapid=" + mapid + ", x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + ", backgroundId=" + backgroundId + ", musicId=" + musicId + ", cells="
 				+ Arrays.toString(cells) + ", entities=" + entities + ", fightType=" + fightType + ", team0Places=" + Arrays.toString(team0Places) + ", team1Places=" + Arrays.toString(team1Places)
-				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", currentTurn=" + currentTurn + "]";
+				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", currentTurn=" + currentTurn
+				+ ", spectator=" + spectator + ", startTimer=" + startTimer + ", duel=" + duel + "]";
 	}
 
 }

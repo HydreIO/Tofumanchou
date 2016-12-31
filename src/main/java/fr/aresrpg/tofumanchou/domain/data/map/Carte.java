@@ -4,6 +4,7 @@ import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 
@@ -23,9 +24,21 @@ public interface Carte { // pas envie de l'apeller Map et DofusMap est déja pri
 
 	int getBackgroundId();
 
+	int getCapabilities();
+
 	int getMusicId();
 
 	Cell[] getCells();
+
+	boolean isOutdoor();
+
+	Set<Integer> getFightsOnMap();
+
+	boolean isSpectator();
+
+	int getFightStartTimer();
+
+	boolean isDuel();
 
 	Map<Long, Entity> getEntities();
 

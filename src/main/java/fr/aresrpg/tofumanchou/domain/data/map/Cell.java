@@ -1,8 +1,7 @@
 package fr.aresrpg.tofumanchou.domain.data.map;
 
 import fr.aresrpg.dofus.structures.item.Interractable;
-import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
-import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 
 /**
  * 
@@ -16,6 +15,8 @@ public interface Cell {
 
 	int getY();
 
+	boolean isInterractable();
+
 	Interractable getInterractable();
 
 	boolean isRessourceSpawned();
@@ -24,8 +25,6 @@ public interface Cell {
 
 	boolean isTeleporter();
 
-	Mob getMobOn();
-
-	MobGroup getMobGoupOn();
+	Entity getEntityOn();
 
 }
