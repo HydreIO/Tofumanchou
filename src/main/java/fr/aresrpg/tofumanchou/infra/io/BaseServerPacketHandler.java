@@ -672,16 +672,16 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameMovementPacket gameMovementPacket) {
-		log(gameMovementPacket);
-		if (gameMovementPacket.getType() == GameMovementType.REMOVE) {
-			gameMovementPacket.getActors().forEach(v -> {
+	public void handle(GameMovementPacket pkt) {
+		log(pkt);
+		if (pkt.getType() == GameMovementType.REMOVE) {
+			pkt.getActors().forEach(v -> {
 				MovementRemoveActor actor = (MovementRemoveActor) (Object) v.getSecond();
 				getPerso().getMap().getEntities().remove(actor.getId());
 			});
 			return;
 		}
-		gameMovementPacket.getActors().forEach(e -> {
+		pkt.getActors().forEach(e -> {
 			switch (e.getFirst()) {
 				case DEFAULT:
 					MovementPlayer player = (MovementPlayer) (Object) e.getSecond();
@@ -691,27 +691,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				case CREATE_INVOCATION:
 				case CREATE_MONSTER:
 					MovementMonster mob = (MovementMonster) (Object) e.getSecond();
-					if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().addEntity(mob, mob.getTeam());
-					else getPerso().getMapInfos().getMap().entityUpdate(mob);
-					getPerso().getDebugView().addMob(mob.getId(), mob.getCellId());
-					getGameHandler().forEach(h -> h.onMobMove(mob));
+					getPerso().getMap().getEntities().put(mob.getId(), ManchouMob.parseMovement(mob));
 					return;
 				case CREATE_MONSTER_GROUP:
 					MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getSecond();
-					getPerso().getMapInfos().getMap().entityUpdate(mobs);
-					getPerso().getDebugView().addMob(mobs.getId(), mobs.getCellId());
-					getGameHandler().forEach(h -> h.onMobGroupMove(mobs));
+					getPerso().getMap().getEntities().put(mobs.getId(), ManchouMobGroup.parseMovement(mobs));
 					return;
 				case CREATE_NPC:
 					MovementNpc npc = (MovementNpc) (Object) e.getSecond();
-					getPerso().getMapInfos().getMap().entityUpdate(npc);
-					getPerso().getDebugView().addNpc(npc.getId(), npc.getCellId());
-					getGameHandler().forEach(h -> h.onNpcMove(npc));
+					getPerso().getMap().getEntities().put(npc.getId(), ManchouNpc.parseMovement(npc));
 					return;
 				default:
 					break;
 			}
 		});
+		transmit(pkt);
 	}
 
 	@Override
