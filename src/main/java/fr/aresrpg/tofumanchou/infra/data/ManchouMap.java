@@ -3,9 +3,11 @@ package fr.aresrpg.tofumanchou.infra.data;
 import fr.aresrpg.dofus.structures.game.FightSpawn;
 import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.dofus.structures.map.DofusMap;
+import fr.aresrpg.tofumanchou.domain.data.MapsData;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 
+import java.awt.Point;
 import java.util.*;
 
 /**
@@ -42,13 +44,14 @@ public class ManchouMap implements Carte {
 	public static ManchouMap fromDofusMap(DofusMap map) {
 		ManchouMap m = new ManchouMap();
 		m.mapid = map.getId();
-		m.x = ;
-		m.y = ;
+		Point coords = MapsData.getCoords(map.getId());
+		m.x = coords.x;
+		m.y = coords.y;
 		m.width = map.getWidth();
 		m.height = map.getHeight();
 		m.backgroundId = map.getBackgroundId();
 		m.musicId = map.getMusicId();
-		m.cells = parseCells(map.getCells(), map.getWidth(),map.getHeight());
+		m.cells = parseCells(map.getCells(), map.getWidth(), map.getHeight());
 		m.outdoor = map.isOutdoor();
 		m.capabilities = map.getCapabilities();
 		return m;

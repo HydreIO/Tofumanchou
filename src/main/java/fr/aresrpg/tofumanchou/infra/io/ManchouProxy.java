@@ -32,8 +32,8 @@ public class ManchouProxy implements Proxy {
 	private String hc;
 
 	public ManchouProxy(Account account, SocketChannel localChannel, SocketChannel remoteChannel) throws IOException {
-		this.remoteHandler = new BaseServerPacketHandler(account);
-		this.localHandler = new BaseClientPacketHandler(account);
+		this.remoteHandler = new BaseServerPacketHandler(this);
+		this.localHandler = new BaseClientPacketHandler(this);
 		changeConnection(new DofusConnection<>("Local", localChannel, localHandler, Bound.CLIENT), ProxyConnectionType.LOCAL);
 		changeConnection(new DofusConnection<>("Remote", remoteChannel, remoteHandler, Bound.SERVER), ProxyConnectionType.REMOTE);
 	}

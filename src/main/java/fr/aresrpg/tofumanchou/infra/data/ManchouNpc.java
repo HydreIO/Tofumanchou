@@ -29,6 +29,9 @@ public class ManchouNpc implements Npc {
 	private int entityType;
 	private Set<Effect> effects;
 	private long uuid;
+	private int pa;
+	private int life;
+	private int pm;
 
 	public static ManchouNpc parseMovement(MovementNpc npc) {
 		ManchouNpc m = new ManchouNpc();
@@ -115,6 +118,36 @@ public class ManchouNpc implements Npc {
 	@Override
 	public void setCellId(int cellid) {
 		this.cellId = cellid;
+	}
+
+	@Override
+	public int getLife() {
+		return life;
+	}
+
+	@Override
+	public void setLife(int life) {
+		this.life = life;
+	}
+
+	@Override
+	public int getPa() {
+		return pa;
+	}
+
+	@Override
+	public void setPa(int pa) {
+		this.pa = pa;
+	}
+
+	@Override
+	public int getPm() {
+		return pm;
+	}
+
+	@Override
+	public void setPm(int pm) {
+		this.pm = pm;
 	}
 
 }

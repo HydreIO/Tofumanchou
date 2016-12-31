@@ -122,4 +122,34 @@ public class ManchouMobGroup implements MobGroup {
 		this.cellId = cellid;
 	}
 
+	@Override
+	public int getLife() {
+		return 0;
+	}
+
+	@Override
+	public void setLife(int life) {
+
+	}
+
+	@Override
+	public int getPa() {
+		return 0;
+	}
+
+	@Override
+	public void setPa(int pa) {
+
+	}
+
+	@Override
+	public int getPm() {
+		return 0;
+	}
+
+	@Override
+	public void setPm(int pm) {
+
+	}
+
 }

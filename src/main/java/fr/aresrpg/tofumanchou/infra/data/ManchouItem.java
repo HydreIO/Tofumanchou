@@ -2,6 +2,8 @@ package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.structures.item.ItemCategory;
+import fr.aresrpg.tofumanchou.domain.data.ItemsData;
+import fr.aresrpg.tofumanchou.domain.data.ItemsData.LangItem;
 import fr.aresrpg.tofumanchou.domain.data.item.Item;
 
 /**
@@ -45,9 +47,10 @@ public class ManchouItem implements Item {
 	public static ManchouItem fromProtocolItem(fr.aresrpg.dofus.structures.item.Item item) {
 		ManchouItem i = new ManchouItem();
 		i.uuid = item.getUid();
-		i.name = ;
-		i.desc = ;
-		i.category = ;
+		LangItem langItem = ItemsData.get(i.getTypeId());
+		i.name = langItem.getName();
+		i.desc = langItem.getDesc();
+		i.category = langItem.getCategory();
 		i.typeId = item.getItemTypeId();
 		i.amount = item.getQuantity();
 		i.position = item.getPosition();
@@ -55,7 +58,7 @@ public class ManchouItem implements Item {
 		i.price = item.getPrice();
 		i.skin = item.getSkin();
 		i.remainingHours = item.getRemainingHours();
-		i.pods = ;
+		i.pods = langItem.getPod();
 		return i;
 	}
 

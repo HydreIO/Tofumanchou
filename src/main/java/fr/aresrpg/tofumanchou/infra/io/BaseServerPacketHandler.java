@@ -70,7 +70,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
-import fr.aresrpg.tofumanchou.domain.event.*;
+import fr.aresrpg.tofumanchou.domain.event.ServerStateEvent;
 import fr.aresrpg.tofumanchou.domain.event.aproach.*;
 import fr.aresrpg.tofumanchou.domain.event.chat.*;
 import fr.aresrpg.tofumanchou.domain.event.duel.DuelRequestEvent;
@@ -522,6 +522,9 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case EARN_KAMAS:
 				int kamas = Integer.parseInt(pkt.getExtraDatas());
 				client.getBank().addKamas(kamas);
+				break;
+			case CURRENT_ADRESS:
+				if (isBot()) sendPkt(new GameCreatePacket().setGameType(GameType.SOLO));
 				break;
 			default:
 				break;

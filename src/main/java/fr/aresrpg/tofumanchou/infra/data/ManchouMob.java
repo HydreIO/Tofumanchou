@@ -293,4 +293,14 @@ public class ManchouMob implements Mob {
 		this.dead = dead;
 	}
 
+	@Override
+	public int getPa() {
+		return pa;
+	}
+
+	@Override
+	public int getPm() {
+		return pm;
+	}
+
 }

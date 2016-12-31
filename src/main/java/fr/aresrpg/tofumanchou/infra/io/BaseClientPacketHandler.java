@@ -8,6 +8,9 @@
  *******************************************************************************/
 package fr.aresrpg.tofumanchou.infra.io;
 
+import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
+
+import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.dofus.protocol.*;
 import fr.aresrpg.dofus.protocol.account.AccountKeyPacket;
 import fr.aresrpg.dofus.protocol.account.AccountRegionalVersionPacket;
@@ -35,7 +38,14 @@ import fr.aresrpg.dofus.protocol.spell.client.SpellBoostPacket;
 import fr.aresrpg.dofus.protocol.spell.client.SpellMoveToUsedPacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
+import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.io.Proxy;
+import fr.aresrpg.tofumanchou.infra.data.ManchouAccount;
+import fr.aresrpg.tofumanchou.infra.data.ManchouPerso;
+
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * 
@@ -43,22 +53,57 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  */
 public class BaseClientPacketHandler implements ClientPacketHandler {
 
-	private Account account;
+	private ManchouAccount client;
+	private ManchouProxy proxy;
+	private String ticket;
+	private Server current;
 
-	public BaseClientPacketHandler(Account account) {
-		this.account = account;
+	public BaseClientPacketHandler(Proxy proxy) {
+		Objects.requireNonNull(proxy);
+		this.proxy = (ManchouProxy) proxy;
+		this.client = (ManchouAccount) proxy.getClient();
 	}
 
-	/**
-	 * @return the account
-	 */
-	public Account getAccount() {
-		return account;
+	public ManchouProxy getProxy() {
+		return proxy;
+	}
+
+	public ManchouAccount getClient() {
+		return client;
+	}
+
+	public ManchouPerso getPerso() {
+		return (ManchouPerso) client.getPerso();
+	}
+
+	public void setClient(Account client) {
+		this.client = (ManchouAccount) client;
+	}
+
+	private void transmit(Packet pkt) {
+		try {
+			proxy.getLocalConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void sendPkt(Packet pkt) {
+		try {
+			getClient().getConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void event(Event event) {
+		if (client == null) throw new NullPointerException("The client cannot be null !");
+		event.send();
 	}
 
 	protected void log(Packet pkt) {
-		if (getPerso() == null) LOGGER.info("[[SND]> " + pkt);
-		else LOGGER.info("[" + getPerso().getPseudo() + ":[SND]> " + pkt);
+		if (getPerso() == null) LOGGER.info("[RCV:]< " + pkt);
+		else LOGGER.info("[" + getPerso().getPseudo() + ":RCV:]< " + pkt);
 	}
 
 	@Override
