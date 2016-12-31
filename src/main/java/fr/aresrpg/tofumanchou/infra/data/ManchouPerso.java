@@ -80,6 +80,7 @@ public class ManchouPerso implements Perso {
 	private int scaleY;
 	private Orientation orientation;
 	private int sprite;
+	private ManchouJob job;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -785,6 +786,11 @@ public class ManchouPerso implements Perso {
 	@Override
 	public Orientation getOrientation() {
 		return orientation;
+	}
+
+	@Override
+	public ManchouJob getJob() {
+		return job;
 	}
 
 }

@@ -117,4 +117,9 @@ public class ManchouMobGroup implements MobGroup {
 				+ ", entities=" + Arrays.toString(entities) + ", lvls=" + Arrays.toString(lvls) + ", colors=" + colors + ", accessories=" + Arrays.toString(accessories) + "]";
 	}
 
+	@Override
+	public void setCellId(int cellid) {
+		this.cellId = cellid;
+	}
+
 }

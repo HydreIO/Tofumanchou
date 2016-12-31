@@ -28,8 +28,6 @@ import fr.aresrpg.dofus.protocol.exchange.server.*;
 import fr.aresrpg.dofus.protocol.fight.server.*;
 import fr.aresrpg.dofus.protocol.friend.server.FriendListPacket;
 import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
-import fr.aresrpg.dofus.protocol.game.actions.client.GameAcceptDuelAction;
-import fr.aresrpg.dofus.protocol.game.actions.client.GameRefuseDuelAction;
 import fr.aresrpg.dofus.protocol.game.actions.server.*;
 import fr.aresrpg.dofus.protocol.game.client.GameCreatePacket;
 import fr.aresrpg.dofus.protocol.game.movement.*;
@@ -79,6 +77,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -722,74 +721,121 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GamePositionsPacket pkt) {
 		log(pkt);
+		pkt.getPositions().forEach(p -> {
+			Entity entity = getPerso().getMap().getEntities().get(p.getEntityId());
+			entity.setCellId(p.getPosition());
+			new EntityChangePlaceInFightEvent(client, entity, p.getPosition()).send();
+		});
 		transmit(pkt);
-		pkt.getPositions().forEach(p -> getPerso().getFightInfos().getCurrentFight().entityMove(p.getEntityId(), p.getPosition()));
-		getGameHandler().forEach(h -> pkt.getPositions().forEach(p -> h.onEntityFightPositionChange(p.getEntityId(), p.getPosition())));
 	}
 
 	@Override
 	public void handle(GamePositionStartPacket pkt) {
 		log(pkt);
+		ManchouMap map = getPerso().getMap();
+		map.setTeam0Places(pkt.getPlacesTeam0());
+		map.setTeam1Places(pkt.getPlacesTeam1());
+		FightPositionsReceiveEvent event = new FightPositionsReceiveEvent(client, pkt.getPlacesTeam0(), pkt.getPlacesTeam1());
+		event.send();
+		pkt.setPlacesTeam0(event.getPlacesTeam0());
+		pkt.setPlacesTeam1(event.getPlacesTeam1());
 		transmit(pkt);
-		Fight f = getPerso().getFightInfos().getCurrentFight();
-		f.setPlaceTeam0(pkt.getPlacesTeam0());
-		f.setPlaceTeam1(pkt.getPlacesTeam1());
 	}
 
 	@Override
 	public void handle(GameServerActionPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		switch (pkt.getType()) {
 			case ERROR:
-				getGameActionHandler().forEach(GameActionServerHandler::onActionError);
 				break;
 			case LIFE_CHANGE:
 				GameLifeChangeAction actionl = (GameLifeChangeAction) pkt.getAction();
-				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityLife(actionl.getEntity(), actionl.getLife());
-				getGameActionHandler().forEach(h -> h.onEntityLifeChange(actionl.getEntity(), actionl.getLife()));
+				Entity entt = getPerso().getMap().getEntities().get(actionl.getEntity());
+				entt.setLife(actionl.getLife());
+				EntityLifeChangeEvent event = new EntityLifeChangeEvent(client, entt, actionl.getLife());
+				event.send();
+				actionl.setEntity(event.getEntity().getUUID());
+				actionl.setLife(event.getLife());
 				break;
 			case PA_CHANGE:
 				GamePaChangeAction actionpa = (GamePaChangeAction) pkt.getAction();
-				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityPa(actionpa.getEntity(), actionpa.getPa());
-				getGameActionHandler().forEach(h -> h.onEntityPaChange(actionpa.getEntity(), actionpa.getPa()));
+				Entity enttt = getPerso().getMap().getEntities().get(actionpa.getEntity());
+				enttt.setPa(actionpa.getPa());
+				EntityPaChangeEvent eventt = new EntityPaChangeEvent(client, enttt, actionpa.getPa());
+				eventt.send();
+				actionpa.setEntity(eventt.getEntity().getUUID());
+				actionpa.setPa(eventt.getPa());
 				break;
 			case PM_CHANGE:
 				GamePmChangeAction actionpm = (GamePmChangeAction) pkt.getAction();
-				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().updateEntityPm(actionpm.getEntity(), actionpm.getPm());
-				getGameActionHandler().forEach(h -> h.onEntityPmChange(actionpm.getEntity(), actionpm.getPm()));
+				Entity ee = getPerso().getMap().getEntities().get(actionpm.getEntity());
+				ee.setPm(actionpm.getPm());
+				EntityPmChangeEvent ev = new EntityPmChangeEvent(client, ee, actionpm.getPm());
+				ev.send();
+				actionpm.setEntity(ev.getEntity().getUUID());
+				actionpm.setPm(ev.getPm());
 				break;
 			case KILL:
 				GameKillAction actionk = (GameKillAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onEntityKilled(actionk.getKilled()));
+				Entity de = getPerso().getMap().getEntities().get(actionk.getKilled());
+				EntityDieEvent eevent = new EntityDieEvent(client, de);
+				eevent.send();
+				actionk.setKilled(eevent.getEntity().getUUID());
 				break;
 			case SUMMON:
 				GameSummonAction actions = (GameSummonAction) pkt.getAction();
-				actions.getSummoned().forEach(s -> {
-					if (s instanceof MovementPlayer) {
-						MovementPlayer pl = (MovementPlayer) s;
-						getPerso().getFightInfos().getCurrentFight().addEntity(pl, pl.getPlayerInFight().getTeam());
-					} else if (s instanceof MovementMonster) {
-						MovementMonster mo = (MovementMonster) s;
-						getPerso().getFightInfos().getCurrentFight().addEntity(mo, mo.getTeam());
+				for (Entry<GameMovementAction, MovementAction> e : actions.getSummoned().entrySet()) {
+					switch (e.getKey()) {
+						case DEFAULT:
+							MovementPlayer player = (MovementPlayer) (Object) e.getValue();
+							if (player.getId() == getPerso().getUUID()) getPerso().updateMovement(player);
+							else {
+								ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
+								getPerso().getMap().getEntities().put(player.getId(), parseMovement);
+								new EntityPlayerJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+							}
+							return;
+						case CREATE_INVOCATION:
+						case CREATE_MONSTER:
+							MovementMonster mob = (MovementMonster) (Object) e.getValue();
+							ManchouMob parseMovement = ManchouMob.parseMovement(mob);
+							getPerso().getMap().getEntities().put(mob.getId(), parseMovement);
+							new MonsterJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+							return;
+						case CREATE_MONSTER_GROUP:
+							MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getValue();
+							ManchouMobGroup mobsgroup = ManchouMobGroup.parseMovement(mobs);
+							getPerso().getMap().getEntities().put(mobs.getId(), mobsgroup);
+							new MonsterGroupSpawnEvent(client, mobsgroup).send(); // ASYNCHRONE
+							return;
+						case CREATE_NPC:
+							MovementNpc npc = (MovementNpc) (Object) e.getValue();
+							ManchouNpc npcm = ManchouNpc.parseMovement(npc);
+							getPerso().getMap().getEntities().put(npc.getId(), npcm);
+							new NpcJoinMapEvent(client, npcm).send(); // ASYNCHRONE
+							return;
+						default:
+							break;
 					}
-				});
-				getGameActionHandler().forEach(h -> actions.getSummoned().forEach(h::onEntitySummoned));
+				}
 				break;
 			case FIGHT_JOIN_ERROR:
 				GameJoinErrorAction actionj = (GameJoinErrorAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onFightJoinError(actionj.getError()));
+				FightJoinErrorEvent e2 = new FightJoinErrorEvent(client, actionj.getError());
+				e2.send();
+				actionj.setError(e2.getError());
 				break;
 			case MOVE:
 				GameMoveAction actionm = (GameMoveAction) pkt.getAction();
 				int cell = actionm.getPath().get(actionm.getPath().size() - 1).getCellId();
-				getPerso().getDebugView().addEntity(pkt.getEntityId(), cell);
-				if (pkt.getEntityId() == getPerso().getId()) {
-					getPerso().getMapInfos().setCellId(cell);
-					getPerso().getBotInfos().setLastMove(System.currentTimeMillis());
-				}
-				if (getPerso().isInFight()) getPerso().getFightInfos().getCurrentFight().entityMove(pkt.getEntityId(), cell);
-				getGameActionHandler().forEach(h -> h.onEntityMove(pkt.getEntityId(), actionm.getPath()));
+				Entity enti = null;
+				if (pkt.getEntityId() == getPerso().getUUID()) enti = getPerso();
+				else enti = getPerso().getMap().getEntities().get(pkt.getEntityId());
+				enti.setCellId(cell);
+				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
+				ec.send();
+				pkt.setEntityId(ec.getEntity().getUUID());
+				actionm.setPath(ec.getPath());
 				break;
 			case DUEL_SERVER_ASK:
 				GameDuelServerAction actiond = (GameDuelServerAction) pkt.getAction();
@@ -809,14 +855,40 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				break;
 			case HARVEST_TIME:
 				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onHarvestTime(actionh.getTime(), pkt.getEntityId()));
+				if (pkt.getEntityId() == getPerso().getUUID()) {
+					if (isBot() && getPerso().getJob() != null) Executors.SCHEDULED.schedule(() -> {
+						int action = 0;
+						switch (getPerso().getJob().getType()) {
+							case JOB_BUCHERON:
+								action = 1;
+								break;
+
+							default:
+								break;
+						}
+						sendPkt(new GameActionACKPacket().setActionId(action));
+					} , actionh.getTime(), TimeUnit.MILLISECONDS);
+					HarvestTimeReceiveEvent event = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime());
+					event.send();
+					actionh.setCellId(event.getCellId());
+					actionh.setTime(event.getTime());
+				} else {
+					Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
+					Player p = (Player) entity;
+					PlayerStoleYourRessourceEvent event = new PlayerStoleYourRessourceEvent(client, actionh.getCellId(), actionh.getTime(), p);
+					event.send();
+					actionh.setCellId(event.getCellId());
+					actionh.setTime(event.getTime());
+					pkt.setEntityId(event.getThief().getUUID());
+				}
 				break;
 			case TACLE:
-				getGameActionHandler().forEach(GameActionServerHandler::onTacle);
+				new PlayerTacledEvent(client).send();
 				break;
 			default:
 				break;
 		}
+		transmit(pkt);
 	}
 
 	@Override
@@ -1240,7 +1312,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		transmit(pkt);
 		for (Job j : pkt.getJobs())
-			getPerso().getBotInfos().getJobs().add(new DofusJob(j.getType()));
+			getPerso().getBotInfos().getJobs().add(new ManchouJob(j.getType()));
 		getJobHandler().forEach(h -> Arrays.stream(pkt.getJobs()).forEach(h::onPlayerJobInfo));
 	}
 
@@ -1249,7 +1321,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		transmit(pkt);
 		for (JobInfo j : pkt.getInfos())
-			for (DofusJob job : getPerso().getBotInfos().getJobs())
+			for (ManchouJob job : getPerso().getBotInfos().getJobs())
 				if (j.getJob() == job.getType()) {
 					job.setLvl(j.getLvl());
 					job.setMaxXp(j.getXpMax());
@@ -1264,7 +1336,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(JobLevelPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		for (DofusJob j : getPerso().getBotInfos().getJobs())
+		for (ManchouJob j : getPerso().getBotInfos().getJobs())
 			if (j.getType() == pkt.getJob()) j.setLvl(pkt.getLvl());
 		getJobHandler().forEach(h -> h.onJobLvl(pkt.getJob(), pkt.getLvl()));
 	}

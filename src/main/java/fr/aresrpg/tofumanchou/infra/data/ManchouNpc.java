@@ -112,4 +112,9 @@ public class ManchouNpc implements Npc {
 				+ ", cellId=" + cellId + ", scaleY=" + scaleY + ", scaleX=" + scaleX + ", sex=" + sex + ", entityType=" + entityType + ", effects=" + effects + ", uuid=" + uuid + "]";
 	}
 
+	@Override
+	public void setCellId(int cellid) {
+		this.cellId = cellid;
+	}
+
 }

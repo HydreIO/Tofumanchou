@@ -144,4 +144,9 @@ public class ManchouMob implements Mob {
 		return dead;
 	}
 
+	@Override
+	public void setCellId(int cellid) {
+		this.cellId = cellid;
+	}
+
 }

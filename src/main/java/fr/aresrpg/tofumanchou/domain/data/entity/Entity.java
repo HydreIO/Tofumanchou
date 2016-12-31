@@ -17,7 +17,21 @@ public interface Entity {
 
 	int getCellId();
 
+	void setCellId(int cellid);
+
 	int getScaleX();
+
+	int getLife();
+
+	void setLife(int life);
+
+	int getPa();
+
+	void setPa(int pa);
+
+	int getPm();
+
+	void setPm(int pm);
 
 	int getScaleY();
 

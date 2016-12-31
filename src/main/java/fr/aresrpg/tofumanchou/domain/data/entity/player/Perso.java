@@ -2,8 +2,7 @@ package fr.aresrpg.tofumanchou.domain.data.entity.player;
 
 import fr.aresrpg.dofus.structures.Chat;
 import fr.aresrpg.dofus.structures.Friend;
-import fr.aresrpg.tofumanchou.domain.data.Account;
-import fr.aresrpg.tofumanchou.domain.data.Spell;
+import fr.aresrpg.tofumanchou.domain.data.*;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
@@ -28,6 +27,8 @@ public interface Perso extends Player {
 	int getXpMin();
 
 	int getXpMax();
+
+	Job getJob();
 
 	int getStatsPoints();
 

@@ -321,4 +321,9 @@ public class ManchouPlayerEntity implements Player {
 		return orientation;
 	}
 
+	@Override
+	public void setCellId(int cellid) {
+		this.cellId = cellid;
+	}
+
 }
