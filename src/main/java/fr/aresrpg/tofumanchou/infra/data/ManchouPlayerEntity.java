@@ -176,6 +176,206 @@ public class ManchouPlayerEntity implements Player {
 		return life;
 	}
 
+	/**
+	 * @param effects
+	 *            the effects to set
+	 */
+	public void setEffects(Set<Effect> effects) {
+		this.effects = effects;
+	}
+
+	/**
+	 * @param pseudo
+	 *            the pseudo to set
+	 */
+	public void setPseudo(String pseudo) {
+		this.pseudo = pseudo;
+	}
+
+	/**
+	 * @param classe
+	 *            the classe to set
+	 */
+	public void setClasse(Classe classe) {
+		this.classe = classe;
+	}
+
+	/**
+	 * @param colors
+	 *            the colors to set
+	 */
+	public void setColors(EntityColor colors) {
+		this.colors = colors;
+	}
+
+	/**
+	 * @param sex
+	 *            the sex to set
+	 */
+	public void setSex(Genre sex) {
+		this.sex = sex;
+	}
+
+	/**
+	 * @param level
+	 *            the level to set
+	 */
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+	/**
+	 * @param lifeMax
+	 *            the lifeMax to set
+	 */
+	public void setLifeMax(int lifeMax) {
+		this.lifeMax = lifeMax;
+	}
+
+	/**
+	 * @param initiative
+	 *            the initiative to set
+	 */
+	public void setInitiative(int initiative) {
+		this.initiative = initiative;
+	}
+
+	/**
+	 * @param alignement
+	 *            the alignement to set
+	 */
+	public void setAlignement(Alignement alignement) {
+		this.alignement = alignement;
+	}
+
+	/**
+	 * @param rank
+	 *            the rank to set
+	 */
+	public void setRank(Rank rank) {
+		this.rank = rank;
+	}
+
+	/**
+	 * @param prospection
+	 *            the prospection to set
+	 */
+	public void setProspection(int prospection) {
+		this.prospection = prospection;
+	}
+
+	/**
+	 * @param stats
+	 *            the stats to set
+	 */
+	public void setStats(Map<Stat, StatValue> stats) {
+		this.stats = stats;
+	}
+
+	/**
+	 * @param server
+	 *            the server to set
+	 */
+	public void setServer(Server server) {
+		this.server = server;
+	}
+
+	/**
+	 * @param merchant
+	 *            the merchant to set
+	 */
+	public void setMerchant(boolean merchant) {
+		this.merchant = merchant;
+	}
+
+	/**
+	 * @param dead
+	 *            the dead to set
+	 */
+	public void setDead(boolean dead) {
+		this.dead = dead;
+	}
+
+	/**
+	 * @param deathCount
+	 *            the deathCount to set
+	 */
+	public void setDeathCount(int deathCount) {
+		this.deathCount = deathCount;
+	}
+
+	/**
+	 * @param lvlMax
+	 *            the lvlMax to set
+	 */
+	public void setLvlMax(int lvlMax) {
+		this.lvlMax = lvlMax;
+	}
+
+	/**
+	 * @param guild
+	 *            the guild to set
+	 */
+	public void setGuild(int guild) {
+		this.guild = guild;
+	}
+
+	/**
+	 * @param team
+	 *            the team to set
+	 */
+	public void setTeam(int team) {
+		this.team = team;
+	}
+
+	/**
+	 * @param aura
+	 *            the aura to set
+	 */
+	public void setAura(int aura) {
+		this.aura = aura;
+	}
+
+	/**
+	 * @param emot
+	 *            the emot to set
+	 */
+	public void setEmot(int emot) {
+		this.emot = emot;
+	}
+
+	/**
+	 * @param emotTimer
+	 *            the emotTimer to set
+	 */
+	public void setEmotTimer(int emotTimer) {
+		this.emotTimer = emotTimer;
+	}
+
+	/**
+	 * @param guildName
+	 *            the guildName to set
+	 */
+	public void setGuildName(String guildName) {
+		this.guildName = guildName;
+	}
+
+	/**
+	 * @param emblem
+	 *            the emblem to set
+	 */
+	public void setEmblem(String[] emblem) {
+		this.emblem = emblem;
+	}
+
+	/**
+	 * @param orientation
+	 *            the orientation to set
+	 */
+	public void setOrientation(Orientation orientation) {
+		this.orientation = orientation;
+	}
+
 	@Override
 	public int getLifeMax() {
 		return lifeMax;
@@ -324,6 +524,39 @@ public class ManchouPlayerEntity implements Player {
 	@Override
 	public void setCellId(int cellid) {
 		this.cellId = cellid;
+	}
+
+	@Override
+	public void setLife(int life) {
+		this.life = life;
+	}
+
+	/**
+	 * @param accessories
+	 *            the accessories to set
+	 */
+	public void setAccessories(Accessory[] accessories) {
+		this.accessories = accessories;
+	}
+
+	@Override
+	public int getPa() {
+		return getStat(Stat.PA).getTotal();
+	}
+
+	@Override
+	public void setPa(int pa) {
+		getStat(Stat.PA).setTotal(pa);
+	}
+
+	@Override
+	public int getPm() {
+		return getStat(Stat.PM).getTotal();
+	}
+
+	@Override
+	public void setPm(int pm) {
+		getStat(Stat.PM).setTotal(pm);
 	}
 
 }

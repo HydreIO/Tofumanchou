@@ -26,9 +26,17 @@ public class PlayerInventory implements Inventory {
 		return joiner.toString();
 	}
 
-	public void updateContent(List<fr.aresrpg.dofus.structures.item.Item> items) {
+	public void replaceContent(List<fr.aresrpg.dofus.structures.item.Item> items) {
 		contents.clear();
 		items.stream().map(ManchouItem::fromProtocolItem).forEach(i -> contents.put(i.getUUID(), i));
+	}
+
+	public void addContent(Collection<fr.aresrpg.dofus.structures.item.Item> items) {
+		items.stream().map(ManchouItem::fromProtocolItem).forEach(i -> contents.put(i.getUUID(), i));
+	}
+
+	public void addItems(Collection<Item> items) {
+		items.forEach(i -> contents.put(i.getUUID(), i));
 	}
 
 	public void addKamas(int kamas) {

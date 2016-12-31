@@ -28,8 +28,10 @@ import fr.aresrpg.dofus.protocol.exchange.server.*;
 import fr.aresrpg.dofus.protocol.fight.server.*;
 import fr.aresrpg.dofus.protocol.friend.server.FriendListPacket;
 import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
+import fr.aresrpg.dofus.protocol.game.actions.client.GameAcceptDuelAction;
+import fr.aresrpg.dofus.protocol.game.actions.client.GameRefuseDuelAction;
 import fr.aresrpg.dofus.protocol.game.actions.server.*;
-import fr.aresrpg.dofus.protocol.game.client.GameCreatePacket;
+import fr.aresrpg.dofus.protocol.game.client.*;
 import fr.aresrpg.dofus.protocol.game.movement.*;
 import fr.aresrpg.dofus.protocol.game.server.*;
 import fr.aresrpg.dofus.protocol.guild.server.GuildStatPacket;
@@ -63,8 +65,22 @@ import fr.aresrpg.dofus.util.*;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
+import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
+import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.event.*;
+import fr.aresrpg.tofumanchou.domain.event.aproach.*;
+import fr.aresrpg.tofumanchou.domain.event.chat.*;
+import fr.aresrpg.tofumanchou.domain.event.duel.DuelRequestEvent;
+import fr.aresrpg.tofumanchou.domain.event.entity.*;
+import fr.aresrpg.tofumanchou.domain.event.exchange.*;
+import fr.aresrpg.tofumanchou.domain.event.fight.*;
+import fr.aresrpg.tofumanchou.domain.event.friend.FriendListsEvent;
+import fr.aresrpg.tofumanchou.domain.event.guild.GuildStatsEvent;
+import fr.aresrpg.tofumanchou.domain.event.item.*;
+import fr.aresrpg.tofumanchou.domain.event.map.*;
+import fr.aresrpg.tofumanchou.domain.event.player.*;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.domain.io.Proxy.ProxyConnectionType;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
@@ -79,6 +95,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -136,11 +153,19 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 
 	private void transmit(Packet pkt) {
 		if (isBot()) return;
-		proxy.getLocalConnection().send(pkt);
+		try {
+			proxy.getLocalConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void sendPkt(Packet pkt) {
-		getClient().getConnection().send(pkt);
+		try {
+			getClient().getConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void event(Event event) {
@@ -360,21 +385,25 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountServerHostPacket pkt) {
 		log(pkt);
 		this.ticket = pkt.getTicketKey();
-		if (isBot()) {
-			client.getConnection().closeConnection();
-			client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
-			client.getConnection().start();
-		} else {
-			String ip = pkt.getIp();
-			ServerSocketChannel srvchannel = ServerSocketChannel.open();
-			srvchannel.bind(new InetSocketAddress(0));
-			int localPort = srvchannel.socket().getLocalPort();
-			getProxy().getLocalConnection().send(new AccountServerHostPacket().setIp(Variables.PASSERELLE_IP).setPort(localPort).setTicketKey(pkt.getTicketKey()));
-			getProxy().changeConnection(new DofusConnection<>("Local", srvchannel.accept(), getProxy().getLocalHandler(), Bound.CLIENT),
-					ProxyConnectionType.LOCAL);
-			getProxy().changeConnection(
-					new DofusConnection<>("Remote", SocketChannel.open(new InetSocketAddress(ip, pkt.getPort())), getProxy().getRemoteHandler(), Bound.SERVER),
-					ProxyConnectionType.REMOTE);
+		try {
+			if (isBot()) {
+				client.getConnection().closeConnection();
+				client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
+				client.getConnection().start();
+			} else {
+				String ip = pkt.getIp();
+				ServerSocketChannel srvchannel = ServerSocketChannel.open();
+				srvchannel.bind(new InetSocketAddress(0));
+				int localPort = srvchannel.socket().getLocalPort();
+				getProxy().getLocalConnection().send(new AccountServerHostPacket().setIp(Variables.PASSERELLE_IP).setPort(localPort).setTicketKey(pkt.getTicketKey()));
+				getProxy().changeConnection(new DofusConnection<>("Local", srvchannel.accept(), getProxy().getLocalHandler(), Bound.CLIENT),
+						ProxyConnectionType.LOCAL);
+				getProxy().changeConnection(
+						new DofusConnection<>("Remote", SocketChannel.open(new InetSocketAddress(ip, pkt.getPort())), getProxy().getRemoteHandler(), Bound.SERVER),
+						ProxyConnectionType.REMOTE);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -408,6 +437,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(ExchangeCreatePacket pkt) {
 		log(pkt);
+		getPerso().setCurrentInv(pkt.getType());
 		ExchangeCreateEvent event = new ExchangeCreateEvent(client, pkt.getType(), pkt.getData(), pkt.isSuccess());
 		event.send();
 		pkt.setType(event.getType());
@@ -656,6 +686,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		ManchouMap map = ManchouMap.fromDofusMap(m);
 		getPerso().setMap(map);
 		new MapJoinEvent(client, map).send();
+		if (isBot()) sendPkt(new GameExtraInformationPacket());
 		transmit(pkt);
 	}
 
@@ -839,19 +870,38 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				break;
 			case DUEL_SERVER_ASK:
 				GameDuelServerAction actiond = (GameDuelServerAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onDuel(pkt.getEntityId(), actiond.getTargetId()));
+				Player sender = (Player) getPerso().getMap().getEntities().get(pkt.getEntityId());
+				Player target = (Player) getPerso().getMap().getEntities().get(actiond.getTargetId());
+				DuelRequestEvent duelRequestEvent = new DuelRequestEvent(client, sender, target);
+				duelRequestEvent.send();
+				pkt.setEntityId(duelRequestEvent.getSender().getUUID());
+				actiond.setTargetId(duelRequestEvent.getTarget().getUUID());
 				break;
 			case ACCEPT_DUEL:
 				GameAcceptDuelAction actionda = (GameAcceptDuelAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onPlayerAcceptDuel(pkt.getEntityId(), actionda.getTargetId()));
+				Player sendera = (Player) getPerso().getMap().getEntities().get(pkt.getEntityId());
+				Player targeta = (Player) getPerso().getMap().getEntities().get(actionda.getTargetId());
+				PlayerAcceptDuelEvent playerAcceptDuelEvent = new PlayerAcceptDuelEvent(client, sendera, targeta);
+				playerAcceptDuelEvent.send();
+				pkt.setEntityId(playerAcceptDuelEvent.getSender().getUUID());
+				actionda.setTargetId(playerAcceptDuelEvent.getTarget().getUUID());
 				break;
 			case REFUSE_DUEL:
 				GameRefuseDuelAction actiondr = (GameRefuseDuelAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onPlayerRefuseDuel(pkt.getEntityId(), actiondr.getTargetId()));
+				Player senderr = (Player) getPerso().getMap().getEntities().get(pkt.getEntityId());
+				Player targetr = (Player) getPerso().getMap().getEntities().get(actiondr.getTargetId());
+				PlayerRefuseDuelEvent refusevent = new PlayerRefuseDuelEvent(client, senderr, targetr);
+				refusevent.send();
+				pkt.setEntityId(refusevent.getSender().getUUID());
+				actiondr.setTargetId(refusevent.getTarget().getUUID());
 				break;
 			case SPELL_LAUNCHED:
 				GameSpellLaunchedAction actionsp = (GameSpellLaunchedAction) pkt.getAction();
-				getGameActionHandler().forEach(h -> h.onSpellLaunched(actionsp.getSpellId(), actionsp.getCellId(), actionsp.getLvl()));
+				EntityLaunchSpellEvent lsevent = new EntityLaunchSpellEvent(client, actionsp.getSpellId(), actionsp.getCellId(), actionsp.getLvl());
+				lsevent.send();
+				actionsp.setCellId(lsevent.getCellId());
+				actionsp.setLvl(lsevent.getSpellLvl());
+				actionsp.setSpellId(lsevent.getSpellId());
 				break;
 			case HARVEST_TIME:
 				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
@@ -868,18 +918,18 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 						}
 						sendPkt(new GameActionACKPacket().setActionId(action));
 					} , actionh.getTime(), TimeUnit.MILLISECONDS);
-					HarvestTimeReceiveEvent event = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime());
-					event.send();
-					actionh.setCellId(event.getCellId());
-					actionh.setTime(event.getTime());
+					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime());
+					eventh.send();
+					actionh.setCellId(eventh.getCellId());
+					actionh.setTime(eventh.getTime());
 				} else {
 					Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
 					Player p = (Player) entity;
-					PlayerStoleYourRessourceEvent event = new PlayerStoleYourRessourceEvent(client, actionh.getCellId(), actionh.getTime(), p);
-					event.send();
-					actionh.setCellId(event.getCellId());
-					actionh.setTime(event.getTime());
-					pkt.setEntityId(event.getThief().getUUID());
+					PlayerStoleYourRessourceEvent eventss = new PlayerStoleYourRessourceEvent(client, actionh.getCellId(), actionh.getTime(), p);
+					eventss.send();
+					actionh.setCellId(eventss.getCellId());
+					actionh.setTime(eventss.getTime());
+					pkt.setEntityId(eventss.getThief().getUUID());
 				}
 				break;
 			case TACLE:
@@ -894,192 +944,233 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameServerReadyPacket pkt) {
 		log(pkt);
+		Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
+		if (entity == null) {
+			transmit(pkt);
+			return;
+		}
+		EntityReadyToFight event = new EntityReadyToFight(client, entity, pkt.isReady());
+		event.send();
+		pkt.setEntityId(event.getEntity().getUUID());
+		pkt.setReady(event.isReady());
 		transmit(pkt);
-		getGameHandler().forEach(h -> h.onPlayerReadyToFight(pkt.getEntityId(), pkt.isReady()));
 	}
 
 	@Override
 	public void handle(GameStartToPlayPacket pkt) {
 		log(pkt);
+		new FightStartEvent(client).send();
 		transmit(pkt);
-		getGameHandler().forEach(GameServerHandler::onFightStart);
 	}
 
 	@Override
 	public void handle(GameTurnFinishPacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
-		if (fight == null) {
-			LOGGER.severe(
-					"TurnFinishPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+		Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
+		if (entity == null) {
+			transmit(pkt);
 			return;
 		}
-		getGameHandler().forEach(h -> h.onEntityTurnEnd(pkt.getEntityId()));
+		EntityTurnEndEvent event = new EntityTurnEndEvent(client, entity);
+		event.send();
+		pkt.setEntityId(event.getEntity().getUUID());
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(GameTurnListPacket pkt) {
 		log(pkt);
+		FightTurnOrderReceiveEvent event = new FightTurnOrderReceiveEvent(client, Arrays.stream(pkt.getTurns()).mapToObj(getPerso().getMap().getEntities()::get).toArray(Entity[]::new));
+		event.send();
+		pkt.setTurns(Arrays.stream(event.getTurns()).filter(Objects::nonNull).mapToLong(Entity::getUUID).toArray());
 		transmit(pkt);
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
-		if (fight == null) {
-			LOGGER.severe(
-					"TurnListPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
-			return;
-		}
-		getGameHandler().forEach(h -> h.onFightTurnInfos(pkt.getTurns()));
 	}
 
 	@Override
 	public void handle(GameTurnMiddlePacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
-		if (fight == null) {
-			LOGGER.severe(
-					"TurnMiddlePacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
-			return;
+		for (FightEntity e : pkt.getEntities()) {
+			Entity ent = getPerso().getMap().getEntities().get(e.getId());
+			if (ent == null) continue;
+			if (ent instanceof Player) {
+				ManchouPlayerEntity player = (ManchouPlayerEntity) ent;
+				player.setLife(e.getLife());
+				player.setLifeMax(e.getLifeMax());
+				player.setPa(e.getPa());
+				player.setPm(e.getPm());
+				player.setDead(e.isDead());
+			} else if (ent instanceof Mob) {
+				ManchouMob mob = (ManchouMob) ent;
+				mob.setLife(e.getLife());
+				mob.setLifeMax(e.getLifeMax());
+				mob.setPa(e.getPa());
+				mob.setPm(e.getPm());
+				mob.setDead(e.isDead());
+			}
 		}
-		for (FightEntity e : pkt.getEntities())
-			fight.addEntity(e);
-		getGameHandler().forEach(h -> h.onFighterInfos(pkt.getEntities()));
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(GameTurnReadyPacket pkt) {
 		log(pkt);
+		if (isBot()) sendPkt(new GameTurnOkPacket());
 		transmit(pkt);
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
-		if (fight == null) {
-			LOGGER.severe(
-					"TurnReadyPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
-			return;
-		}
-		getGameHandler().forEach(h -> h.onEntityTurnReady(pkt.getEntityId()));
 	}
 
 	@Override
 	public void handle(GameTurnStartPacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		Fight fight = getPerso().getFightInfos().getCurrentFight();
-		if (fight == null) {
-			LOGGER.severe(
-					"TurnStartPacket received before fight initialisation ! skiping.. | No worries the server will send all infos again, this appen sometimes when you keep reconnecting in a fight");
+		Entity e = getPerso().getMap().getEntities().get(pkt.getCharacterId());
+		if (e == null) {
+			transmit(pkt);
 			return;
 		}
-		fight.setCurrentTurn(pkt.getCharacterId());
-		getPerso().getAbilities().getFightAbility().getBotThread().unpause();
-		getGameHandler().forEach(h -> h.onEntityTurnStart(pkt.getCharacterId(), pkt.getTime()));
+		getPerso().getMap().setCurrentTurn(e);
+		EntityTurnStartEvent event = new EntityTurnStartEvent(client, e, pkt.getTime());
+		event.send();
+		pkt.setCharacterId(event.getEntity().getUUID());
+		pkt.setTime(event.getTime());
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(ExchangeRequestOkPacket pkt) {
 		log(pkt);
+		ManchouMap map = getPerso().getMap();
+		Entity player = map.getEntities().get(pkt.getPlayerId());
+		Entity target = map.getEntities().get(pkt.getTargetId());
+		ExchangeAcceptedEvent event = new ExchangeAcceptedEvent(client, (Player) player, (Player) target, pkt.getExchange());
+		event.send();
+		pkt.setExchange(event.getExchange());
+		pkt.setPlayerId(event.getSender().getUUID());
+		pkt.setTargetId(event.getTarget().getUUID());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onExchangeRequestOk(pkt.getPlayerId(), pkt.getTargetId(), pkt.getExchange()));
 	}
 
 	@Override
 	public void handle(DialogLeavePacket pkt) {
 		log(pkt);
+		new DialogLeaveEvent(client).send();
 		transmit(pkt);
-		getDialogHandler().forEach(DialogServerHandler::onDialogLeave);
 	}
 
 	@Override
 	public void handle(DialogCreateOkPacket pkt) {
 		log(pkt);
+		DialogCreateEvent event = new DialogCreateEvent(client, (Npc) getPerso().getMap().getEntities().get(pkt.getNpcId()));
+		event.send();
+		pkt.setNpcId(event.getNpc().getUUID());
 		transmit(pkt);
-		getPerso().getAbilities().getBaseAbility().getBotThread().unpause();
-		getDialogHandler().forEach(h -> h.onDialogCreate(pkt.getNpcId()));
 	}
 
 	@Override
 	public void handle(DialogQuestionPacket pkt) {
 		log(pkt);
+		DialogQuestionReceiveEvent event = new DialogQuestionReceiveEvent(client, pkt.getQuestion(), pkt.getResponse(), pkt.getQuestionParam());
+		event.send();
+		pkt.setQuestion(event.getQuestion());
+		pkt.setQuestionParam(event.getQuestionParam());
+		pkt.setResponse(event.getResponse());
 		transmit(pkt);
-		getDialogHandler().forEach(h -> h.onQuestion(pkt.getQuestion(), pkt.getQuestionParam(), pkt.getResponse()));
 	}
 
 	@Override
 	public void handle(DialogPausePacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getDialogHandler().forEach(DialogServerHandler::onDialogPause);
 	}
 
 	@Override
 	public void handle(ExchangeReadyPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onExchangeReady(pkt.getExtraData()));
 	}
 
 	@Override
 	public void handle(ItemAddOkPacket pkt) {
 		log(pkt);
+		Set<ManchouItem> collect = pkt.getItems().stream().map(ManchouItem::fromProtocolItem).collect(Collectors.toSet());
+		getPerso().getInventory().addContent(pkt.getItems());
+		ItemsAddedEvent event = new ItemsAddedEvent(client, collect);
+		event.send();
+		pkt.setItems(event.getItems().stream().map(i -> ((ManchouItem) i).serializeProtocol()).collect(Collectors.toSet()));
 		transmit(pkt);
-		for (Item i : pkt.getItems())
-			getPerso().getInventory().getContents().put(i.getUid(), i); // on add direct car quand c juste une update de quantité il y a un autre packet
-		getItemHandler().forEach(h -> h.onItemsAdd(pkt.getItems()));
 	}
 
 	@Override
 	public void handle(ItemAddErrorPacket pkt) {
 		log(pkt);
+		ItemAddErrorEvent event = new ItemAddErrorEvent(client, pkt.getResult());
+		event.send();
+		pkt.setResult(event.getResult());
 		transmit(pkt);
-		getItemHandler().forEach(h -> h.onItemAddError(pkt.getResult()));
 	}
 
 	@Override
 	public void handle(ItemDropErrorPacket pkt) {
 		log(pkt);
+		ItemDropErrorEvent event = new ItemDropErrorEvent(client, pkt.getResult());
+		event.send();
+		pkt.setResult(event.getResult());
 		transmit(pkt);
-		getItemHandler().forEach(h -> h.onItemDropError(pkt.getResult()));
 	}
 
 	@Override
 	public void handle(ItemRemovePacket pkt) {
 		log(pkt);
+		fr.aresrpg.tofumanchou.domain.data.item.Item removed = getPerso().getInventory().getContents().remove(pkt.getItemuid());
+		ItemRemovedEvent event = new ItemRemovedEvent(client, removed);
+		event.send();
+		pkt.setItemuid(event.getItem().getUUID());
 		transmit(pkt);
-		System.out.println("Item remove id : " + pkt.getItemuid());
-		getPerso().getInventory().getContents().remove(pkt.getItemuid());
-		getItemHandler().forEach(h -> h.onItemRemove(pkt.getItemuid()));
 	}
 
 	@Override
 	public void handle(ItemQuantityUpdatePacket pkt) {
 		log(pkt);
+		fr.aresrpg.tofumanchou.domain.data.item.Item item = getPerso().getInventory().getItem(pkt.getItemUid());
+		int lastQ = item.getAmount();
+		item.setAmount(pkt.getAmount());
+		ItemQuantityUpdateEvent event = new ItemQuantityUpdateEvent(client, item, lastQ, pkt.getAmount());
+		event.send();
+		pkt.setItemUid(event.getItem().getUUID());
+		pkt.setAmount(event.getNewAmount());
 		transmit(pkt);
-		getPerso().getInventory().getItem(pkt.getItemUid()).setQuantity(pkt.getAmount());
-		getItemHandler().forEach(h -> h.onItemQuantityUpdate(pkt.getItemUid(), pkt.getAmount()));
 	}
 
 	@Override
 	public void handle(ItemMovementConfirmPacket pkt) {
 		log(pkt);
+		ManchouItem item = (ManchouItem) getPerso().getInventory().getItem(pkt.getItemUid());
+		item.setPosition(pkt.getPosition());
+		ItemMovedEvent event = new ItemMovedEvent(client, item, pkt.getPosition());
+		event.send();
+		pkt.setItemUid(event.getItem().getUUID());
+		pkt.setPosition(event.getPosition());
 		transmit(pkt);
-		getPerso().getInventory().getItem(pkt.getItemUid()).setPosition(pkt.getPosition());
-		getItemHandler().forEach(h -> h.onItemMove(pkt.getItemUid(), pkt.getPosition()));
 	}
 
 	@Override
 	public void handle(ItemToolPacket pkt) {
 		log(pkt);
+		getPerso().updateJob(pkt.getJobId());
+		JobItemEquipEvent event = new JobItemEquipEvent(client, pkt.getJobId());
+		event.send();
+		pkt.setJobId(event.getJob());
 		transmit(pkt);
-		getPerso().getBotInfos().updateCurrentJob(pkt.getJobId());
-		getItemHandler().forEach(h -> h.onItemToolEquip(pkt.getJobId()));
 	}
 
 	@Override
 	public void handle(ItemWeightPacket pkt) {
 		log(pkt);
+		getPerso().setPods(pkt.getCurrentWeight());
+		getPerso().setMaxPods(pkt.getMaxWeight());
+		PodsUpdateEvent event = new PodsUpdateEvent(client, pkt.getCurrentWeight(), pkt.getMaxWeight());
+		event.send();
+		pkt.setCurrentWeight(event.getCurrentPods());
+		pkt.setMaxWeight(event.getCurrentPods());
 		transmit(pkt);
-		getPerso().getStatsInfos().setPods(pkt.getCurrentWeight());
-		getPerso().getStatsInfos().setMaxPods(pkt.getMaxWeight());
-		getItemHandler().forEach(h -> h.onPodsUpdate(pkt.getCurrentWeight(), pkt.getMaxWeight()));
 	}
 
 	@Override
@@ -1135,90 +1226,120 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCraftPacket pkt) { // TODO
+	public void handle(ExchangeCraftPacket pkt) {
 		log(pkt);
+		CraftResultEvent event = new CraftResultEvent(client, pkt.getResult());
+		event.send();
+		pkt.setResult(event.getResult()); // inutile car le packet write n'est pas encore écrit lel
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onCraft(pkt.getResult()));
 	}
 
 	@Override
-	public void handle(ExchangeLocalMovePacket pkt) { // TODO
+	public void handle(ExchangeLocalMovePacket pkt) {
 		log(pkt);
+		ExchangeLocalMoveEvent event = new ExchangeLocalMoveEvent(client, pkt.getItemType(), pkt.getItemAmount(), pkt.getLocalKama(), pkt.isAdd());
+		event.send();
+		pkt.setAdd(event.isAdd());
+		pkt.setItemAmount(event.getItemAmount());
+		pkt.setItemType(event.getItemType());
+		pkt.setLocalKama(event.getLocalKama());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onLocalMove(pkt.getItemType(), pkt.getItemAmount(), pkt.getLocalKama()));
 	}
 
 	@Override
-	public void handle(ExchangeDistantMovePacket pkt) { // TODO
+	public void handle(ExchangeDistantMovePacket pkt) {
 		log(pkt);
+		ManchouItem item = ManchouItem.fromProtocolItem(pkt.getMoved());
+		ExchangeDistantMoveEvent event = new ExchangeDistantMoveEvent(client, item, pkt.isAdd(), pkt.getRemainingHours(), pkt.getKamas());
+		event.send();
+		pkt.setAdd(event.isAdd());
+		pkt.setKamas(event.getKamas());
+		pkt.setMoved(((ManchouItem) event.getMoved()).serializeProtocol());
+		pkt.setRemainingHours(event.getRemainingHours());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onDistantMove(pkt.getMoved(), pkt.isAdd(), pkt.getKamas(), pkt.getRemainingHours()));
 	}
 
 	@Override
-	public void handle(ExchangeCoopMovePacket pkt) { // TODO
+	public void handle(ExchangeCoopMovePacket pkt) {
 		log(pkt);
+		ManchouItem item = ManchouItem.fromProtocolItem(pkt.getMoved());
+		ExchangeCoopMoveEvent event = new ExchangeCoopMoveEvent(client, item, pkt.getKamas(), pkt.isAdd());
+		event.send();
+		pkt.setAdd(event.isAdd());
+		pkt.setKamas(event.getKamas());
+		pkt.setMoved(((ManchouItem) event.getMoved()).serializeProtocol());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onCoopMove(pkt.getMoved(), pkt.getKamas(), pkt.isAdd()));
 	}
 
 	@Override
 	public void handle(ExchangeStorageMovePacket pkt) {
 		log(pkt);
-		transmit(pkt);
-		switch (getPerso().getAbilities().getBaseAbility().getStates().currentInventory) {
+		switch (getPerso().getCurrentInv()) {
 			case BANK:
 				if (pkt.getMoved() != null) {
-					if (pkt.isAdd()) getAccount().getBanque().getContents().put(pkt.getMoved().getUid(), pkt.getMoved());
+					if (pkt.isAdd()) client.getBank().getContents().put(pkt.getMoved().getUid(), ManchouItem.fromProtocolItem(pkt.getMoved()));
 					else {
-						Map<Long, Item> contents = getAccount().getBanque().getContents();
+						Map<Long, fr.aresrpg.tofumanchou.domain.data.item.Item> contents = client.getBank().getContents();
 						Item moved = pkt.getMoved();
-						Item itemInBank = contents.get(moved.getUid());
-						if (moved.getQuantity() >= itemInBank.getQuantity()) contents.remove(moved.getUid());
-						else itemInBank.setQuantity(itemInBank.getQuantity() - moved.getQuantity());
+						ManchouItem itemInBank = (ManchouItem) contents.get(moved.getUid());
+						if (moved.getQuantity() >= itemInBank.getAmount()) contents.remove(moved.getUid());
+						else itemInBank.setAmount(itemInBank.getAmount() - moved.getQuantity());
 					}
 				}
-				if (pkt.getKamas() != -1) getAccount().getBanque().setKamas(pkt.getKamas());
+				if (pkt.getKamas() != -1) client.getBank().setKamas(pkt.getKamas());
 				break;
 			default:
 				break;
 		}
-		getExchangeHandler().forEach(h -> h.onStorageMove(pkt.getMoved(), pkt.getKamas(), pkt.isAdd()));
+		ExchangeStorageMoveEvent event = new ExchangeStorageMoveEvent(client, ManchouItem.fromProtocolItem(pkt.getMoved()), pkt.getKamas(), pkt.isAdd());
+		event.send();
+		pkt.setAdd(event.isAdd());
+		pkt.setKamas(event.getKamas());
+		pkt.setMoved(((ManchouItem) event.getMoved()).serializeProtocol());
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(ExchangeShopMovePacket pkt) {
 		log(pkt);
+		ExchangeShopMoveEvent event = new ExchangeShopMoveEvent(client, ManchouItem.fromProtocolItem(pkt.getMoved()), pkt.isAdd());
+		event.send();
+		pkt.setAdd(event.isAdd());
+		pkt.setMoved(((ManchouItem) event.getItem()).serializeProtocol());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onShopMove(pkt.getMoved(), pkt.isAdd()));
 	}
 
 	@Override
 	public void handle(ExchangeCraftPublicPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onCraftPublic(pkt.isCraftPublicMode(), pkt.getItemid(), pkt.getMultiCraftSkill()));
 	}
 
 	@Override
 	public void handle(ExchangeSellToNpcResultPacket pkt) {
 		log(pkt);
+		SellItemToNpcResultEvent event = new SellItemToNpcResultEvent(client, pkt.isSuccess());
+		event.send();
+		pkt.setSuccess(event.isSuccess());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onSellToNpc(pkt.isSuccess()));
 	}
 
 	@Override
 	public void handle(ExchangeBuyToNpcResultPacket pkt) {
 		log(pkt);
+		BuyItemToNpcResultEvent event = new BuyItemToNpcResultEvent(client, pkt.isSuccess());
+		event.send();
+		pkt.setSuccess(event.isSuccess());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onBuyToNpc(pkt.isSuccess()));
 	}
 
 	@Override
 	public void handle(ExchangeCraftLoopPacket pkt) {
 		log(pkt);
+		CraftLoopIndexEvent event = new CraftLoopIndexEvent(client, pkt.getIndex());
+		event.send();
+		pkt.setIndex(event.getIndex());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onCraftLoop(pkt.getIndex()));
 	}
 
 	@Override

@@ -9,16 +9,17 @@ import fr.aresrpg.dofus.structures.*;
 import fr.aresrpg.dofus.structures.game.Alignement;
 import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.structures.item.Accessory;
+import fr.aresrpg.dofus.structures.job.Jobs;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.Job;
 import fr.aresrpg.tofumanchou.domain.data.Spell;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
-import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.io.BaseServerPacketHandler;
 import fr.aresrpg.tofumanchou.infra.io.ManchouBridge;
@@ -62,7 +63,7 @@ public class ManchouPerso implements Perso {
 	private String guildName;
 	private String[] emblem;
 	private String restrictions;
-	private Inventory inventory;
+	private PlayerInventory inventory;
 	private int xp;
 	private int xpLow;
 	private int xpHight;
@@ -81,6 +82,11 @@ public class ManchouPerso implements Perso {
 	private Orientation orientation;
 	private int sprite;
 	private ManchouJob job;
+	private Map<Jobs, Job> jobs;
+	private int pods;
+	private int maxPods;
+
+	private Exchange currentInv;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -160,6 +166,21 @@ public class ManchouPerso implements Perso {
 		} catch (IOException e) {
 
 		}
+	}
+
+	/**
+	 * @return the currentInv
+	 */
+	public Exchange getCurrentInv() {
+		return currentInv;
+	}
+
+	/**
+	 * @param currentInv
+	 *            the currentInv to set
+	 */
+	public void setCurrentInv(Exchange currentInv) {
+		this.currentInv = currentInv;
 	}
 
 	@Override
@@ -570,7 +591,7 @@ public class ManchouPerso implements Perso {
 	/**
 	 * @return the inventory
 	 */
-	public Inventory getInventory() {
+	public PlayerInventory getInventory() {
 		return inventory;
 	}
 
@@ -578,7 +599,7 @@ public class ManchouPerso implements Perso {
 	 * @param inventory
 	 *            the inventory to set
 	 */
-	public void setInventory(Inventory inventory) {
+	public void setInventory(PlayerInventory inventory) {
 		this.inventory = inventory;
 	}
 
@@ -793,4 +814,66 @@ public class ManchouPerso implements Perso {
 		return job;
 	}
 
+	@Override
+	public int getPa() {
+		return getStat(Stat.PA).getTotal();
+	}
+
+	@Override
+	public void setPa(int pa) {
+		getStat(Stat.PA).setTotal(pa);
+	}
+
+	@Override
+	public int getPm() {
+		return getStat(Stat.PM).getTotal();
+	}
+
+	@Override
+	public void setPm(int pm) {
+		getStat(Stat.PM).setTotal(pm);
+	}
+
+	@Override
+	public Map<Jobs, Job> getJobs() {
+		return jobs;
+	}
+
+	public void updateJob(Jobs j) {
+		if (jobs.containsKey(j)) setJob((ManchouJob) jobs.get(j));
+	}
+
+	/**
+	 * @param job
+	 *            the job to set
+	 */
+	public void setJob(ManchouJob job) {
+		this.job = job;
+	}
+
+	@Override
+	public int getPods() {
+		return pods;
+	}
+
+	@Override
+	public int getMaxPods() {
+		return maxPods;
+	}
+
+	/**
+	 * @param pods
+	 *            the pods to set
+	 */
+	public void setPods(int pods) {
+		this.pods = pods;
+	}
+
+	/**
+	 * @param maxPods
+	 *            the maxPods to set
+	 */
+	public void setMaxPods(int maxPods) {
+		this.maxPods = maxPods;
+	}
 }

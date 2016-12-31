@@ -2,6 +2,7 @@ package fr.aresrpg.tofumanchou.domain.data.entity.player;
 
 import fr.aresrpg.dofus.structures.Chat;
 import fr.aresrpg.dofus.structures.Friend;
+import fr.aresrpg.dofus.structures.job.Jobs;
 import fr.aresrpg.tofumanchou.domain.data.*;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
@@ -30,6 +31,8 @@ public interface Perso extends Player {
 
 	Job getJob();
 
+	Map<Jobs, Job> getJobs();
+
 	int getStatsPoints();
 
 	int getSpellsPoints();
@@ -47,4 +50,8 @@ public interface Perso extends Player {
 	Carte getMap();
 
 	Map<Spells, Spell> getSpells();
+
+	int getPods();
+
+	int getMaxPods();
 }

@@ -149,4 +149,148 @@ public class ManchouMob implements Mob {
 		this.cellId = cellid;
 	}
 
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(long uuid) {
+		this.uuid = uuid;
+	}
+
+	/**
+	 * @param effects
+	 *            the effects to set
+	 */
+	public void setEffects(Set<Effect> effects) {
+		this.effects = effects;
+	}
+
+	/**
+	 * @param scaleX
+	 *            the scaleX to set
+	 */
+	public void setScaleX(int scaleX) {
+		this.scaleX = scaleX;
+	}
+
+	/**
+	 * @param scaleY
+	 *            the scaleY to set
+	 */
+	public void setScaleY(int scaleY) {
+		this.scaleY = scaleY;
+	}
+
+	/**
+	 * @param orientation
+	 *            the orientation to set
+	 */
+	public void setOrientation(Orientation orientation) {
+		this.orientation = orientation;
+	}
+
+	/**
+	 * @param entityType
+	 *            the entityType to set
+	 */
+	public void setEntityType(int entityType) {
+		this.entityType = entityType;
+	}
+
+	/**
+	 * @param spriteType
+	 *            the spriteType to set
+	 */
+	public void setSpriteType(int spriteType) {
+		this.spriteType = spriteType;
+	}
+
+	/**
+	 * @param noFlip
+	 *            the noFlip to set
+	 */
+	public void setNoFlip(boolean noFlip) {
+		this.noFlip = noFlip;
+	}
+
+	/**
+	 * @param powerLvl
+	 *            the powerLvl to set
+	 */
+	public void setPowerLvl(int powerLvl) {
+		this.powerLvl = powerLvl;
+	}
+
+	/**
+	 * @param colors
+	 *            the colors to set
+	 */
+	public void setColors(EntityColor colors) {
+		this.colors = colors;
+	}
+
+	/**
+	 * @param accessories
+	 *            the accessories to set
+	 */
+	public void setAccessories(Accessory[] accessories) {
+		this.accessories = accessories;
+	}
+
+	/**
+	 * @param life
+	 *            the life to set
+	 */
+	public void setLife(int life) {
+		this.life = life;
+	}
+
+	/**
+	 * @param lifeMax
+	 *            the lifeMax to set
+	 */
+	public void setLifeMax(int lifeMax) {
+		this.lifeMax = lifeMax;
+	}
+
+	/**
+	 * @param pa
+	 *            the pa to set
+	 */
+	public void setPa(int pa) {
+		this.pa = pa;
+	}
+
+	/**
+	 * @param pm
+	 *            the pm to set
+	 */
+	public void setPm(int pm) {
+		this.pm = pm;
+	}
+
+	/**
+	 * @param resistances
+	 *            the resistances to set
+	 */
+	public void setResistances(int[] resistances) {
+		this.resistances = resistances;
+	}
+
+	/**
+	 * @param team
+	 *            the team to set
+	 */
+	public void setTeam(int team) {
+		this.team = team;
+	}
+
+	/**
+	 * @param dead
+	 *            the dead to set
+	 */
+	public void setDead(boolean dead) {
+		this.dead = dead;
+	}
+
 }

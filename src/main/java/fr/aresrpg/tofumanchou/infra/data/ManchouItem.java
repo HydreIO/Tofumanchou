@@ -59,9 +59,108 @@ public class ManchouItem implements Item {
 		return i;
 	}
 
+	public fr.aresrpg.dofus.structures.item.Item serializeProtocol() {
+		return new fr.aresrpg.dofus.structures.item.Item(uuid, typeId, amount, position, effects, price, skin);
+	}
+
 	@Override
 	public long getUUID() {
 		return uuid;
+	}
+
+	/**
+	 * @return the uuid
+	 */
+	public long getUuid() {
+		return uuid;
+	}
+
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(long uuid) {
+		this.uuid = uuid;
+	}
+
+	/**
+	 * @param name
+	 *            the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * @param desc
+	 *            the desc to set
+	 */
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	/**
+	 * @param category
+	 *            the category to set
+	 */
+	public void setCategory(ItemCategory category) {
+		this.category = category;
+	}
+
+	/**
+	 * @param typeId
+	 *            the typeId to set
+	 */
+	public void setTypeId(int typeId) {
+		this.typeId = typeId;
+	}
+
+	/**
+	 * @param position
+	 *            the position to set
+	 */
+	public void setPosition(int position) {
+		this.position = position;
+	}
+
+	/**
+	 * @param effects
+	 *            the effects to set
+	 */
+	public void setEffects(Effect[] effects) {
+		this.effects = effects;
+	}
+
+	/**
+	 * @param price
+	 *            the price to set
+	 */
+	public void setPrice(int price) {
+		this.price = price;
+	}
+
+	/**
+	 * @param skin
+	 *            the skin to set
+	 */
+	public void setSkin(int skin) {
+		this.skin = skin;
+	}
+
+	/**
+	 * @param remainingHours
+	 *            the remainingHours to set
+	 */
+	public void setRemainingHours(int remainingHours) {
+		this.remainingHours = remainingHours;
+	}
+
+	/**
+	 * @param pods
+	 *            the pods to set
+	 */
+	public void setPods(int pods) {
+		this.pods = pods;
 	}
 
 	@Override
