@@ -1,4 +1,4 @@
-package fr.aresrpg.tofumanchou.domain.event;
+package fr.aresrpg.tofumanchou.domain.event.group;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
@@ -8,9 +8,9 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class GroupPlayerStopFollowEvent implements Event<GroupPlayerStopFollowEvent> {
+public class GroupPlayerFollowEvent implements Event<GroupPlayerFollowEvent> {
 
-	private static final EventBus<GroupPlayerStopFollowEvent> BUS = new EventBus<>(GroupPlayerStopFollowEvent.class);
+	private static final EventBus<GroupPlayerFollowEvent> BUS = new EventBus<>(GroupPlayerFollowEvent.class);
 	private Account client;
 	private String followed;
 
@@ -18,7 +18,7 @@ public class GroupPlayerStopFollowEvent implements Event<GroupPlayerStopFollowEv
 	 * @param client
 	 * @param followed
 	 */
-	public GroupPlayerStopFollowEvent(Account client, String followed) {
+	public GroupPlayerFollowEvent(Account client, String followed) {
 		this.client = client;
 		this.followed = followed;
 	}
@@ -54,7 +54,7 @@ public class GroupPlayerStopFollowEvent implements Event<GroupPlayerStopFollowEv
 	}
 
 	@Override
-	public EventBus<GroupPlayerStopFollowEvent> getBus() {
+	public EventBus<GroupPlayerFollowEvent> getBus() {
 		return BUS;
 	}
 

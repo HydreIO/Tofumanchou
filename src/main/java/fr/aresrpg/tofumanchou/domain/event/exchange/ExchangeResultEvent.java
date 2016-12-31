@@ -1,4 +1,4 @@
-package fr.aresrpg.tofumanchou.domain.event;
+package fr.aresrpg.tofumanchou.domain.event.exchange;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
@@ -8,9 +8,9 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class BuyItemToNpcResultEvent implements Event<BuyItemToNpcResultEvent> {
+public class ExchangeResultEvent implements Event<ExchangeResultEvent> {
 
-	private static final EventBus<BuyItemToNpcResultEvent> BUS = new EventBus<>(BuyItemToNpcResultEvent.class);
+	private static final EventBus<ExchangeResultEvent> BUS = new EventBus<>(ExchangeResultEvent.class);
 	private Account client;
 	private boolean success;
 
@@ -18,7 +18,7 @@ public class BuyItemToNpcResultEvent implements Event<BuyItemToNpcResultEvent> {
 	 * @param client
 	 * @param success
 	 */
-	public BuyItemToNpcResultEvent(Account client, boolean success) {
+	public ExchangeResultEvent(Account client, boolean success) {
 		this.client = client;
 		this.success = success;
 	}
@@ -54,7 +54,7 @@ public class BuyItemToNpcResultEvent implements Event<BuyItemToNpcResultEvent> {
 	}
 
 	@Override
-	public EventBus<BuyItemToNpcResultEvent> getBus() {
+	public EventBus<ExchangeResultEvent> getBus() {
 		return BUS;
 	}
 

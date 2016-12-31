@@ -1,4 +1,4 @@
-package fr.aresrpg.tofumanchou.domain.event;
+package fr.aresrpg.tofumanchou.domain.event.group;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
@@ -8,10 +8,14 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class TemplateEvent implements Event<TemplateEvent> {
+public class GroupCreatedEvent implements Event<GroupCreatedEvent> {
 
-	private static final EventBus<TemplateEvent> BUS = new EventBus<>(TemplateEvent.class);
+	private static final EventBus<GroupCreatedEvent> BUS = new EventBus<>(GroupCreatedEvent.class);
 	private Account client;
+
+	public GroupCreatedEvent(Account client) {
+		this.client = client;
+	}
 
 	/**
 	 * @return the client
@@ -21,7 +25,7 @@ public class TemplateEvent implements Event<TemplateEvent> {
 	}
 
 	@Override
-	public EventBus<TemplateEvent> getBus() {
+	public EventBus<GroupCreatedEvent> getBus() {
 		return BUS;
 	}
 

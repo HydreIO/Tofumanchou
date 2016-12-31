@@ -1,4 +1,4 @@
-package fr.aresrpg.tofumanchou.domain.event;
+package fr.aresrpg.tofumanchou.domain.event.group;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
@@ -9,9 +9,9 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class GroupInviteErrorEvent implements Event<GroupInviteErrorEvent> {
+public class GroupCreateErrorEvent implements Event<GroupCreateErrorEvent> {
 
-	private static final EventBus<GroupInviteErrorEvent> BUS = new EventBus<>(GroupInviteErrorEvent.class);
+	private static final EventBus<GroupCreateErrorEvent> BUS = new EventBus<>(GroupCreateErrorEvent.class);
 	private Account client;
 	private PartyErrorReason reason;
 
@@ -19,7 +19,7 @@ public class GroupInviteErrorEvent implements Event<GroupInviteErrorEvent> {
 	 * @param client
 	 * @param reason
 	 */
-	public GroupInviteErrorEvent(Account client, PartyErrorReason reason) {
+	public GroupCreateErrorEvent(Account client, PartyErrorReason reason) {
 		this.client = client;
 		this.reason = reason;
 	}
@@ -55,7 +55,7 @@ public class GroupInviteErrorEvent implements Event<GroupInviteErrorEvent> {
 	}
 
 	@Override
-	public EventBus<GroupInviteErrorEvent> getBus() {
+	public EventBus<GroupCreateErrorEvent> getBus() {
 		return BUS;
 	}
 

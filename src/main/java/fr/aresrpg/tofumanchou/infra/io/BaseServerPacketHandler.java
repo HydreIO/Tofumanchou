@@ -78,6 +78,7 @@ import fr.aresrpg.tofumanchou.domain.event.entity.*;
 import fr.aresrpg.tofumanchou.domain.event.exchange.*;
 import fr.aresrpg.tofumanchou.domain.event.fight.*;
 import fr.aresrpg.tofumanchou.domain.event.friend.FriendListsEvent;
+import fr.aresrpg.tofumanchou.domain.event.group.*;
 import fr.aresrpg.tofumanchou.domain.event.guild.GuildStatsEvent;
 import fr.aresrpg.tofumanchou.domain.event.item.*;
 import fr.aresrpg.tofumanchou.domain.event.map.*;

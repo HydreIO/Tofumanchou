@@ -1,4 +1,4 @@
-package fr.aresrpg.tofumanchou.domain.event;
+package fr.aresrpg.tofumanchou.domain.event.fight;
 
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
@@ -9,9 +9,9 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class FightSpawnEvent implements Event<FightSpawnEvent> {
+public class FightDespawnEvent implements Event<FightDespawnEvent> {
 
-	private static final EventBus<FightSpawnEvent> BUS = new EventBus<>(FightSpawnEvent.class);
+	private static final EventBus<FightDespawnEvent> BUS = new EventBus<>(FightDespawnEvent.class);
 	private Account client;
 	private FightSpawn fight;
 
@@ -19,7 +19,7 @@ public class FightSpawnEvent implements Event<FightSpawnEvent> {
 	 * @param client
 	 * @param fight
 	 */
-	public FightSpawnEvent(Account client, FightSpawn fight) {
+	public FightDespawnEvent(Account client, FightSpawn fight) {
 		this.client = client;
 		this.fight = fight;
 	}
@@ -55,7 +55,7 @@ public class FightSpawnEvent implements Event<FightSpawnEvent> {
 	}
 
 	@Override
-	public EventBus<FightSpawnEvent> getBus() {
+	public EventBus<FightDespawnEvent> getBus() {
 		return BUS;
 	}
 
