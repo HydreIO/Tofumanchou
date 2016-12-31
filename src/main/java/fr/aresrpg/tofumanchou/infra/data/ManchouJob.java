@@ -1,5 +1,6 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
+import fr.aresrpg.dofus.structures.job.JobInfo;
 import fr.aresrpg.dofus.structures.job.Jobs;
 import fr.aresrpg.tofumanchou.domain.data.Job;
 
@@ -27,6 +28,10 @@ public class ManchouJob implements Job {
 		if (obj == null) return false;
 		if (obj == this) return true;
 		return obj instanceof ManchouJob && ((ManchouJob) obj).getType() == type;
+	}
+
+	public JobInfo serializeProtocol() {
+		return new JobInfo(type, lvl, minXp, xp, maxXp);
 	}
 
 	/**

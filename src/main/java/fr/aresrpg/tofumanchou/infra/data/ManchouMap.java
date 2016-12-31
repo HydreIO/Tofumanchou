@@ -1,10 +1,10 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
+import fr.aresrpg.dofus.structures.game.FightSpawn;
 import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
-import fr.aresrpg.tofumanchou.domain.data.map.Cell;
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ public class ManchouMap implements Carte {
 	private boolean spectator;
 	private int startTimer;
 	private boolean duel;
-	private Set<Integer> fightsOnMap;
+	private Set<FightSpawn> fightsOnMap;
 	private int capabilities;
 
 	public static ManchouMap fromDofusMap(DofusMap map) {
@@ -246,7 +246,7 @@ public class ManchouMap implements Carte {
 	 * @param cells
 	 *            the cells to set
 	 */
-	public void setCells(Cell[] cells) {
+	public void setCells(ManchouCell[] cells) {
 		this.cells = cells;
 	}
 
@@ -364,7 +364,7 @@ public class ManchouMap implements Carte {
 	}
 
 	@Override
-	public Set<Integer> getFightsOnMap() {
+	public Set<FightSpawn> getFightsOnMap() {
 		return fightsOnMap;
 	}
 

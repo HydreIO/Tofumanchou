@@ -1,5 +1,6 @@
 package fr.aresrpg.tofumanchou.domain.data.map;
 
+import fr.aresrpg.dofus.structures.game.FightSpawn;
 import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 
@@ -32,7 +33,7 @@ public interface Carte { // pas envie de l'apeller Map et DofusMap est déja pri
 
 	boolean isOutdoor();
 
-	Set<Integer> getFightsOnMap();
+	Set<FightSpawn> getFightsOnMap();
 
 	boolean isSpectator();
 

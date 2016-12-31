@@ -52,6 +52,7 @@ import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
 import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.character.AvailableCharacter;
+import fr.aresrpg.dofus.structures.character.PartyMember;
 import fr.aresrpg.dofus.structures.game.*;
 import fr.aresrpg.dofus.structures.item.Item;
 import fr.aresrpg.dofus.structures.job.Job;
@@ -1345,166 +1346,236 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(ExchangeCraftLoopEndPacket pkt) {
 		log(pkt);
+		CraftLoopEndEvent event = new CraftLoopEndEvent(client, pkt.getResult());
+		event.send();
+		pkt.setResult(event.getResult());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onCraftLoopEnd(pkt.getResult()));
 	}
 
 	@Override
 	public void handle(ExchangeLeaveResultPacket pkt) {
 		log(pkt);
+		ExchangeResultEvent event = new ExchangeResultEvent(client, pkt.isSuccess());
+		event.send();
+		pkt.setSuccess(event.isSuccess());
 		transmit(pkt);
-		getExchangeHandler().forEach(h -> h.onLeave(pkt.isSuccess()));
 	}
 
 	@Override
 	public void handle(PartyRefusePacket pkt) {
 		log(pkt);
+		new PlayerRefuseGroupInvitationEvent(client).send();
 		transmit(pkt);
-		getPartyHandler().forEach(PartyServerHandler::onPlayerRefuse);
 	}
 
 	@Override
 	public void handle(PartyInviteRequestOkPacket pkt) {
 		log(pkt);
+		GroupInvitationAcceptedEvent event = new GroupInvitationAcceptedEvent(client, pkt.getInviter(), pkt.getInvited());
+		event.send();
+		pkt.setInvited(event.getInvited());
+		pkt.setInviter(event.getInviter());
 		transmit(pkt);
-		getPartyHandler().forEach(h -> h.onInvitePlayerInGroup(pkt.getInviter(), pkt.getInvited()));
 	}
 
 	@Override
 	public void handle(PartyInviteRequestErrorPacket pkt) {
 		log(pkt);
+		GroupInviteErrorEvent event = new GroupInviteErrorEvent(client, pkt.getReason());
+		event.send();
+		pkt.setReason(event.getReason());
 		transmit(pkt);
-		getPartyHandler().forEach(h -> h.onInviteFail(pkt.getReason()));
 	}
 
 	@Override
 	public void handle(PartyLeaderPacket pkt) {
 		log(pkt);
+		GroupLeaderUpdateEvent event = new GroupLeaderUpdateEvent(client, pkt.getLeaderId());
+		event.send();
+		pkt.setLeaderId(event.getLeaderId());
 		transmit(pkt);
-		getPartyHandler().forEach(h -> h.onGroupLeaderUpdate(pkt.getLeaderId()));
 	}
 
 	@Override
 	public void handle(PartyCreateOkPacket pkt) {
 		log(pkt);
+		new GroupCreatedEvent(client).send();
 		transmit(pkt);
-		getPartyHandler().forEach(PartyServerHandler::onJoinGroupOk);
 	}
 
 	@Override
 	public void handle(PartyCreateErrorPacket pkt) {
 		log(pkt);
+		GroupCreateErrorEvent event = new GroupCreateErrorEvent(client, pkt.getReason());
+		event.send();
+		pkt.setReason(event.getReason());
 		transmit(pkt);
-		getPartyHandler().forEach(h -> h.onJoinGroupError(pkt.getReason()));
 	}
 
 	@Override
 	public void handle(PartyPlayerLeavePacket pkt) {
 		log(pkt);
+		PlayerLeaveGroupEvent event = new PlayerLeaveGroupEvent(client, pkt.getPlayer());
+		event.send();
+		pkt.setPlayer(event.getPlayer());
 		transmit(pkt);
-		getPartyHandler().forEach(h -> h.onPlayerLeaveGroup(pkt.getPlayer()));
 	}
 
 	@Override
 	public void handle(PartyFollowReceivePacket pkt) {
 		log(pkt);
+		if (pkt.isSuccess()) {
+			GroupPlayerFollowEvent event = new GroupPlayerFollowEvent(client, pkt.getFollowed());
+			event.send();
+			pkt.setFollowed(event.getFollowed());
+		} else {
+			GroupPlayerStopFollowEvent event = new GroupPlayerStopFollowEvent(client, pkt.getFollowed());
+			event.send();
+			pkt.setFollowed(event.getFollowed());
+		}
 		transmit(pkt);
-		if (pkt.isSuccess())
-			getPartyHandler().forEach(h -> h.onFollow(pkt.getFollowed()));
-		else getPartyHandler().forEach(PartyServerHandler::onStopFollow);
 	}
 
 	@Override
 	public void handle(PartyMovementPacket pkt) {
 		log(pkt);
+		ManchouPlayerEntity[] array = Arrays.stream(pkt.getMembers()).map(m -> {
+			ManchouPlayerEntity p = new ManchouPlayerEntity();
+			p.setPseudo(m.getName());
+			p.setColors(new ManchouColors(m.getColor1(), m.getColor2(), m.getColor3()));
+			p.setLife(m.getLife());
+			p.setLifeMax(m.getMaxLife());
+			p.setLevel(m.getLvl());
+			p.setInitiative(m.getInitiative());
+			p.setProspection(m.getProspection());
+			p.setGfx(m.getGfxFile());
+			p.setSide(m.getSide());
+			p.setAccessories(m.getAccessories());
+			return p;
+		}).toArray(ManchouPlayerEntity[]::new);
+		GroupMembersUpdateEvent event = new GroupMembersUpdateEvent(client, pkt.getMove(), array);
+		event.send();
+		pkt.setMove(event.getUpdate());
+		pkt.setMembers(Arrays.stream(event.getMembers()).map(i -> (ManchouPlayerEntity) i).map(m -> new PartyMember(m.getUUID(), m.getPseudo(), m.getGfx(), m.getColors().getFirstColor(),
+				m.getColors().getSecondColor(), m.getColors().getThirdColor(), m.getLife(), m.getLifeMax(), m.getLevel(), m.getInitiative(), m.getProspection(), m.getSide(), m.getAccessories()))
+				.toArray(PartyMember[]::new));
 		transmit(pkt);
-		getPartyHandler().forEach(h -> Arrays.stream(pkt.getMembers()).forEach(m -> h.onPartyMemberUpdate(pkt.getMove(), m)));
 	}
 
 	@Override
 	public void handle(GameTeamPacket pkt) {
 		log(pkt);
+		FightTeamEvent event = new FightTeamEvent(client, pkt.getFirstId(), pkt.getEntities());
+		event.send();
+		pkt.setFirstId(event.getFightId());
+		pkt.setEntities(event.getTeams());
 		transmit(pkt);
-		getGameHandler().forEach(h -> h.onFightTeams(pkt.getFirstId(), pkt.getEntities()));
 	}
 
 	@Override
 	public void handle(JobSkillsPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		for (Job j : pkt.getJobs())
-			getPerso().getBotInfos().getJobs().add(new ManchouJob(j.getType()));
-		getJobHandler().forEach(h -> Arrays.stream(pkt.getJobs()).forEach(h::onPlayerJobInfo));
+			getPerso().getJobs().put(j.getType(), new ManchouJob(j.getType()));
+		PlayerJobsReceiveEvent event = new PlayerJobsReceiveEvent(client, pkt.getJobs());
+		event.send(); // niks j'allow pas l'edit
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(JobXpPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		for (JobInfo j : pkt.getInfos())
-			for (ManchouJob job : getPerso().getBotInfos().getJobs())
+			for (fr.aresrpg.tofumanchou.domain.data.Job jjob : getPerso().getJobs().values()) {
+				ManchouJob job = (ManchouJob) jjob;
 				if (j.getJob() == job.getType()) {
 					job.setLvl(j.getLvl());
 					job.setMaxXp(j.getXpMax());
 					job.setMinXp(j.getXpMin());
 					job.setXp(j.getXp());
 				}
-		getPerso().getAbilities().getBaseAbility().getBotThread().unpause();
-		getJobHandler().forEach(h -> Arrays.stream(pkt.getInfos()).forEach(h::onJobXp));
+			}
+		PlayerJobsInfosReceiveEvent event = new PlayerJobsInfosReceiveEvent(client, getPerso().getJobs().values());
+		event.send();
+		pkt.setInfos(event.getJobs().stream().map(j -> (ManchouJob) j).map(ManchouJob::serializeProtocol).toArray(JobInfo[]::new));
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(JobLevelPacket pkt) {
 		log(pkt);
+		for (fr.aresrpg.tofumanchou.domain.data.Job j : getPerso().getJobs().values())
+			if (j.getType() == pkt.getJob()) ((ManchouJob) j).setLvl(pkt.getLvl());
+		JobLevelUpEvent event = new JobLevelUpEvent(client, getPerso().getJobs().get(pkt.getJob()), pkt.getLvl());
+		event.send();
+		pkt.setJob(event.getJob().getType());
+		pkt.setLvl(event.getLvl());
 		transmit(pkt);
-		for (ManchouJob j : getPerso().getBotInfos().getJobs())
-			if (j.getType() == pkt.getJob()) j.setLvl(pkt.getLvl());
-		getJobHandler().forEach(h -> h.onJobLvl(pkt.getJob(), pkt.getLvl()));
 	}
 
 	@Override
 	public void handle(GameSpawnPacket pkt) {
 		log(pkt);
-		transmit(pkt);
 		if (pkt.isCreated()) {
-			getPerso().getFightInfos().getFightsOnMap().add(pkt.getFight());
-			getGameHandler().forEach(h -> h.onFightSpawn(pkt.getFight()));
+			getPerso().getMap().getFightsOnMap().add(pkt.getFight());
+			FightSpawnEvent event = new FightSpawnEvent(client, pkt.getFight());
+			event.send();
+			pkt.setFight(event.getFight());
+		} else {
+			getPerso().getMap().getFightsOnMap().remove(pkt.getFight());
+			FightDespawnEvent event = new FightDespawnEvent(client, pkt.getFight());
+			event.send();
+			pkt.setFight(event.getFight());
 		}
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(FightCountPacket pkt) {
 		log(pkt);
+		FightCountEvent event = new FightCountEvent(client, pkt.getCount());
+		event.send();
+		pkt.setCount(event.getCount());
 		transmit(pkt);
-		getFightHandler().forEach(h -> h.onFightCount(pkt.getCount()));
 	}
 
 	@Override
 	public void handle(FightListPacket pkt) {
 		log(pkt);
+		FightListEvent event = new FightListEvent(client, pkt.getFights());
+		event.send();
+		pkt.setFights(event.getFights());
 		transmit(pkt);
-		getFightHandler().forEach(h -> pkt.getFights().forEach(h::onFightInfos));
 	}
 
 	@Override
 	public void handle(FightDetailsPacket pkt) {
 		log(pkt);
+		FightDetailsEvent event = new FightDetailsEvent(client, pkt.getDetailsId(), pkt.getT0(), pkt.getT1());
+		event.send();
+		pkt.setId(event.getId());
+		pkt.setT0(event.getT0());
+		pkt.setT1(event.getT1());
 		transmit(pkt);
-		getFightHandler().forEach(h -> h.onFightDetails(pkt.getDetailsId(), pkt.getT0(), pkt.getT1()));
 	}
 
 	@Override
 	public void handle(InfoCompassPacket pkt) {
 		log(pkt);
+		CompassCoordinatesEvent event = new CompassCoordinatesEvent(client, pkt.getX(), pkt.getY());
+		event.send();
+		pkt.setX(event.getX());
+		pkt.setY(event.getY());
 		transmit(pkt);
-		getInfoHandler().forEach(h -> h.onCompass(pkt.getX(), pkt.getY()));
 	}
 
 	@Override
 	public void handle(InfoCoordinatePacket pkt) {
 		log(pkt);
+		GroupMembersPositionsEvent event = new GroupMembersPositionsEvent(client, pkt.getPlayers());
+		event.send();
+		pkt.setPlayers(event.getPlayers());
 		transmit(pkt);
-		getInfoHandler().forEach(h -> pkt.getPlayers().forEach(h::onFollowedPlayerMove));
 	}
 
 }

@@ -59,6 +59,8 @@ public class ManchouPlayerEntity implements Player {
 
 	private int sprite;
 	private boolean inFight;
+	private String gfx;
+	private int side;
 
 	public MovementPlayer serialize() {
 		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, sex.ordinal(), alignement, rank.getValue(), null, null);
@@ -125,6 +127,88 @@ public class ManchouPlayerEntity implements Player {
 			e.restrictions = of.getRestrictions();
 		}
 		return e;
+	}
+
+	/**
+	 * @return the uuid
+	 */
+	public long getUuid() {
+		return uuid;
+	}
+
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(long uuid) {
+		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the sprite
+	 */
+	public int getSprite() {
+		return sprite;
+	}
+
+	/**
+	 * @param sprite
+	 *            the sprite to set
+	 */
+	public void setSprite(int sprite) {
+		this.sprite = sprite;
+	}
+
+	/**
+	 * @return the inFight
+	 */
+	public boolean isInFight() {
+		return inFight;
+	}
+
+	/**
+	 * @param inFight
+	 *            the inFight to set
+	 */
+	public void setInFight(boolean inFight) {
+		this.inFight = inFight;
+	}
+
+	/**
+	 * @return the gfx
+	 */
+	public String getGfx() {
+		return gfx;
+	}
+
+	/**
+	 * @param gfx
+	 *            the gfx to set
+	 */
+	public void setGfx(String gfx) {
+		this.gfx = gfx;
+	}
+
+	/**
+	 * @return the side
+	 */
+	public int getSide() {
+		return side;
+	}
+
+	/**
+	 * @param side
+	 *            the side to set
+	 */
+	public void setSide(int side) {
+		this.side = side;
+	}
+
+	/**
+	 * @return the restrictions
+	 */
+	public String getRestrictions() {
+		return restrictions;
 	}
 
 	public void setRestrictions(String restrictions) {

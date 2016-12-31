@@ -8,10 +8,14 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class TemplateEvent implements Event<TemplateEvent> {
+public class PlayerRefuseGroupInvitationEvent implements Event<PlayerRefuseGroupInvitationEvent> {
 
-	private static final EventBus<TemplateEvent> BUS = new EventBus<>(TemplateEvent.class);
+	private static final EventBus<PlayerRefuseGroupInvitationEvent> BUS = new EventBus<>(PlayerRefuseGroupInvitationEvent.class);
 	private Account client;
+
+	public PlayerRefuseGroupInvitationEvent(Account client) {
+		this.client = client;
+	}
 
 	/**
 	 * @return the client
@@ -21,7 +25,7 @@ public class TemplateEvent implements Event<TemplateEvent> {
 	}
 
 	@Override
-	public EventBus<TemplateEvent> getBus() {
+	public EventBus<PlayerRefuseGroupInvitationEvent> getBus() {
 		return BUS;
 	}
 
