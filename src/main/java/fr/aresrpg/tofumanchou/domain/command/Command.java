@@ -8,6 +8,6 @@ public interface Command {
 
 	String getCmd();
 
-	String[] getArgs();
+	void trigger(String[] args);
 
 }

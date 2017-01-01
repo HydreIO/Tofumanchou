@@ -5,10 +5,8 @@ import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.dofus.structures.server.*;
 import fr.aresrpg.tofumanchou.domain.command.Command;
-import fr.aresrpg.tofumanchou.domain.event.ManchouCommandEvent;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
-import fr.aresrpg.tofumanchou.infra.command.ManchouCommand;
 import fr.aresrpg.tofumanchou.infra.config.Configurations;
 import fr.aresrpg.tofumanchou.infra.config.Configurations.Config;
 import fr.aresrpg.tofumanchou.infra.config.Variables;
@@ -33,7 +31,7 @@ public class Manchou {
 	public static final Logger LOGGER = new LoggerBuilder("TofuM").setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
-	private static final Set<String> commands = new HashSet<>();
+	private static final Map<String, Command> commands = new HashMap<>();
 	private static Set<ManchouPlugin> plugins;
 	private static final Manchou instance = new Manchou();
 	private static Selector selector;
@@ -103,8 +101,8 @@ public class Manchou {
 		System.exit(0);
 	}
 
-	public void registerCommand(String cmd) {
-		commands.add(cmd);
+	public void registerCommand(Command cmd) {
+		commands.put(cmd.getCmd(), cmd);
 	}
 
 	public void unregisterCommand(String cmd) {
@@ -116,14 +114,27 @@ public class Manchou {
 		while (isRunning()) {
 			if (!sc.hasNext()) continue;
 			String nextLine = sc.nextLine();
-			if (nextLine.isEmpty() || !commands.contains(nextLine)) {
+			if (nextLine.isEmpty() || !commands.containsKey(nextLine)) {
 				LOGGER.warning("Unknow command !");
 				continue;
 			}
-			Command cmd = ManchouCommand.parse(nextLine);
-			if (cmd != null) new ManchouCommandEvent(cmd).send();
+			String[] args = parse(nextLine);
+			if (args != null) Executors.CACHED.execute(() -> commands.get(nextLine).trigger(args));
 			else LOGGER.warning("Unknow command !");
 		}
+	}
+
+	private String[] parse(String line) {
+		if (line.isEmpty()) return null;
+		String[] all = line.split(" ");
+		if (all.length < 1) return null;
+		String cmd = all[0];
+		if (cmd.isEmpty()) return null;
+		if (all.length <= 1) return new String[0];
+		String[] args = new String[all.length - 1];
+		for (int i = 1; i < all.length; i++)
+			args[i - 1] = all[i];
+		return args;
 	}
 
 	/**
