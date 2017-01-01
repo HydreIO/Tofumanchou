@@ -23,7 +23,7 @@ public class ManchouAccount implements Account {
 	private Perso perso;
 	private Logger logger = new LoggerBuilder(String.valueOf(id)).setUseConsoleHandler(false, true, Option.none(), Option.none()).build();
 	private DofusConnection connection;
-	private ManchouBank bank;
+	private ManchouBank bank = new ManchouBank();
 	private ManchouProxy proxy;
 
 	public ManchouAccount(int id, SocketAddress adress, String accountName, String pass, Perso perso) {

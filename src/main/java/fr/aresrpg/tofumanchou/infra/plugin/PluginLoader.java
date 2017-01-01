@@ -4,7 +4,6 @@ import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
-import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 
 import java.io.*;
 import java.net.URL;
@@ -33,8 +32,9 @@ public class PluginLoader {
 		LOGGER.warning("All plugins disabled !");
 	}
 
-	public void loadPlugins() throws IOException {
+	public Set<ManchouPlugin> loadPlugins() throws IOException {
 		LOGGER.info("Loading plugins..");
+		Set<ManchouPlugin> hashSet = new HashSet<>();
 		File loc = new File("plugins");
 		File[] flist = loc.listFiles(new FileFilter() {
 			public boolean accept(File file) {
@@ -43,7 +43,7 @@ public class PluginLoader {
 		});
 		if (flist == null || flist.length == 0) {
 			LOGGER.warning("No plugins detected under /plugins/*");
-			return;
+			return hashSet;
 		}
 		URL[] urls = new URL[flist.length];
 		for (int i = 0; i < flist.length; i++)
@@ -55,10 +55,20 @@ public class PluginLoader {
 		while (apit.hasNext()) {
 			ManchouPlugin plugin = apit.next();
 			plugins.add(plugin);
-			LOGGER.success(AnsiColor.GREEN + "Successfully loaded plugin " + AnsiColor.PURPLE + plugin.getName() + " " + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + plugin.getVersion()
+			if (plugin.getAuthor() == null) {
+				LOGGER.error("The author is null for plugin " + plugin.getClass());
+				continue;
+			}
+			if (plugin.getName() == null) {
+				LOGGER.error("The name is null for plugin " + plugin.getClass());
+				continue;
+			}
+			LOGGER.success(AnsiColor.GREEN + "Successfully loaded plugin " + AnsiColor.PURPLE + plugin.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + plugin.getVersion()
 					+ AnsiColor.GREEN + "." + AnsiColor.PURPLE + plugin.getSubVersion() + AnsiColor.GREEN + " by " + AnsiColor.PURPLE + plugin.getAuthor());
-			Executors.CACHED.execute(plugin::onEnable);
+			hashSet.add(plugin);
 		}
+		if (hashSet.isEmpty()) LOGGER.warning("No plugins detected under /plugins/*");
+		return hashSet;
 	}
 
 }

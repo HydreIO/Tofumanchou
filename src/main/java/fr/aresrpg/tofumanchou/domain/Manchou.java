@@ -6,6 +6,7 @@ import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.dofus.structures.server.*;
 import fr.aresrpg.tofumanchou.domain.command.Command;
 import fr.aresrpg.tofumanchou.domain.event.ManchouCommandEvent;
+import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.command.ManchouCommand;
 import fr.aresrpg.tofumanchou.infra.config.Configurations;
@@ -33,6 +34,7 @@ public class Manchou {
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
 	private static final Set<String> commands = new HashSet<>();
+	private static Set<ManchouPlugin> plugins;
 	private static final Manchou instance = new Manchou();
 	private static Selector selector;
 	private final Config config;
@@ -49,10 +51,8 @@ public class Manchou {
 			Variables.ACCOUNTS.add(new PlayerBean("compte2", "password2"));
 			Variables.GROUPS.add(new GroupBean("testgroup", "Jawad", "Tthomax", "Goodyxx", "Juste-puissant"));
 		}));
-
 		try {
-			PluginLoader.getInstance().loadPlugins();
-			Accounts.registerAccount("SceatOkra");
+			plugins = PluginLoader.getInstance().loadPlugins();
 		} catch (IOException e) {
 			LOGGER.error(e, "Error while loading plugins !");
 			shutdown();
@@ -70,7 +70,14 @@ public class Manchou {
 			shutdown();
 		}
 		LOGGER.success("Tofumanchou started !");
-		//startScanner();
+		Executors.CACHED.execute(this::startScanner);
+	}
+
+	/**
+	 * @return the plugins
+	 */
+	public static Set<ManchouPlugin> getPlugins() {
+		return plugins;
 	}
 
 	/**

@@ -93,6 +93,7 @@ import fr.aresrpg.tofumanchou.infra.data.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
@@ -152,6 +153,23 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		return proxy != null;
 	}
 
+	@Override
+	public boolean parse(ProtocolRegistry registry, String packet) {
+		if (registry == null) {
+			try {
+				System.out.println("[RECEIVE direct] " + packet);
+				((SocketChannel) getProxy().getLocalConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
+			} catch (IOException e) {
+				ClientCrashEvent event = new ClientCrashEvent(client, e);
+				event.send();
+				if (event.isShowException()) LOGGER.error(e);
+				if (event.isShutdownClient()) proxy.shutdown();
+			}
+			return true;
+		}
+		throw new UnsupportedOperationException();
+	}
+
 	public boolean isBot() {
 		return !isMitm();
 	}
@@ -161,7 +179,10 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		try {
 			proxy.getLocalConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(client, e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
+			if (event.isShutdownClient()) proxy.shutdown();
 		}
 	}
 
@@ -883,6 +904,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				Entity enti = null;
 				if (pkt.getEntityId() == getPerso().getUUID()) enti = getPerso();
 				else enti = getPerso().getMap().getEntities().get(pkt.getEntityId());
+				if (enti == null) break;
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
 				ec.send();
@@ -1190,7 +1212,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		PodsUpdateEvent event = new PodsUpdateEvent(client, pkt.getCurrentWeight(), pkt.getMaxWeight());
 		event.send();
 		pkt.setCurrentWeight(event.getCurrentPods());
-		pkt.setMaxWeight(event.getCurrentPods());
+		pkt.setMaxWeight(event.getMaxPods());
 		transmit(pkt);
 	}
 

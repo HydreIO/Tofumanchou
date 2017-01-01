@@ -47,7 +47,7 @@ public class ManchouItem implements Item {
 	public static ManchouItem fromProtocolItem(fr.aresrpg.dofus.structures.item.Item item) {
 		ManchouItem i = new ManchouItem();
 		i.uuid = item.getUid();
-		LangItem langItem = ItemsData.get(i.getTypeId());
+		LangItem langItem = ItemsData.get(item.getItemTypeId());
 		i.name = langItem.getName();
 		i.desc = langItem.getDesc();
 		i.category = langItem.getCategory();
