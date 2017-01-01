@@ -17,6 +17,7 @@ import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
+import fr.aresrpg.tofumanchou.infra.data.ManchouAccount;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
@@ -36,6 +37,13 @@ public class ManchouProxy implements Proxy {
 		this.localHandler = new BaseClientPacketHandler(this);
 		changeConnection(new DofusConnection<>("Local", localChannel, localHandler, Bound.CLIENT), ProxyConnectionType.LOCAL);
 		changeConnection(new DofusConnection<>("Remote", remoteChannel, remoteHandler, Bound.SERVER), ProxyConnectionType.REMOTE);
+	}
+
+	public void setAccount(Account account) {
+		this.account = account;
+		((ManchouAccount) account).setProxy(this);
+		localHandler.setClient(account);
+		remoteHandler.setClient(account);
 	}
 
 	public String getHc() {

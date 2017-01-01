@@ -2,6 +2,7 @@ package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.dofus.structures.game.FightSpawn;
 import fr.aresrpg.dofus.structures.game.FightType;
+import fr.aresrpg.dofus.structures.map.Cell;
 import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.tofumanchou.domain.data.MapsData;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
@@ -40,6 +41,8 @@ public class ManchouMap implements Carte {
 	private boolean duel;
 	private Set<FightSpawn> fightsOnMap;
 	private int capabilities;
+	private String area;
+	private String subarea;
 
 	public static ManchouMap fromDofusMap(DofusMap map) {
 		ManchouMap m = new ManchouMap();
@@ -54,6 +57,8 @@ public class ManchouMap implements Carte {
 		m.cells = parseCells(map.getCells(), map.getWidth(), map.getHeight());
 		m.outdoor = map.isOutdoor();
 		m.capabilities = map.getCapabilities();
+		m.area = MapsData.getArea(map.getId());
+		m.subarea = MapsData.getSubArea(map.getId());
 		return m;
 	}
 
@@ -137,6 +142,10 @@ public class ManchouMap implements Carte {
 	@Override
 	public ManchouCell[] getCells() {
 		return cells;
+	}
+
+	public Cell[] getProtocolCells() {
+		return Arrays.stream(cells).map(ManchouCell::serialize).toArray(Cell[]::new);
 	}
 
 	@Override
@@ -390,6 +399,16 @@ public class ManchouMap implements Carte {
 				+ Arrays.toString(cells) + ", entities=" + entities + ", fightType=" + fightType + ", team0Places=" + Arrays.toString(team0Places) + ", team1Places=" + Arrays.toString(team1Places)
 				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", currentTurn=" + currentTurn
 				+ ", spectator=" + spectator + ", startTimer=" + startTimer + ", duel=" + duel + "]";
+	}
+
+	@Override
+	public String getArea() {
+		return area;
+	}
+
+	@Override
+	public String getSubarea() {
+		return subarea;
 	}
 
 }

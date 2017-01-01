@@ -55,6 +55,12 @@ public class Accounts {
 		return null;
 	}
 
+	public static Account getAccount(String accountName) {
+		for (Account a : instance.accounts.values())
+			if (a.getAccountName().equals(accountName)) return a;
+		return null;
+	}
+
 	public static Account registerAccount(String accountname) {
 		Account account = instance.createAccount(accountname, "");
 		instance.accounts.put(account.getId(), account);

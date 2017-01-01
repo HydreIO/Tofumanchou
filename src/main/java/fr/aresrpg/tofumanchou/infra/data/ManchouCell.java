@@ -6,6 +6,7 @@ import fr.aresrpg.dofus.util.Maps;
 import fr.aresrpg.dofus.util.Pathfinding;
 import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.domain.data.map.Cell;
 
@@ -109,10 +110,15 @@ public class ManchouCell implements Cell {
 		return c;
 	}
 
+	public fr.aresrpg.dofus.structures.map.Cell serialize() {
+		return new fr.aresrpg.dofus.structures.map.Cell(id, mapWidth, lineOfSight, layerGroundRot, groundLevel, movement, layerGroundNum, groundSlope, x, y, layerGroundFlip, layerObject1Num,
+				layerObject1Rot, layerObject1Flip, layerObject2Flip, layerObject2Interactive, layerObject2Num);
+	}
+
 	public int getRandomNeighborCell(Carte map, boolean diagonale, List<Integer> avoid) {
 		Node[] neighbors = diagonale ? Pathfinding.getNeighbors(new Node(getX(), getY())) : Pathfinding.getNeighborsWithoutDiagonals(new Node(getX(), getY()));
 		for (Node n : neighbors) {
-			int id = Maps.getId2(n.getX(), n.getY(), mapWidth, mapHeight);
+			int id = Maps.getId(n.getX(), n.getY(), mapWidth, mapHeight);
 			if (avoid.contains(id) || !Maps.isInMap(n.getX(), n.getY(), mapWidth, mapHeight)) continue;
 			Cell cell = map.getCells()[id];
 			if (cell.isWalkeable() && cell.getEntityOn() == null) return id;
@@ -165,7 +171,7 @@ public class ManchouCell implements Cell {
 	}
 
 	public int distance(int cellid) {
-		return Maps.distance2(id, cellid, mapWidth, mapHeight);
+		return Maps.distance(id, cellid, mapWidth, mapHeight);
 	}
 
 	public int distance(Cell cell) {
@@ -173,7 +179,7 @@ public class ManchouCell implements Cell {
 	}
 
 	public int distanceManathan(int cellid) {
-		return Maps.distanceManathan2(getId(), cellid, mapWidth, mapHeight);
+		return Maps.distanceManathan(getId(), cellid, mapWidth, mapHeight);
 	}
 
 	public int distanceManathan(Cell cell) {
@@ -197,5 +203,11 @@ public class ManchouCell implements Cell {
 	@Override
 	public Entity getEntityOn() {
 		return entityOn;
+	}
+
+	public boolean hasMobOn() {
+		Entity e = getEntityOn();
+		if (e == null) return false;
+		return e instanceof MobGroup;
 	}
 }

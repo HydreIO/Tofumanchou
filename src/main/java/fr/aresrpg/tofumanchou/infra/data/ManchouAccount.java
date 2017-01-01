@@ -6,6 +6,7 @@ import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.dofus.protocol.DofusConnection;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
+import fr.aresrpg.tofumanchou.infra.io.ManchouProxy;
 
 import java.net.SocketAddress;
 
@@ -24,6 +25,7 @@ public class ManchouAccount implements Account {
 	private String hc;
 	private DofusConnection connection;
 	private ManchouBank bank;
+	private ManchouProxy proxy;
 
 	public ManchouAccount(int id, SocketAddress adress, String accountName, String pass, Perso perso) {
 		this.id = id;
@@ -151,4 +153,24 @@ public class ManchouAccount implements Account {
 		return this.bank;
 	}
 
+	@Override
+	public ManchouProxy getProxy() {
+		return proxy;
+	}
+
+	/**
+	 * @param proxy
+	 *            the proxy to set
+	 */
+	public void setProxy(ManchouProxy proxy) {
+		this.proxy = proxy;
+	}
+
+	/**
+	 * @param bank
+	 *            the bank to set
+	 */
+	public void setBank(ManchouBank bank) {
+		this.bank = bank;
+	}
 }

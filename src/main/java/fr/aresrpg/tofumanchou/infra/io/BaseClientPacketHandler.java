@@ -38,13 +38,16 @@ import fr.aresrpg.dofus.protocol.spell.client.SpellBoostPacket;
 import fr.aresrpg.dofus.protocol.spell.client.SpellMoveToUsedPacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
-import fr.aresrpg.dofus.structures.server.Server;
+import fr.aresrpg.tofumanchou.domain.Accounts;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.event.ClientCrashEvent;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.infra.data.ManchouAccount;
 import fr.aresrpg.tofumanchou.infra.data.ManchouPerso;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Objects;
 
 /**
@@ -55,8 +58,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 
 	private ManchouAccount client;
 	private ManchouProxy proxy;
-	private String ticket;
-	private Server current;
+	private boolean state_machine = false;
 
 	public BaseClientPacketHandler(Proxy proxy) {
 		Objects.requireNonNull(proxy);
@@ -84,7 +86,10 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 		try {
 			proxy.getLocalConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(client, e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
+			if (event.isShutdownClient()) proxy.shutdown();
 		}
 	}
 
@@ -92,8 +97,28 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 		try {
 			getClient().getConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(client, e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
+			if (event.isShutdownClient()) proxy.shutdown();
 		}
+	}
+
+	@Override
+	public boolean parse(ProtocolRegistry registry, String packet) {
+		if (state_machine && registry == null) {
+			try {
+				System.out.println("[SEND direct] -> " + packet);
+				((SocketChannel) getProxy().getRemoteConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
+			} catch (IOException e) {
+				ClientCrashEvent event = new ClientCrashEvent(client, e);
+				event.send();
+				if (event.isShowException()) LOGGER.error(e);
+				if (event.isShutdownClient()) proxy.shutdown();
+			}
+			return true;
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	private void event(Event event) {
@@ -114,451 +139,533 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	@Override
 	public void handle(AccountKeyPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountRegionalVersionPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ChatSubscribeChannelPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ZaapLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyAcceptPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyRefusePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(BasicUseSmileyPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountAuthPacket pkt) {
 		log(pkt);
-
+		Account account = Accounts.getAccount(pkt.getPseudo());
+		if (account == null) {
+			proxy.shutdown();
+			throw new NullPointerException("This account is not registered !");
+		}
+		proxy.setAccount(account);
+		transmit(pkt);
+		state_machine = true;
 	}
 
 	@Override
 	public void handle(AccountAccessServerPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountGetCharactersPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountGetGiftsPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountGetQueuePosition pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountIdentityPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountListServersPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountSelectCharacterPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(AccountSetCharacterPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameActionACKPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameClientActionPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameClientReadyPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameCreatePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameEndTurnPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameExtraInformationPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameFreeMySoulPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameSetPlayerPositionPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameTurnEndPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameTurnOkPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(InfoMapPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(MountPlayerPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeAcceptPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ZaapUsePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(EmoteUsePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeRequestPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeMoveItemsPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeSendReadyPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeShopPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeMoveKamasPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeSellToNpcPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeBuyToNpcPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeDisconnectAsMerchantPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeAskToDisconnectAsMerchantPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeHdvPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeGetCrafterForJobPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeMountPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeParkMountPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeReplayCraftPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeRepeatCraftPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(DialogBeginPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(DialogCreatePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(DialogLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(DialogResponsePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(FightBlockSpectatePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(FightRestrictGroupPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(FightBlockAllPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(FightNeedHelpPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(GameActionCancel pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ItemMovementPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ItemDropPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ItemDestroyPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ItemUsePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ExchangeLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyInvitePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyFollowPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyWherePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(PartyFollowAllPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(JobChangeStatsPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(WorldInfosJoinPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(WorldInfosLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(ItemSkinPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 
 	}
 
 	@Override
 	public void handle(FriendGetListPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(FriendAddPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(FriendRemovePacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(BasicChatMessageSendPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(SpellMoveToUsedPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 	@Override
 	public void handle(SpellBoostPacket pkt) {
 		log(pkt);
+		transmit(pkt);
 	}
 
 }

@@ -370,7 +370,11 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(AccountSelectCharacterOkPacket pkt) {
 		log(pkt);
-		if (isMitm()) client.setPerso(new ManchouPerso(client, pkt.getCharacter().getPseudo(), current));
+		if (isMitm()) {
+			ManchouPerso manchouPerso = new ManchouPerso(client, pkt.getCharacter().getPseudo(), current);
+			manchouPerso.setMitm(true);
+			client.setPerso(manchouPerso);
+		}
 		((PlayerInventory) getPerso().getInventory()).parseCharacter(pkt.getCharacter());
 		new PersoSelectEvent(client, getPerso()).send();
 		transmit(pkt);
