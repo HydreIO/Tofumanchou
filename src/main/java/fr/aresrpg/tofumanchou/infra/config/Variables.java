@@ -16,9 +16,9 @@ public class Variables {
 	public static String PASSERELLE_IP = "127.0.0.1";
 	@Configured("internal.")
 	public static int PASSERELLE_PORT = 2727;
-	@Configured("accounts.")
+	@Configured("data.")
 	public static List<PlayerBean> ACCOUNTS = new ArrayList<>();
-	@Configured("groups.")
+	@Configured("data.")
 	public static List<GroupBean> GROUPS = new ArrayList<>();
 
 	private Variables() {

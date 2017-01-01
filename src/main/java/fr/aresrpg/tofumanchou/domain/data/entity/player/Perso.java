@@ -30,6 +30,8 @@ public interface Perso extends Player {
 
 	void connect();
 
+	void disconnect();
+
 	int getXp();
 
 	int getXpMin();
@@ -63,6 +65,10 @@ public interface Perso extends Player {
 	Map<Spells, Spell> getSpells();
 
 	int getPods();
+
+	void activateChat(Chat... chts);
+
+	void desactivateChat(Chat... chts);
 
 	int getMaxPods();
 

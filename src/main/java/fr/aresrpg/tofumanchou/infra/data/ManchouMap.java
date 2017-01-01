@@ -97,6 +97,10 @@ public class ManchouMap implements Carte {
 		this.spectator = spectator;
 	}
 
+	public boolean isOnCoords(int x, int y) {
+		return this.x == x && this.y == y;
+	}
+
 	/**
 	 * @return the mapid
 	 */

@@ -1,6 +1,8 @@
 package fr.aresrpg.tofumanchou.domain;
 
 import fr.aresrpg.commons.domain.condition.Option;
+import fr.aresrpg.commons.domain.event.Events;
+import fr.aresrpg.commons.domain.event.Listener;
 import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.dofus.structures.server.*;
@@ -71,6 +73,14 @@ public class Manchou {
 		Executors.CACHED.execute(this::startScanner);
 	}
 
+	public static void registerEvent(Listener listener) {
+		try {
+			Events.register(listener);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * @return the plugins
 	 */
@@ -101,11 +111,11 @@ public class Manchou {
 		System.exit(0);
 	}
 
-	public void registerCommand(Command cmd) {
+	public static void registerCommand(Command cmd) {
 		commands.put(cmd.getCmd(), cmd);
 	}
 
-	public void unregisterCommand(String cmd) {
+	public static void unregisterCommand(String cmd) {
 		commands.remove(cmd);
 	}
 

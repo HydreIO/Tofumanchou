@@ -15,6 +15,7 @@ import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.dofus.protocol.DofusConnection;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.event.MitmConnectEvent;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.data.ManchouAccount;
@@ -44,6 +45,7 @@ public class ManchouProxy implements Proxy {
 		((ManchouAccount) account).setProxy(this);
 		localHandler.setClient(account);
 		remoteHandler.setClient(account);
+		new MitmConnectEvent(account).send();
 	}
 
 	public String getHc() {

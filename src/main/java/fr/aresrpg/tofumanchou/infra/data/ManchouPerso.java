@@ -9,6 +9,7 @@ import fr.aresrpg.dofus.protocol.Packet;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.dofus.protocol.basic.client.BasicChatMessageSendPacket;
 import fr.aresrpg.dofus.protocol.basic.client.BasicUseSmileyPacket;
+import fr.aresrpg.dofus.protocol.chat.ChatSubscribeChannelPacket;
 import fr.aresrpg.dofus.protocol.dialog.DialogLeavePacket;
 import fr.aresrpg.dofus.protocol.dialog.client.DialogCreatePacket;
 import fr.aresrpg.dofus.protocol.dialog.client.DialogResponsePacket;
@@ -47,10 +48,10 @@ import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
+import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.exception.ZaapException;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
-import fr.aresrpg.tofumanchou.infra.io.BaseServerPacketHandler;
-import fr.aresrpg.tofumanchou.infra.io.ManchouBridge;
+import fr.aresrpg.tofumanchou.infra.io.*;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -192,12 +193,27 @@ public class ManchouPerso implements Perso {
 				try {
 					dofusConnection.start();
 				} catch (Exception e) {
-					e.printStackTrace();
+					ClientCrashEvent event = new ClientCrashEvent(account, e);
+					event.send();
+					if (event.isShowException()) LOGGER.error(e);
+					if (event.isShutdownClient()) dofusConnection.closeConnection();
 				}
 			});
 		} catch (IOException e) {
-
+			LOGGER.error(e);
 		}
+		new BotConnectEvent(account, this).send();
+	}
+
+	@Override
+	public void disconnect() {
+		account.getLogger().info("Déconnection de " + pseudo);
+		new BotDisconnectEvent(account, this).send();
+		account.setPerso(null);
+		ManchouProxy proxy = account.getProxy();
+		if (proxy != null) proxy.shutdown();
+		else account.getConnection().closeConnection();
+		account.getLogger().success(pseudo + " déconnecté !");
 	}
 
 	/**
@@ -1007,7 +1023,7 @@ public class ManchouPerso implements Perso {
 				Maps.getY(cellid, width, height), getMap().getProtocolCells(), width, height, diagonals, avoidMobs ? p -> canGoOnCellAvoidingMobs(Maps.getId(p.x, p.y, width, height)) : i -> true);
 	}
 
-	private boolean canGoOnCellAvoidingMobs(int cell) {
+	public boolean canGoOnCellAvoidingMobs(int cell) {
 		Map<Long, Entity> entities = getMap().getEntities();
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
@@ -1061,7 +1077,7 @@ public class ManchouPerso implements Perso {
 		return null;
 	}
 
-	private ManchouCell getNearestWalkableCell(ManchouCell current) {
+	public ManchouCell getNearestWalkableCell(ManchouCell current) {
 		int width = map.getWidth();
 		int height = map.getHeight();
 		int dist = Integer.MAX_VALUE;
@@ -1076,8 +1092,16 @@ public class ManchouPerso implements Perso {
 		return cell;
 	}
 
-	private ManchouCell[] getAllTeleporters() {
+	public ManchouCell[] getAllTeleporters() {
 		return Arrays.stream(map.getCells()).filter(ManchouCell::isTeleporter).toArray(ManchouCell[]::new);
+	}
+
+	public ManchouCell[] getNearestTeleporters() {
+		return Arrays.stream(getAllTeleporters()).sorted((o1, o2) -> o1.distance(cellId) - o2.distance(cellId)).toArray(ManchouCell[]::new);
+	}
+
+	public ManchouCell[] getNearestTeleporters1030() {
+		return Arrays.stream(getNearestTeleporters()).filter(ManchouCell::isTeleporter1030).toArray(ManchouCell[]::new);
 	}
 
 	public void moveToRandomNeightbourMap() {
@@ -1378,6 +1402,22 @@ public class ManchouPerso implements Perso {
 	public void sendSmiley(Smiley emot) {
 		BasicUseSmileyPacket pkt = new BasicUseSmileyPacket();
 		pkt.setSmileyId(emot.getId());
+		sendPacketToServer(pkt);
+	}
+
+	@Override
+	public void activateChat(Chat... chts) {
+		ChatSubscribeChannelPacket pkt = new ChatSubscribeChannelPacket();
+		pkt.setAdd(true);
+		pkt.setChannels(chts);
+		sendPacketToServer(pkt);
+	}
+
+	@Override
+	public void desactivateChat(Chat... chts) {
+		ChatSubscribeChannelPacket pkt = new ChatSubscribeChannelPacket();
+		pkt.setAdd(false);
+		pkt.setChannels(chts);
 		sendPacketToServer(pkt);
 	}
 }
