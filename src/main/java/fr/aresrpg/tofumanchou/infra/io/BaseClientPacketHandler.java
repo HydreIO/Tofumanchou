@@ -75,6 +75,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	}
 
 	public ManchouPerso getPerso() {
+		if (client == null) return null;
 		return (ManchouPerso) client.getPerso();
 	}
 
@@ -84,7 +85,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 
 	private void transmit(Packet pkt) {
 		try {
-			proxy.getLocalConnection().send(pkt);
+			proxy.getRemoteConnection().send(pkt);
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(client, e);
 			event.send();
@@ -127,8 +128,8 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	}
 
 	protected void log(Packet pkt) {
-		if (getPerso() == null) LOGGER.info("[RCV:]< " + pkt);
-		else LOGGER.info("[" + getPerso().getPseudo() + ":RCV:]< " + pkt);
+		if (getPerso() == null) LOGGER.info("[SND:]> " + pkt);
+		else LOGGER.info("[" + getPerso().getPseudo() + ":SND:]> " + pkt);
 	}
 
 	@Override
@@ -140,14 +141,12 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	public void handle(AccountKeyPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-
 	}
 
 	@Override
 	public void handle(AccountRegionalVersionPacket pkt) {
 		log(pkt);
 		transmit(pkt);
-
 	}
 
 	@Override
@@ -279,7 +278,6 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	public void handle(GameCreatePacket pkt) {
 		log(pkt);
 		transmit(pkt);
-
 	}
 
 	@Override

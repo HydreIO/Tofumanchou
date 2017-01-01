@@ -38,7 +38,7 @@ public class ManchouPlayerEntity implements Player {
 	private Alignement alignement;
 	private Rank rank;
 	private int prospection;
-	private Map<Stat, StatValue> stats;
+	private Map<Stat, StatValue> stats = new HashMap<>();
 	private Accessory[] accessories;
 	private Server server;
 	private boolean merchant;

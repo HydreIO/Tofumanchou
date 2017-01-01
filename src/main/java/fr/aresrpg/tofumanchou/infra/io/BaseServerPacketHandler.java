@@ -70,6 +70,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
+import fr.aresrpg.tofumanchou.domain.event.ClientCrashEvent;
 import fr.aresrpg.tofumanchou.domain.event.ServerStateEvent;
 import fr.aresrpg.tofumanchou.domain.event.aproach.*;
 import fr.aresrpg.tofumanchou.domain.event.chat.*;
@@ -109,6 +110,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	private ManchouProxy proxy;
 	private String ticket;
 	private Server current;
+	private String hc;
 
 	public BaseServerPacketHandler(Account client) {
 		Objects.requireNonNull(client);
@@ -130,6 +132,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	public ManchouPerso getPerso() {
+		if (client == null) return null;
 		return (ManchouPerso) client.getPerso();
 	}
 
@@ -187,7 +190,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(HelloConnectionPacket pkt) {
 		log(pkt);
-		client.setHc(pkt.getHashKey());
+		this.hc = pkt.getHashKey();
 		if (isBot()) {
 			sendPkt(new AccountAuthPacket()
 					.setPseudo(client.getAccountName())
@@ -384,18 +387,20 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountServerEncryptedHostPacket pkt) {
 		log(pkt);
 		this.ticket = pkt.getTicketKey();
-		transmit(pkt);
-	}
-
-	@Override
-	public void handle(AccountServerHostPacket pkt) {
-		log(pkt);
-		this.ticket = pkt.getTicketKey();
 		try {
 			if (isBot()) {
 				client.getConnection().closeConnection();
 				client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
-				client.getConnection().start();
+				Executors.CACHED.execute(() -> {
+					try {
+						client.getConnection().start();
+					} catch (Exception e) {
+						ClientCrashEvent event = new ClientCrashEvent(client, e);
+						event.send();
+						if (event.isShowException()) LOGGER.error(e);
+						if (event.isShutdownClient()) proxy.shutdown();
+					}
+				});
 			} else {
 				String ip = pkt.getIp();
 				ServerSocketChannel srvchannel = ServerSocketChannel.open();
@@ -411,6 +416,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void handle(AccountServerHostPacket pkt) {
+		log(pkt);
+		this.ticket = pkt.getTicketKey();
+		transmit(pkt);
 	}
 
 	@Override

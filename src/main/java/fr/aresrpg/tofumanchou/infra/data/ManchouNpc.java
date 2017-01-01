@@ -8,8 +8,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
 
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 
@@ -27,7 +26,7 @@ public class ManchouNpc implements Npc {
 	private int scaleX;
 	private Genre sex;
 	private int entityType;
-	private Set<Effect> effects;
+	private Set<Effect> effects = new HashSet<>();
 	private long uuid;
 	private int pa;
 	private int life;

@@ -34,12 +34,17 @@ public class PluginLoader {
 	}
 
 	public void loadPlugins() throws IOException {
+		LOGGER.info("Loading plugins..");
 		File loc = new File("plugins");
 		File[] flist = loc.listFiles(new FileFilter() {
 			public boolean accept(File file) {
 				return file.getPath().toLowerCase().endsWith(".jar");
 			}
 		});
+		if (flist == null || flist.length == 0) {
+			LOGGER.warning("No plugins detected under /plugins/*");
+			return;
+		}
 		URL[] urls = new URL[flist.length];
 		for (int i = 0; i < flist.length; i++)
 			urls[i] = flist[i].toURI().toURL();

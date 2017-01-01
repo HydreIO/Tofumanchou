@@ -26,6 +26,7 @@ public class ManchouBridge implements Bridge {
 	public ManchouBridge(String label, ServerSocketChannel channel) {
 		this.logger = new LoggerBuilder(label).setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 		Selector slc = Manchou.getSelector();
+		running = true;
 		while (running) {
 			logger.info("En attente d'une connection..");
 			try {

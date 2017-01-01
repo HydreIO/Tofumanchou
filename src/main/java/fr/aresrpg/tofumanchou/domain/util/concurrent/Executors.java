@@ -26,12 +26,12 @@ public final class Executors {
 
 	public static ExecutorService CACHED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
-			.setName("ThreadManchou[%1$]"))
+			.setName("ThreadManchou[%d]"))
 					.setType(PoolType.CACHED)
 					.buildAsService();
 	public static ScheduledExecutorService SCHEDULED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
-			.setName("ScheduleManchou[%1$]"))
+			.setName("ScheduleManchou[%d]"))
 					.setType(PoolType.SCHEDULED)
 					.setParallelism(40)
 					.buildAsScheduled();

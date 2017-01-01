@@ -36,6 +36,7 @@ public class ManchouCommand implements Command {
 	public static Command parse(String line) {
 		if (line.isEmpty()) return null;
 		String[] all = line.split(" ");
+		if (all.length < 1) return null;
 		String cmd = all[0];
 		if (cmd.isEmpty()) return null;
 		if (all.length <= 1) return new ManchouCommand(cmd, new String[0]);
@@ -43,10 +44,6 @@ public class ManchouCommand implements Command {
 		for (int i = 1; i < all.length; i++)
 			args[i - 1] = all[i];
 		return new ManchouCommand(cmd, args);
-	}
-
-	public static void main(String[] args) {
-		System.out.println(parse("salut fdp ok"));
 	}
 
 }

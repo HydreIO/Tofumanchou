@@ -39,7 +39,7 @@ public class ManchouMap implements Carte {
 	private boolean spectator;
 	private int startTimer;
 	private boolean duel;
-	private Set<FightSpawn> fightsOnMap;
+	private Set<FightSpawn> fightsOnMap = new HashSet<>();
 	private int capabilities;
 	private String area;
 	private String subarea;

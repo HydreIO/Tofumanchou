@@ -80,7 +80,7 @@ public class ManchouPerso implements Perso {
 	private Alignement alignement;
 	private Rank rank;
 	private int prospection;
-	private Map<Stat, StatValue> stats;
+	private Map<Stat, StatValue> stats = new HashMap<>();
 	private Accessory[] accessories;
 	private boolean merchant;
 	private boolean dead;
@@ -93,7 +93,7 @@ public class ManchouPerso implements Perso {
 	private String guildName;
 	private String[] emblem;
 	private String restrictions;
-	private PlayerInventory inventory;
+	private PlayerInventory inventory = new PlayerInventory();
 	private int xp;
 	private int xpLow;
 	private int xpHight;
@@ -106,13 +106,13 @@ public class ManchouPerso implements Perso {
 	private Map<Chat, Boolean> channels = new HashMap<>();
 	private Set<Effect> effects;
 	private ManchouMap map;
-	private Map<Spells, Spell> spells;
+	private Map<Spells, Spell> spells = new HashMap<>();
 	private int scaleX;
 	private int scaleY;
 	private Orientation orientation;
 	private int sprite;
 	private ManchouJob job;
-	private Map<Jobs, Job> jobs;
+	private Map<Jobs, Job> jobs = new HashMap<>();
 	private int pods;
 	private int maxPods;
 

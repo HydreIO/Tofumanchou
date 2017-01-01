@@ -22,7 +22,6 @@ public class ManchouAccount implements Account {
 	private String pass;
 	private Perso perso;
 	private Logger logger = new LoggerBuilder(String.valueOf(id)).setUseConsoleHandler(false, true, Option.none(), Option.none()).build();
-	private String hc;
 	private DofusConnection connection;
 	private ManchouBank bank;
 	private ManchouProxy proxy;
@@ -96,21 +95,6 @@ public class ManchouAccount implements Account {
 	 */
 	public void setLogger(Logger logger) {
 		this.logger = logger;
-	}
-
-	/**
-	 * @return the hc
-	 */
-	public String getHc() {
-		return hc;
-	}
-
-	/**
-	 * @param hc
-	 *            the hc to set
-	 */
-	public void setHc(String hc) {
-		this.hc = hc;
 	}
 
 	@Override

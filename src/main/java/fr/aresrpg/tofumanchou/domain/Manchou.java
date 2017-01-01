@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * 
@@ -33,12 +32,14 @@ public class Manchou {
 	public static final Logger LOGGER = new LoggerBuilder("TofuM").setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
+	private static final Set<String> commands = new HashSet<>();
 	private static final Manchou instance = new Manchou();
 	private static Selector selector;
 	private final Config config;
 	private boolean running;
 
 	public Manchou() {
+		LOGGER.success("Starting Tofumanchou..");
 		this.running = true;
 		this.config = Configurations.generate("Tofumanchou.yml", Variables.class, Optional.of(() -> {
 			LOGGER.info("Configuration created ! please configure and then restart.");
@@ -51,6 +52,7 @@ public class Manchou {
 
 		try {
 			PluginLoader.getInstance().loadPlugins();
+			Accounts.registerAccount("SceatOkra");
 		} catch (IOException e) {
 			LOGGER.error(e, "Error while loading plugins !");
 			shutdown();
@@ -67,7 +69,8 @@ public class Manchou {
 			LOGGER.error(e, "Unable to open the connection ! please contact DeltaEvo");
 			shutdown();
 		}
-		startScanner();
+		LOGGER.success("Tofumanchou started !");
+		//startScanner();
 	}
 
 	/**
@@ -75,6 +78,13 @@ public class Manchou {
 	 */
 	public static Selector getSelector() {
 		return selector;
+	}
+
+	/**
+	 * @return the instance
+	 */
+	public static Manchou getInstance() {
+		return instance;
 	}
 
 	public void shutdown() {
@@ -86,12 +96,26 @@ public class Manchou {
 		System.exit(0);
 	}
 
+	public void registerCommand(String cmd) {
+		commands.add(cmd);
+	}
+
+	public void unregisterCommand(String cmd) {
+		commands.remove(cmd);
+	}
+
 	private void startScanner() {
 		Scanner sc = new Scanner(System.in);
 		while (isRunning()) {
 			if (!sc.hasNext()) continue;
-			Command cmd = ManchouCommand.parse(sc.nextLine());
+			String nextLine = sc.nextLine();
+			if (nextLine.isEmpty() || !commands.contains(nextLine)) {
+				LOGGER.warning("Unknow command !");
+				continue;
+			}
+			Command cmd = ManchouCommand.parse(nextLine);
 			if (cmd != null) new ManchouCommandEvent(cmd).send();
+			else LOGGER.warning("Unknow command !");
 		}
 	}
 
