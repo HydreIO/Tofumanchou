@@ -18,15 +18,15 @@ import java.util.Set;
  */
 public class BootStrap {
 	public static void main(String[] args) throws IOException {
-		LOGGER.info("Initialisating items..");
+		LOGGER.info("Initialising items..");
 		BenchTime t = new BenchTime();
 		ItemsData.getInstance().init();
 		LOGGER.info("Items initialized ! (" + t.getAsLong() + "ms)");
-		LOGGER.info("Initialisating maps..");
+		LOGGER.info("Initialising maps..");
 		BenchTime t2 = new BenchTime();
 		MapsData.getInstance().init();
 		LOGGER.info("Maps initialized ! (" + t2.getAsLong() + "ms)");
-		LOGGER.info("Initialisating langs..");
+		LOGGER.info("Initialising langs..");
 		BenchTime t3 = new BenchTime();
 		InfosData.getInstance().init();
 		LOGGER.info("Langs initialized ! (" + t3.getAsLong() + "ms)");
