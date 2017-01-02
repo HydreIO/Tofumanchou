@@ -41,6 +41,7 @@ import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.Maps;
 import fr.aresrpg.dofus.util.Pathfinding;
+import fr.aresrpg.dofus.util.Pathfinding.PathValidator;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.Job;
 import fr.aresrpg.tofumanchou.domain.data.Spell;
@@ -1041,7 +1042,10 @@ public class ManchouPerso implements Perso {
 		float time = Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
 		if (shortpath == null) throw new NullPointerException("Unable to find a path ! The point list is invalid ! " + p);
-		sendPacketToServer(new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath)));
+		LOGGER.severe("le path = " + shortpath);
+		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
+		LOGGER.severe("le path = " + gameClientActionPacket);
+		sendPacketToServer(gameClientActionPacket);
 		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), (long) (time * 30), TimeUnit.MILLISECONDS);
 		return this;
 	}
@@ -1050,14 +1054,12 @@ public class ManchouPerso implements Perso {
 		if (cellid == -1) return null;
 		int width = getMap().getWidth();
 		int height = getMap().getHeight();
-		return Pathfinding.getCellPath(
-				Maps.getX(getCellId(), width, height),
-				Maps.getY(getCellId(), width, height),
-				Maps.getX(cellid, width, height),
-				Maps.getY(cellid, width, height), getMap().getProtocolCells(), width, height, diagonals, avoidMobs ? p -> canGoOnCellAvoidingMobs(Maps.getId(p.x, p.y, width, height)) : i -> true);
+		return Pathfinding.getCellPath(getCellId(), cellid, getMap().getProtocolCells(), width, height, diagonals ? Pathfinding::getNeighbors : Pathfinding::getNeighborsWithoutDiagonals,
+				avoidMobs ? this::canGoOnCellAvoidingMobs : PathValidator.alwaysTrue());
 	}
 
-	public boolean canGoOnCellAvoidingMobs(int cell) {
+	public boolean canGoOnCellAvoidingMobs(int xfrom, int yfrom, int xto, int yto) {
+		int cellId = Maps.getIdRotated(xto, yto, map.getWidth(), map.getHeight());
 		Map<Long, Entity> entities = getMap().getEntities();
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
@@ -1069,7 +1071,7 @@ public class ManchouPerso implements Perso {
 				int distanceAgro = AgressiveMobs.getDistanceAgro(type);
 				if (distanceAgro == 0) continue;
 				distanceAgro++; // increment car la distance manathan par de 0
-				if (Maps.distanceManathan(grp.getCellId(), cell, map.getWidth(), map.getHeight()) <= distanceAgro) return false;
+				if (Maps.distanceManathan(grp.getCellId(), c.getId(), map.getWidth(), map.getHeight()) <= distanceAgro) return false;
 			}
 		}
 		return true;
@@ -1077,7 +1079,7 @@ public class ManchouPerso implements Perso {
 
 	public boolean canGoOnCellAvoidingMobs(Point p) {
 		Map<Long, Entity> entities = getMap().getEntities();
-		int cellId = Maps.getId(p.x, p.y, map.getWidth(), map.getHeight());
+		int cellId = Maps.getIdRotated(p.x, p.y, map.getWidth(), map.getHeight());
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
 		if (c.hasMobOn()) return false;
@@ -1109,13 +1111,14 @@ public class ManchouPerso implements Perso {
 			if (t[3] == -1)
 				t[3] = getTeleporter(dWi, dWi, i, dHi, true, avoidCell);
 		}
+		LOGGER.error("tp: " + Arrays.toString(t));
 		return t;
 	}
 
 	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, boolean only1030, Predicate<Integer> avoidCell) {
 		for (int x = xFrom; x <= xTo; x++)
 			for (int y = yFrom; y <= yTo; y++) {
-				int id = Maps.getId(x, y, map.getWidth(), map.getHeight());
+				int id = Maps.getId(x, y, map.getWidth());
 				if (avoidCell.test(id)) continue;
 				ManchouCell l = map.getCells()[id];
 				if (l.isTeleporter1030()) return id;

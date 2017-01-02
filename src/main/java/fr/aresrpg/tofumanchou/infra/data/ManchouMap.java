@@ -97,6 +97,10 @@ public class ManchouMap implements Carte {
 		this.spectator = spectator;
 	}
 
+	public int distance(Point map) {
+		return Math.abs(map.x - getX()) + Math.abs(map.y - getY());
+	}
+
 	public boolean isOnCoords(int x, int y) {
 		return this.x == x && this.y == y;
 	}

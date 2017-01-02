@@ -80,7 +80,9 @@ public class Accounts {
 
 	private Perso createPerso(String pseudo, String accountname, String password, Server server) {
 		Account account = createAccount(accountname, password);
-		return new ManchouPerso(account, pseudo, server);
+		ManchouPerso manchouPerso = new ManchouPerso(account, pseudo, server);
+		((ManchouAccount) account).setPerso(manchouPerso);
+		return manchouPerso;
 	}
 
 }

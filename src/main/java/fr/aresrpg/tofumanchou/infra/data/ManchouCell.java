@@ -111,15 +111,15 @@ public class ManchouCell implements Cell {
 	}
 
 	public fr.aresrpg.dofus.structures.map.Cell serialize() {
-		return new fr.aresrpg.dofus.structures.map.Cell(id, mapWidth, lineOfSight, layerGroundRot, groundLevel, movement, layerGroundNum, groundSlope, x, y, layerGroundFlip, layerObject1Num,
-				layerObject1Rot, layerObject1Flip, layerObject2Flip, layerObject2Interactive, layerObject2Num);
+		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, movement, layerGroundNum, groundSlope, layerGroundFlip, layerObject1Num, layerObject1Rot,
+				layerObject1Flip, layerObject2Flip, layerObject2Interactive, layerObject2Num);
 	}
 
 	public int getRandomNeighborCell(Carte map, boolean diagonale, List<Integer> avoid) {
 		Node[] neighbors = diagonale ? Pathfinding.getNeighbors(new Node(getX(), getY())) : Pathfinding.getNeighborsWithoutDiagonals(new Node(getX(), getY()));
 		for (Node n : neighbors) {
-			int id = Maps.getId(n.getX(), n.getY(), mapWidth, mapHeight);
-			if (avoid.contains(id) || !Maps.isInMap(n.getX(), n.getY(), mapWidth, mapHeight)) continue;
+			int id = Maps.getIdRotated(n.getX(), n.getY(), mapWidth, mapHeight);
+			if (avoid.contains(id) || !Maps.isInMap(id, mapWidth, mapHeight)) continue;
 			Cell cell = map.getCells()[id];
 			if (cell.isWalkeable() && cell.getEntityOn() == null) return id;
 		}

@@ -52,6 +52,7 @@ import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
 import fr.aresrpg.dofus.structures.Rank;
 import fr.aresrpg.dofus.structures.character.AvailableCharacter;
+import fr.aresrpg.dofus.structures.character.Character;
 import fr.aresrpg.dofus.structures.character.PartyMember;
 import fr.aresrpg.dofus.structures.game.*;
 import fr.aresrpg.dofus.structures.item.Item;
@@ -310,6 +311,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				p.setDead(c.isDead());
 				p.setDeathCount(c.getDeathCount());
 				p.setLvlMax(c.getLvlMax());
+				sendPkt(new AccountSelectCharacterPacket().setCharacterId(c.getId()));
 			}
 		CharacterListEvent event = new CharacterListEvent(client, pkt.getSubscriptionTime(), pkt.getPersoTot(), pkt.getCharacters());
 		event.send();
@@ -398,6 +400,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			ManchouPerso manchouPerso = new ManchouPerso(client, current, pkt.getCharacter());
 			manchouPerso.setMitm(true);
 			client.setPerso(manchouPerso);
+		} else {
+			ManchouPerso p = (ManchouPerso) client.getPerso();
+			Character c = pkt.getCharacter();
+			p.setUuid(c.getId());
+			//			tphis.sex = c.getSex();
+			p.setLvl(c.getLevel());
+			p.setGuild(c.getGuild());
+			p.setColors(new ManchouColors(c.getColor1(), c.getColor2(), c.getColor3()));
 		}
 		((PlayerInventory) getPerso().getInventory()).parseCharacter(pkt.getCharacter());
 		new PersoSelectEvent(client, getPerso()).send();
@@ -753,6 +763,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				getPerso().getMap().getEntities().remove(actor.getId());
 				new EntityLeaveMapEvent(client, actor.getId()).send(); // ASYNCHRONE
 			});
+			transmit(pkt);
 			return;
 		}
 		pkt.getActors().forEach(e -> {
