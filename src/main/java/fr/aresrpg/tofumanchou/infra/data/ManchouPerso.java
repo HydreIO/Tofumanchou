@@ -31,6 +31,7 @@ import fr.aresrpg.dofus.protocol.party.PartyRefusePacket;
 import fr.aresrpg.dofus.protocol.party.client.*;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
 import fr.aresrpg.dofus.structures.*;
+import fr.aresrpg.dofus.structures.character.Character;
 import fr.aresrpg.dofus.structures.game.Alignement;
 import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.structures.item.Accessory;
@@ -58,6 +59,8 @@ import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -74,7 +77,8 @@ public class ManchouPerso implements Perso {
 	private int lvlMax;
 	private Classe classe;
 	private EntityColor colors;
-	private Genre genre;
+	private Genre genre; // en fait ya un putin de code genre 9 = cra male etc
+	private int sex; // en attendant
 	private int life;
 	private int lifeMax;
 	private int initiative;
@@ -126,6 +130,18 @@ public class ManchouPerso implements Perso {
 		this.server = server;
 	}
 
+	public ManchouPerso(Account account, Server server, Character c) {
+		this.account = (ManchouAccount) account;
+		this.pseudo = c.getPseudo();
+		this.server = server;
+		this.uuid = c.getId();
+		this.sex = c.getSex();
+		this.lvl = c.getLevel();
+		this.guild = c.getGuild();
+		this.colors = new ManchouColors(c.getColor1(), c.getColor2(), c.getColor3());
+		inventory.replaceContent(Arrays.stream(c.getItems()).collect(Collectors.toList()));
+	}
+
 	public MovementPlayer serialize() {
 		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, genre.ordinal(), alignement, rank.getValue(), null, null);
 		if (!getMap().isEnded()) {
@@ -150,7 +166,8 @@ public class ManchouPerso implements Perso {
 	}
 
 	public void updateMovement(MovementPlayer player) {
-		if (player.getId() != uuid) throw new IllegalArgumentException("Bad player !");
+		if (player.getId() != uuid)
+			throw new IllegalArgumentException("Bad player !");
 		cellId = player.getCellId();
 		pseudo = player.getPseudo();
 		scaleX = player.getScaleX();
@@ -978,38 +995,55 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public Perso moveUp() {
-		return moveToCell(getTeleporters()[0], true, true, true);
+	public Perso moveUp(Predicate<Integer> avoidCell) {
+		return moveToCell(getTeleporters(avoidCell)[0], true, true, true);
 	}
 
 	@Override
-	public Perso moveDown() {
-		return moveToCell(getTeleporters()[2], true, true, true);
+	public Perso moveDown(Predicate<Integer> avoidCell) {
+		return moveToCell(getTeleporters(avoidCell)[2], true, true, true);
 	}
 
 	@Override
-	public Perso moveLeft() {
-		return moveToCell(getTeleporters()[1], true, true, true);
+	public Perso moveLeft(Predicate<Integer> avoidCell) {
+		return moveToCell(getTeleporters(avoidCell)[1], true, true, true);
 	}
 
 	@Override
-	public Perso moveRight() {
-		return moveToCell(getTeleporters()[3], true, true, true);
+	public Perso moveRight(Predicate<Integer> avoidCell) {
+		return moveToCell(getTeleporters(avoidCell)[3], true, true, true);
+	}
+
+	public int getRightTp(Predicate<Integer> avoidCell) {
+		return getTeleporters(avoidCell)[3];
+	}
+
+	public int getLeftTp(Predicate<Integer> avoidCell) {
+		return getTeleporters(avoidCell)[1];
+	}
+
+	public int getUpTp(Predicate<Integer> avoidCell) {
+		return getTeleporters(avoidCell)[0];
+	}
+
+	public int getDownTp(Predicate<Integer> avoidCell) {
+		return getTeleporters(avoidCell)[2];
 	}
 
 	@Override
 	public Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs) {
-		return moveToCell(searchPath(cellid, avoidMobs, diagonals), cellid, teleport);
+		return move(searchPath(cellid, avoidMobs, diagonals), teleport);
 	}
 
 	@Override
-	public Perso moveToCell(List<Point> p, int cellid, boolean teleport) {
+	public Perso move(List<Point> p, boolean teleport) {
+		if (p == null) throw new NullPointerException("The path is null !");
 		float time = Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
 		if (shortpath == null) throw new NullPointerException("Unable to find a path ! The point list is invalid ! " + p);
 		sendPacketToServer(new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath)));
 		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), (long) (time * 30), TimeUnit.MILLISECONDS);
-		return null;
+		return this;
 	}
 
 	private List<Point> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
@@ -1041,33 +1075,53 @@ public class ManchouPerso implements Perso {
 		return true;
 	}
 
-	public int[] getTeleporters() {
+	public boolean canGoOnCellAvoidingMobs(Point p) {
+		Map<Long, Entity> entities = getMap().getEntities();
+		int cellId = Maps.getId(p.x, p.y, map.getWidth(), map.getHeight());
+		ManchouCell c = getMap().getCells()[cellId];
+		if (c.isTeleporter()) return true;
+		if (c.hasMobOn()) return false;
+		for (Entity en : getMap().getEntities().values()) {
+			if (!(en instanceof MobGroup)) continue;
+			MobGroup grp = (MobGroup) en;
+			for (int type : grp.getEntitiesTypes()) {
+				int distanceAgro = AgressiveMobs.getDistanceAgro(type);
+				if (distanceAgro == 0) continue;
+				distanceAgro++; // increment car la distance manathan par de 0
+				if (Maps.distanceManathan(grp.getCellId(), c.getId(), map.getWidth(), map.getHeight()) <= distanceAgro) return false;
+			}
+		}
+		return true;
+	}
+
+	public int[] getTeleporters(Predicate<Integer> avoidCell) {
 		int[] t = new int[4];
 		Arrays.fill(t, -1);
 		for (int i = 0; i < map.getHeight() * 2; i++) {
 			int dHi = ((map.getHeight() - 1) * 2) - i;
 			int dWi = (map.getWidth() * 2 - 1) - i;
 			if (t[0] == -1)
-				t[0] = getTeleporter(i, dWi, i, i, true);
+				t[0] = getTeleporter(i, dWi, i, i, true, avoidCell);
 			if (t[1] == -1)
-				t[1] = getTeleporter(i, i, i, dHi, true);
+				t[1] = getTeleporter(i, i, i, dHi, true, avoidCell);
 			if (t[2] == -1)
-				t[2] = getTeleporter(i, dWi, dHi, dHi, true);
+				t[2] = getTeleporter(i, dWi, dHi, dHi, true, avoidCell);
 			if (t[3] == -1)
-				t[3] = getTeleporter(dWi, dWi, i, dHi, true);
+				t[3] = getTeleporter(dWi, dWi, i, dHi, true, avoidCell);
 		}
 		return t;
 	}
 
-	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, boolean only1030) {
+	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, boolean only1030, Predicate<Integer> avoidCell) {
 		for (int x = xFrom; x <= xTo; x++)
 			for (int y = yFrom; y <= yTo; y++) {
 				int id = Maps.getId(x, y, map.getWidth(), map.getHeight());
+				if (avoidCell.test(id)) continue;
 				ManchouCell l = map.getCells()[id];
 				if (l.isTeleporter1030()) return id;
 				if (!only1030 && l.isTeleporter()) return id; // permet de chercher les 1030 en prio
 			}
-		if (only1030) return getTeleporter(xFrom, xTo, yFrom, yTo, false); // on search tout si jamais ya pas de 1030
+		if (only1030) return getTeleporter(xFrom, xTo, yFrom, yTo, false, avoidCell); // on search tout si jamais ya pas de 1030
 		return -1;
 	}
 
@@ -1100,16 +1154,24 @@ public class ManchouPerso implements Perso {
 		return Arrays.stream(getAllTeleporters()).sorted((o1, o2) -> o1.distance(cellId) - o2.distance(cellId)).toArray(ManchouCell[]::new);
 	}
 
+	public ManchouCell[] getFarestTeleporters() {
+		return Arrays.stream(getAllTeleporters()).sorted((o1, o2) -> o2.distance(cellId) - o1.distance(cellId)).toArray(ManchouCell[]::new);
+	}
+
 	public ManchouCell[] getNearestTeleporters1030() {
 		return Arrays.stream(getNearestTeleporters()).filter(ManchouCell::isTeleporter1030).toArray(ManchouCell[]::new);
 	}
 
-	public void moveToRandomNeightbourMap() {
+	public ManchouCell[] getFarestTeleporters1030() {
+		return Arrays.stream(getFarestTeleporters()).filter(ManchouCell::isTeleporter1030).toArray(ManchouCell[]::new);
+	}
+
+	public void moveToRandomNeightbourMap(Predicate<Integer> avoidCell) {
 		int nextInt = Randoms.nextInt(40);
-		if (nextInt > 30) moveUp();
-		else if (nextInt > 20) moveDown();
-		else if (nextInt > 10) moveLeft();
-		else moveRight();
+		if (nextInt > 30) moveUp(avoidCell);
+		else if (nextInt > 20) moveDown(avoidCell);
+		else if (nextInt > 10) moveLeft(avoidCell);
+		else moveRight(avoidCell);
 	}
 
 	@Override
@@ -1128,7 +1190,7 @@ public class ManchouPerso implements Perso {
 			LOGGER.warning("Impossible de bouger sur une cell random ! | aucune cell trouvée");
 			return;
 		}
-		moveToCell(path, c.getId(), false);
+		move(path, false);
 	}
 
 	@Override
@@ -1420,4 +1482,17 @@ public class ManchouPerso implements Perso {
 		pkt.setChannels(chts);
 		sendPacketToServer(pkt);
 	}
+
+	@Override
+	public String toString() {
+		return "ManchouPerso [uuid=" + uuid + ", cellId=" + cellId + ", server=" + server + ", pseudo=" + pseudo + ", lvl=" + lvl + ", lvlMax=" + lvlMax + ", classe=" + classe + ", colors=" + colors
+				+ ", genre=" + genre + ", life=" + life + ", lifeMax=" + lifeMax + ", initiative=" + initiative + ", alignement=" + alignement + ", rank=" + rank + ", prospection=" + prospection
+				+ ", stats=" + stats + ", accessories=" + Arrays.toString(accessories) + ", merchant=" + merchant + ", dead=" + dead + ", deathCount=" + deathCount + ", guild=" + guild + ", team="
+				+ team + ", aura=" + aura + ", emot=" + emot + ", emotTimer=" + emotTimer + ", guildName=" + guildName + ", emblem=" + Arrays.toString(emblem) + ", restrictions=" + restrictions
+				+ ", inventory=" + inventory + ", xp=" + xp + ", xpLow=" + xpLow + ", xpHight=" + xpHight + ", statsPoints=" + statsPoints + ", spellsPoints=" + spellsPoints + ", energy=" + energy
+				+ ", energyMax=" + energyMax + ", offlineFriends=" + offlineFriends + ", onlineFriends=" + onlineFriends + ", channels=" + channels + ", effects=" + effects + ", map=" + map
+				+ ", spells=" + spells + ", scaleX=" + scaleX + ", scaleY=" + scaleY + ", orientation=" + orientation + ", sprite=" + sprite + ", job=" + job + ", jobs=" + jobs + ", pods=" + pods
+				+ ", maxPods=" + maxPods + ", currentInv=" + currentInv + ", mitm=" + mitm + "]";
+	}
+
 }

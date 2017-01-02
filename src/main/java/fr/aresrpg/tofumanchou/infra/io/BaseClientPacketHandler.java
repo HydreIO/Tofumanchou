@@ -27,6 +27,8 @@ import fr.aresrpg.dofus.protocol.exchange.ExchangeLeavePacket;
 import fr.aresrpg.dofus.protocol.exchange.client.*;
 import fr.aresrpg.dofus.protocol.fight.client.*;
 import fr.aresrpg.dofus.protocol.friend.client.*;
+import fr.aresrpg.dofus.protocol.game.actions.GameActions;
+import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
 import fr.aresrpg.dofus.protocol.game.client.*;
 import fr.aresrpg.dofus.protocol.info.client.InfoMapPacket;
 import fr.aresrpg.dofus.protocol.item.client.*;
@@ -263,6 +265,10 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	@Override
 	public void handle(GameClientActionPacket pkt) {
 		log(pkt);
+		if (pkt.getType() == GameActions.MOVE) {
+			GameMoveAction action = (GameMoveAction) pkt.getAction();
+			LOGGER.severe("" + action);
+		}
 		transmit(pkt);
 
 	}

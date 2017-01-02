@@ -43,6 +43,7 @@ public class ManchouProxy implements Proxy {
 	public void setAccount(Account account) {
 		this.account = account;
 		((ManchouAccount) account).setProxy(this);
+		((ManchouAccount) account).setConnection(remoteConnection);
 		localHandler.setClient(account);
 		remoteHandler.setClient(account);
 		new MitmConnectEvent(account).send();
@@ -92,6 +93,7 @@ public class ManchouProxy implements Proxy {
 			} else {
 				if (this.remoteConnection != null) this.remoteConnection.closeConnection();
 				this.remoteConnection = connection;
+				if (account != null) ((ManchouAccount) account).setConnection(connection);
 			}
 			Executors.CACHED.execute(() -> {
 				LOGGER.info("Connection '" + connection.getLabel() + "' Started !");

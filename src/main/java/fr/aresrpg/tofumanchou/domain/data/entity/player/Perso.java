@@ -17,6 +17,7 @@ import fr.aresrpg.tofumanchou.infra.data.PlayerInventory;
 import java.awt.Point;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 /**
  * 
@@ -80,41 +81,41 @@ public interface Perso extends Player {
 
 	void replaceCraft();
 
-	Perso moveUp();
+	Perso moveUp(Predicate<Integer> avoidCell);
 
 	default Perso moveUp(int nbr) {
 		for (int i = 0; i < nbr; i++)
-			moveUp();
+			moveUp(c -> false);
 		return this;
 	}
 
-	Perso moveDown();
+	Perso moveDown(Predicate<Integer> avoidCell);
 
 	default Perso moveDown(int nbr) {
 		for (int i = 0; i < nbr; i++)
-			moveDown();
+			moveDown(c -> false);
 		return this;
 	}
 
-	Perso moveLeft();
+	Perso moveLeft(Predicate<Integer> avoidCell);
 
 	default Perso moveLeft(int nbr) {
 		for (int i = 0; i < nbr; i++)
-			moveLeft();
+			moveLeft(c -> false);
 		return this;
 	}
 
-	Perso moveRight();
+	Perso moveRight(Predicate<Integer> avoidCell);
 
 	default Perso moveRight(int nbr) {
 		for (int i = 0; i < nbr; i++)
-			moveRight();
+			moveRight(c -> false);
 		return this;
 	}
 
 	Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs);
 
-	Perso moveToCell(List<Point> p, int cellid, boolean teleport);
+	Perso move(List<Point> p, boolean teleport);
 
 	void moveToRandomCell();
 

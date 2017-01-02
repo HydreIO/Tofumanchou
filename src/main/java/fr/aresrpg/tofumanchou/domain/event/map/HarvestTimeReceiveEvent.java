@@ -3,6 +3,7 @@ package fr.aresrpg.tofumanchou.domain.event.map;
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 
 /**
  * 
@@ -14,16 +15,34 @@ public class HarvestTimeReceiveEvent implements Event<HarvestTimeReceiveEvent> {
 	private Account client;
 	private int cellId;
 	private long time;
+	private Player player;
 
 	/**
 	 * @param client
 	 * @param cellId
 	 * @param time
+	 * @param player
 	 */
-	public HarvestTimeReceiveEvent(Account client, int cellId, long time) {
+	public HarvestTimeReceiveEvent(Account client, int cellId, long time, Player player) {
 		this.client = client;
 		this.cellId = cellId;
 		this.time = time;
+		this.player = player;
+	}
+
+	/**
+	 * @return the player
+	 */
+	public Player getPlayer() {
+		return player;
+	}
+
+	/**
+	 * @param player
+	 *            the player to set
+	 */
+	public void setPlayer(Player player) {
+		this.player = player;
 	}
 
 	/**

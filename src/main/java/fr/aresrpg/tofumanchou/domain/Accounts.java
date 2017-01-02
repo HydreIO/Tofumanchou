@@ -50,7 +50,7 @@ public class Accounts {
 		for (Account a : instance.accounts.values()) {
 			Perso perso = a.getPerso();
 			if (perso == null) continue;
-			if (perso.getServer() == server && perso.getPseudo().equals(pseudo)) return perso;
+			if (perso.getServer() == server && perso.getPseudo().equalsIgnoreCase(pseudo)) return perso;
 		}
 		return null;
 	}

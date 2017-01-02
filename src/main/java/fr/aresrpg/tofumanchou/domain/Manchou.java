@@ -3,6 +3,7 @@ package fr.aresrpg.tofumanchou.domain;
 import fr.aresrpg.commons.domain.condition.Option;
 import fr.aresrpg.commons.domain.event.Events;
 import fr.aresrpg.commons.domain.event.Listener;
+import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.dofus.structures.server.*;
@@ -23,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * 
@@ -81,6 +83,12 @@ public class Manchou {
 		}
 	}
 
+	public static void directRegistry(ManchouPlugin p) {
+		LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
+				+ AnsiColor.PURPLE + p.getSubVersion());
+		Executors.CACHED.execute(p::onEnable);
+	}
+
 	/**
 	 * @return the plugins
 	 */
@@ -123,14 +131,14 @@ public class Manchou {
 		Scanner sc = new Scanner(System.in);
 		while (isRunning()) {
 			if (!sc.hasNext()) continue;
-			String nextLine = sc.nextLine();
-			if (nextLine.isEmpty() || !commands.containsKey(nextLine)) {
+			String[] args = parse(sc.nextLine());
+			if (args == null) {
 				LOGGER.warning("Unknow command !");
 				continue;
 			}
-			String[] args = parse(nextLine);
-			if (args != null) Executors.CACHED.execute(() -> commands.get(nextLine).trigger(args));
-			else LOGGER.warning("Unknow command !");
+			String[] cmdargs = new String[args.length - 1];
+			IntStream.range(1, args.length).forEach(i -> cmdargs[i - 1] = args[i]);
+			Executors.CACHED.execute(() -> commands.get(args[0]).trigger(cmdargs));
 		}
 	}
 
@@ -139,12 +147,8 @@ public class Manchou {
 		String[] all = line.split(" ");
 		if (all.length < 1) return null;
 		String cmd = all[0];
-		if (cmd.isEmpty()) return null;
-		if (all.length <= 1) return new String[0];
-		String[] args = new String[all.length - 1];
-		for (int i = 1; i < all.length; i++)
-			args[i - 1] = all[i];
-		return args;
+		if (cmd.isEmpty() || !commands.containsKey(cmd)) return null;
+		return all;
 	}
 
 	/**

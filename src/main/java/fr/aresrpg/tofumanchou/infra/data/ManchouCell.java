@@ -210,4 +210,13 @@ public class ManchouCell implements Cell {
 		if (e == null) return false;
 		return e instanceof MobGroup;
 	}
+
+	@Override
+	public String toString() {
+		return "ManchouCell [id=" + id + ", mapWidth=" + mapWidth + ", mapHeight=" + mapHeight + ", lineOfSight=" + lineOfSight + ", layerGroundRot=" + layerGroundRot + ", groundLevel=" + groundLevel
+				+ ", movement=" + movement + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
+				+ ", layerObject1Num=" + layerObject1Num + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
+				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + layerObject2Num + ", frame=" + frame + ", entityOn=" + entityOn + "]";
+	}
+
 }

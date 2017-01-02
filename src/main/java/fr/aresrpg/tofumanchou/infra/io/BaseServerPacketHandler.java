@@ -395,7 +395,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(AccountSelectCharacterOkPacket pkt) {
 		log(pkt);
 		if (isMitm()) {
-			ManchouPerso manchouPerso = new ManchouPerso(client, pkt.getCharacter().getPseudo(), current);
+			ManchouPerso manchouPerso = new ManchouPerso(client, current, pkt.getCharacter());
 			manchouPerso.setMitm(true);
 			client.setPerso(manchouPerso);
 		}
@@ -738,6 +738,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		pkt.getFrames().forEach((id, frame) -> {
 			ManchouCell cell = getPerso().getMap().getCells()[id];
 			cell.applyFrame(frame);
+			new FrameUpdateEvent(client, cell, frame.getId()).send();
 			if (cell.isRessource() && cell.isRessourceSpawned()) new RessourceSpawnEvent(client, cell).send(); // event asynchrone
 		});
 		transmit(pkt);
@@ -961,18 +962,18 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 						}
 						sendPkt(new GameActionACKPacket().setActionId(action));
 					} , actionh.getTime(), TimeUnit.MILLISECONDS);
-					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime());
+					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), getPerso());
 					eventh.send();
 					actionh.setCellId(eventh.getCellId());
 					actionh.setTime(eventh.getTime());
 				} else {
 					Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
 					Player p = (Player) entity;
-					PlayerStoleYourRessourceEvent eventss = new PlayerStoleYourRessourceEvent(client, actionh.getCellId(), actionh.getTime(), p);
+					HarvestTimeReceiveEvent eventss = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), p);
 					eventss.send();
 					actionh.setCellId(eventss.getCellId());
 					actionh.setTime(eventss.getTime());
-					pkt.setEntityId(eventss.getThief().getUUID());
+					pkt.setEntityId(eventss.getPlayer().getUUID());
 				}
 				break;
 			case TACLE:

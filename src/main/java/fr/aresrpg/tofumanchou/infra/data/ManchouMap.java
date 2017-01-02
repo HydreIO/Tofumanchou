@@ -34,7 +34,7 @@ public class ManchouMap implements Carte {
 	private boolean specBlocked;
 	private boolean groupBlocked;
 	private boolean helpNeeded;
-	private boolean ended;
+	private boolean ended = true;
 	private Entity currentTurn;
 	private boolean spectator;
 	private int startTimer;
