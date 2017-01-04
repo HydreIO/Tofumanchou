@@ -1,5 +1,6 @@
 package fr.aresrpg.tofumanchou.domain;
 
+import fr.aresrpg.commons.domain.concurrent.Threads;
 import fr.aresrpg.commons.domain.condition.Option;
 import fr.aresrpg.commons.domain.event.Events;
 import fr.aresrpg.commons.domain.event.Listener;
@@ -66,13 +67,13 @@ public class Manchou {
 			socket.bind(addr);
 			socket.configureBlocking(false);
 			socket.register(selector, socket.validOps());
-			Executors.CACHED.execute(() -> new ManchouBridge("Passerelle", socket));
+			Executors.FIXED.execute(() -> new ManchouBridge("Passerelle", socket));
 		} catch (IOException e) {
 			LOGGER.error(e, "Unable to open the connection ! please contact DeltaEvo");
 			shutdown();
 		}
 		LOGGER.success("Tofumanchou started !");
-		Executors.CACHED.execute(this::startScanner);
+		Executors.FIXED.execute(this::startScanner);
 	}
 
 	public static void registerEvent(Listener listener) {
@@ -86,7 +87,7 @@ public class Manchou {
 	public static void directRegistry(ManchouPlugin p) {
 		LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
 				+ AnsiColor.PURPLE + p.getSubVersion());
-		Executors.CACHED.execute(p::onEnable);
+		Executors.FIXED.execute(p::onEnable);
 	}
 
 	/**
@@ -138,7 +139,7 @@ public class Manchou {
 			}
 			String[] cmdargs = new String[args.length - 1];
 			IntStream.range(1, args.length).forEach(i -> cmdargs[i - 1] = args[i]);
-			Executors.CACHED.execute(() -> commands.get(args[0]).trigger(cmdargs));
+			Executors.FIXED.execute(Threads.threadContextSwitch("Cmd:" + args[0], () -> commands.get(args[0]).trigger(cmdargs)));
 		}
 	}
 

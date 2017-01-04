@@ -95,7 +95,7 @@ public class ManchouProxy implements Proxy {
 				this.remoteConnection = connection;
 				if (account != null) ((ManchouAccount) account).setConnection(connection);
 			}
-			Executors.CACHED.execute(() -> {
+			Executors.FIXED.execute(() -> {
 				LOGGER.info("Connection '" + connection.getLabel() + "' Started !");
 				try {
 					connection.start();

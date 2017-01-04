@@ -10,6 +10,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.domain.data.map.Cell;
 
+import java.awt.Point;
 import java.util.List;
 
 /**
@@ -24,17 +25,17 @@ public class ManchouCell implements Cell {
 	protected boolean lineOfSight;
 	protected int layerGroundRot;
 	protected int groundLevel;
-	protected int movement;
+	private int movement;
 	protected int layerGroundNum;
 	protected int groundSlope;
 	protected int x, y;
 	protected boolean layerGroundFlip;
-	protected int layerObject1Num;
+	private int layerObject1Num;
 	protected int layerObject1Rot;
 	protected boolean layerObject1Flip;
 	protected boolean layerObject2Flip;
 	protected boolean layerObject2Interactive;
-	protected int layerObject2Num;
+	private int layerObject2Num;
 	protected int frame;
 	private Entity entityOn;
 
@@ -68,18 +69,18 @@ public class ManchouCell implements Cell {
 		this.lineOfSight = lineOfSight;
 		this.layerGroundRot = layerGroundRot;
 		this.groundLevel = groundLevel;
-		this.movement = movement;
+		this.setMovement(movement);
 		this.layerGroundNum = layerGroundNum;
 		this.groundSlope = groundSlope;
 		this.x = x;
 		this.y = y;
 		this.layerGroundFlip = layerGroundFlip;
-		this.layerObject1Num = layerObject1Num;
+		this.setLayerObject1Num(layerObject1Num);
 		this.layerObject1Rot = layerObject1Rot;
 		this.layerObject1Flip = layerObject1Flip;
 		this.layerObject2Flip = layerObject2Flip;
 		this.layerObject2Interactive = layerObject2Interactive;
-		this.layerObject2Num = layerObject2Num;
+		this.setLayerObject2Num(layerObject2Num);
 		this.frame = frame;
 	}
 
@@ -94,30 +95,35 @@ public class ManchouCell implements Cell {
 		c.lineOfSight = cell.isLineOfSight();
 		c.layerGroundRot = cell.getLayerGroundRot();
 		c.groundLevel = cell.getGroundLevel();
-		c.movement = cell.getMovement();
+		c.setMovement(cell.getMovement());
 		c.layerGroundNum = cell.getLayerGroundNum();
 		c.groundSlope = cell.getGroundSlope();
-		c.x = cell.getX();
-		c.y = cell.getY();
+		c.x = cell.getXRot();
+		c.y = cell.getYRot();
 		c.layerGroundFlip = cell.isLayerGroundFlip();
-		c.layerObject1Num = cell.getLayerObject1Num();
+		c.setLayerObject1Num(cell.getLayerObject1Num());
 		c.layerObject1Rot = cell.getLayerObject1Rot();
 		c.layerObject1Flip = cell.isLayerObject1Flip();
 		c.layerObject2Flip = cell.isLayerObject2Flip();
 		c.layerObject2Interactive = cell.isLayerObject2Interactive();
-		c.layerObject2Num = cell.getLayerObject2Num();
+		c.setLayerObject2Num(cell.getLayerObject2Num());
 		c.frame = cell.getFrame();
 		return c;
 	}
 
+	public Point toPoint() {
+		return new Point(x, y);
+	}
+
 	public fr.aresrpg.dofus.structures.map.Cell serialize() {
-		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, movement, layerGroundNum, groundSlope, layerGroundFlip, layerObject1Num, layerObject1Rot,
-				layerObject1Flip, layerObject2Flip, layerObject2Interactive, layerObject2Num);
+		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, getMovement(), layerGroundNum, groundSlope, layerGroundFlip, getLayerObject1Num(), layerObject1Rot,
+				layerObject1Flip, layerObject2Flip, layerObject2Interactive, getLayerObject2Num());
 	}
 
 	public int getRandomNeighborCell(Carte map, boolean diagonale, List<Integer> avoid) {
 		Node[] neighbors = diagonale ? Pathfinding.getNeighbors(new Node(getX(), getY())) : Pathfinding.getNeighborsWithoutDiagonals(new Node(getX(), getY()));
 		for (Node n : neighbors) {
+			if (!Maps.isInMapRotated(n.getX(), n.getY(), mapWidth, mapHeight)) continue;
 			int id = Maps.getIdRotated(n.getX(), n.getY(), mapWidth, mapHeight);
 			if (avoid.contains(id) || !Maps.isInMap(id, mapWidth, mapHeight)) continue;
 			Cell cell = map.getCells()[id];
@@ -150,7 +156,7 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public Interractable getInterractable() {
-		return Interractable.fromId(layerObject2Num);
+		return Interractable.fromId(getLayerObject2Num());
 	}
 
 	public boolean isRessource() {
@@ -161,7 +167,7 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public boolean isInterractable() {
-		return Interractable.isInterractable(layerObject2Num);
+		return Interractable.isInterractable(getLayerObject2Num());
 	}
 
 	@Override
@@ -188,16 +194,16 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public boolean isWalkeable() {
-		return movement != 0 && !isInterractable();
+		return getMovement() != 0 && !isInterractable();
 	}
 
 	@Override
 	public boolean isTeleporter() {
-		return movement == 2 || layerObject1Num == 1030 || layerObject2Num == 1030;
+		return getMovement() == 2 || getLayerObject1Num() == 1030 || getLayerObject2Num() == 1030;
 	}
 
 	public boolean isTeleporter1030() {
-		return layerObject1Num == 1030 || layerObject2Num == 1030;
+		return getLayerObject1Num() == 1030 || getLayerObject2Num() == 1030;
 	}
 
 	@Override
@@ -214,9 +220,51 @@ public class ManchouCell implements Cell {
 	@Override
 	public String toString() {
 		return "ManchouCell [id=" + id + ", mapWidth=" + mapWidth + ", mapHeight=" + mapHeight + ", lineOfSight=" + lineOfSight + ", layerGroundRot=" + layerGroundRot + ", groundLevel=" + groundLevel
-				+ ", movement=" + movement + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
-				+ ", layerObject1Num=" + layerObject1Num + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
-				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + layerObject2Num + ", frame=" + frame + ", entityOn=" + entityOn + "]";
+				+ ", movement=" + getMovement() + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
+				+ ", layerObject1Num=" + getLayerObject1Num() + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
+				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + getLayerObject2Num() + ", frame=" + frame + ", entityOn=" + entityOn + "]";
+	}
+
+	/**
+	 * @return the movement
+	 */
+	public int getMovement() {
+		return movement;
+	}
+
+	/**
+	 * @param movement the movement to set
+	 */
+	public void setMovement(int movement) {
+		this.movement = movement;
+	}
+
+	/**
+	 * @return the layerObject1Num
+	 */
+	public int getLayerObject1Num() {
+		return layerObject1Num;
+	}
+
+	/**
+	 * @param layerObject1Num the layerObject1Num to set
+	 */
+	public void setLayerObject1Num(int layerObject1Num) {
+		this.layerObject1Num = layerObject1Num;
+	}
+
+	/**
+	 * @return the layerObject2Num
+	 */
+	public int getLayerObject2Num() {
+		return layerObject2Num;
+	}
+
+	/**
+	 * @param layerObject2Num the layerObject2Num to set
+	 */
+	public void setLayerObject2Num(int layerObject2Num) {
+		this.layerObject2Num = layerObject2Num;
 	}
 
 }

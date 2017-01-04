@@ -10,6 +10,8 @@ import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 
 import java.awt.Point;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * 
@@ -26,7 +28,7 @@ public class ManchouMap implements Carte {
 	private boolean outdoor;
 	private int musicId;
 	private ManchouCell[] cells;
-	private Map<Long, Entity> entities = new HashMap<>();
+	private ConcurrentMap<Long, Entity> entities = new ConcurrentHashMap<>();
 	private FightType fightType;
 	private int[] team0Places;
 	private int[] team1Places;
@@ -60,6 +62,13 @@ public class ManchouMap implements Carte {
 		m.area = MapsData.getArea(map.getId());
 		m.subarea = MapsData.getSubArea(map.getId());
 		return m;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		return obj instanceof Carte && ((Carte) obj).getMapId() == mapid;
 	}
 
 	private static ManchouCell[] parseCells(fr.aresrpg.dofus.structures.map.Cell[] cells, int width, int height) {
@@ -99,6 +108,10 @@ public class ManchouMap implements Carte {
 
 	public int distance(Point map) {
 		return Math.abs(map.x - getX()) + Math.abs(map.y - getY());
+	}
+
+	public Point toPoint() {
+		return new Point(x, y);
 	}
 
 	public boolean isOnCoords(int x, int y) {
@@ -274,7 +287,7 @@ public class ManchouMap implements Carte {
 	 * @param entities
 	 *            the entities to set
 	 */
-	public void setEntities(Map<Long, Entity> entities) {
+	public void setEntities(ConcurrentMap<Long, Entity> entities) {
 		this.entities = entities;
 	}
 
@@ -404,7 +417,7 @@ public class ManchouMap implements Carte {
 	@Override
 	public String toString() {
 		return "ManchouMap [mapid=" + mapid + ", x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + ", backgroundId=" + backgroundId + ", musicId=" + musicId + ", cells="
-				+ Arrays.toString(cells) + ", entities=" + entities + ", fightType=" + fightType + ", team0Places=" + Arrays.toString(team0Places) + ", team1Places=" + Arrays.toString(team1Places)
+				+ cells.length + ", entities=" + entities.size() + ", fightType=" + fightType + ", team0Places=" + Arrays.toString(team0Places) + ", team1Places=" + Arrays.toString(team1Places)
 				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", currentTurn=" + currentTurn
 				+ ", spectator=" + spectator + ", startTimer=" + startTimer + ", duel=" + duel + "]";
 	}

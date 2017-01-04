@@ -24,10 +24,11 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public final class Executors {
 
-	public static ExecutorService CACHED = new ThreadPoolBuilder(new ThreadBuilder()
+	public static ExecutorService FIXED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
 			.setName("ThreadManchou[%d]"))
-					.setType(PoolType.CACHED)
+					.setType(PoolType.FIXED)
+					.setParallelism(70)
 					.buildAsService();
 	public static ScheduledExecutorService SCHEDULED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
@@ -42,7 +43,7 @@ public final class Executors {
 	}
 
 	public static void shutdown() {
-		CACHED.shutdownNow();
+		FIXED.shutdownNow();
 		SCHEDULER.shutdown(); // shutdown du scheduled
 	}
 }

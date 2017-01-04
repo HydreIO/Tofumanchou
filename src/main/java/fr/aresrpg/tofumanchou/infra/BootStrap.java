@@ -34,7 +34,7 @@ public class BootStrap {
 		if (plugins != null) plugins.forEach(p -> {
 			LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
 					+ AnsiColor.PURPLE + p.getSubVersion());
-			Executors.CACHED.execute(p::onEnable);
+			Executors.FIXED.execute(p::onEnable);
 		});
 	}
 

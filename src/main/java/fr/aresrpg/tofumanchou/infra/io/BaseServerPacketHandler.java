@@ -69,6 +69,7 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
+import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.event.ClientCrashEvent;
@@ -422,7 +423,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			if (isBot()) {
 				client.getConnection().closeConnection();
 				client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
-				Executors.CACHED.execute(() -> {
+				Executors.FIXED.execute(() -> {
 					try {
 						client.getConnection().start();
 					} catch (Exception e) {
@@ -770,8 +771,10 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			switch (e.getFirst()) {
 				case DEFAULT:
 					MovementPlayer player = (MovementPlayer) (Object) e.getSecond();
-					if (player.getId() == getPerso().getUUID()) getPerso().updateMovement(player);
-					else {
+					if (player.getId() == getPerso().getUUID()) {
+						getPerso().updateMovement(player);
+						getPerso().getMap().getEntities().put(player.getId(), getPerso());
+					} else {
 						ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), parseMovement);
 						new EntityPlayerJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
@@ -807,7 +810,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(GamePositionsPacket pkt) {
 		log(pkt);
 		pkt.getPositions().forEach(p -> {
-			Entity entity = getPerso().getMap().getEntities().get(p.getEntityId());
+			Entity entity = p.getEntityId() == getPerso().getUUID() ? getPerso() : getPerso().getMap().getEntities().get(p.getEntityId());
 			entity.setCellId(p.getPosition());
 			new EntityChangePlaceInFightEvent(client, entity, p.getPosition()).send();
 		});
@@ -915,7 +918,12 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				int cell = actionm.getPath().get(actionm.getPath().size() - 1).getCellId();
 				Entity enti = null;
 				if (pkt.getEntityId() == getPerso().getUUID()) enti = getPerso();
-				else enti = getPerso().getMap().getEntities().get(pkt.getEntityId());
+				else enti = getPerso()
+						.getMap()
+						.getEntities()
+						.get(
+								pkt
+								.getEntityId());
 				if (enti == null) break;
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
@@ -1047,7 +1055,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		for (FightEntity e : pkt.getEntities()) {
 			Entity ent = getPerso().getMap().getEntities().get(e.getId());
 			if (ent == null) continue;
-			if (ent instanceof Player) {
+			if (ent instanceof Perso) {
+				ManchouPerso player = (ManchouPerso) ent;
+				player.setLife(e.getLife());
+				player.setLifeMax(e.getLifeMax());
+				player.setPa(e.getPa());
+				player.setPm(e.getPm());
+				player.setDead(e.isDead());
+			} else if (ent instanceof Player) {
 				ManchouPlayerEntity player = (ManchouPlayerEntity) ent;
 				player.setLife(e.getLife());
 				player.setLifeMax(e.getLifeMax());
@@ -1262,6 +1277,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		s.setEnergyMax(energymax);
 		s.setInitiative(init);
 		s.setProspection(pp);
+		s.setStats(stats);
 		new PersoStatsEvent(client, xp, xpLow, xpHight, kamas, bonuspts, spellpts, align, pkt.getFakeAlignment(), rank, life, lifemax, energy, energymax, init, pp, stats, pkt.getExtradatas()).send();
 	}
 
