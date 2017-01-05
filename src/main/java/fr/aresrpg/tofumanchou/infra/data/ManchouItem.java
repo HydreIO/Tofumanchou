@@ -25,7 +25,7 @@ public class ManchouItem implements Item {
 	private int remainingHours;
 	private int pods;
 
-	public ManchouItem(long uuid, String name, String desc, ItemCategory category, int typeId, int amount, int position, Effect[] effects, int price, int skin, int remainingHours, int pods) {
+	private ManchouItem(long uuid, String name, String desc, ItemCategory category, int typeId, int amount, int position, Effect[] effects, int price, int skin, int remainingHours, int pods) {
 		this.uuid = uuid;
 		this.name = name;
 		this.desc = desc;
@@ -45,6 +45,7 @@ public class ManchouItem implements Item {
 	}
 
 	public static ManchouItem fromProtocolItem(fr.aresrpg.dofus.structures.item.Item item) {
+		if (item == null) return null;
 		ManchouItem i = new ManchouItem();
 		i.uuid = item.getUid();
 		System.out.println(item);
@@ -244,6 +245,12 @@ public class ManchouItem implements Item {
 	@Override
 	public int getPods() {
 		return pods;
+	}
+
+	@Override
+	public String toString() {
+		return "ManchouItem [uuid=" + uuid + ", name=" + name + ", desc=" + desc + ", category=" + category + ", typeId=" + typeId + ", amount=" + amount + ", position=" + position + ", price="
+				+ price + ", skin=" + skin + ", remainingHours=" + remainingHours + ", pods=" + pods + "]";
 	}
 
 }

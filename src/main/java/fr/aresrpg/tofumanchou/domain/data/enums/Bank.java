@@ -7,14 +7,22 @@ import java.awt.Point;
  * @since
  */
 public enum Bank {
-	ASTRUB(4, -16),
-	SUFOKIA(14, 25),
-	AMAKNA(2, -2);
-	private int x, y;
+	ASTRUB(4, -16, 142),
+	SUFOKIA(14, 25, 269),
+	AMAKNA(2, -2, 238);
+	private int x, y, cellid;
 
-	private Bank(int x, int y) {
+	private Bank(int x, int y, int cellid) {
 		this.x = x;
 		this.y = y;
+		this.cellid = cellid;
+	}
+
+	/**
+	 * @return the cellid
+	 */
+	public int getCellid() {
+		return cellid;
 	}
 
 	/**

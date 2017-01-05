@@ -74,9 +74,7 @@ public class PlayerInventory implements Inventory {
 
 	public void parseCharacter(Character c) {
 		if (c.getItems() == null) return;
-		Arrays.stream(c.getItems())
-				.map(i -> new ManchouItem(i.getUid(), "", "", null, i.getItemTypeId(), i.getQuantity(), i.getPosition(), i.getEffects(), i.getPrice(), i.getSkin(), i.getRemainingHours(), 0))
-				.forEach(i -> getContents().put(i.getUUID(), i));
+		Arrays.stream(c.getItems()).map(ManchouItem::fromProtocolItem).forEach(i -> getContents().put(i.getUUID(), i));
 	}
 
 	public Item getItemAtPos(EquipmentPosition pos) {

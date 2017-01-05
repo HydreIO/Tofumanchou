@@ -1167,18 +1167,18 @@ public class ManchouPerso implements Perso {
 			int dHi = ((map.getHeight() - 1) * 2) - i;
 			int dWi = (map.getWidth() * 2 - 1) - i;
 			if (t[0] == -1)
-				t[0] = getTeleporter(i, dWi, i, i, true, avoidCell);
+				t[0] = getTeleporter(i, dWi, i, i, avoidCell);
 			if (t[1] == -1)
-				t[1] = getTeleporter(i, i, i, dHi, true, avoidCell);
+				t[1] = getTeleporter(i, i, i, dHi, avoidCell);
 			if (t[2] == -1)
-				t[2] = getTeleporter(i, dWi, dHi, dHi, true, avoidCell);
+				t[2] = getTeleporter(i, dWi, dHi, dHi, avoidCell);
 			if (t[3] == -1)
-				t[3] = getTeleporter(dWi, dWi, i, dHi, true, avoidCell);
+				t[3] = getTeleporter(dWi, dWi, i, dHi, avoidCell);
 		}
 		t[4] = map.getCells()[leftDownCorner].isTeleporter() ? avoidCell.negate().test(leftDownCorner) ? leftDownCorner : -1 : -1; // downleft
-		t[5] = map.getCells()[rightDownCorner].isTeleporter() ? avoidCell.negate().test(leftDownCorner) ? leftDownCorner : -1 : -1;//downright
-		t[6] = map.getCells()[leftUpCorner].isTeleporter() ? avoidCell.negate().test(leftDownCorner) ? leftDownCorner : -1 : -1;//upleft
-		t[7] = map.getCells()[rightUpCorner].isTeleporter() ? avoidCell.negate().test(leftDownCorner) ? leftDownCorner : -1 : -1;//upright
+		t[5] = map.getCells()[rightDownCorner].isTeleporter() ? avoidCell.negate().test(rightDownCorner) ? rightDownCorner : -1 : -1;//downright
+		t[6] = map.getCells()[leftUpCorner].isTeleporter() ? avoidCell.negate().test(leftUpCorner) ? leftUpCorner : -1 : -1;//upleft
+		t[7] = map.getCells()[rightUpCorner].isTeleporter() ? avoidCell.negate().test(rightUpCorner) ? rightUpCorner : -1 : -1;//upright
 		LOGGER.debug("Teleporters = up:" + t[0] + ", down:" + t[2] + ", right:" + t[3] + ", left:" + t[1]);
 		LOGGER.debug("Teleporters = downleft(" + leftDownCorner + "):" + t[4] + ", downright(" + rightDownCorner + "):" + t[5] + ", upleft(" + leftUpCorner + "):" + t[6] + ", upright(" + rightUpCorner
 				+ "):" + t[7]);
@@ -1187,29 +1187,28 @@ public class ManchouPerso implements Perso {
 
 	private int getNeighborsTeleporters(int w, int h, int cellid, int cellX, int cellY) {
 		Node[] neighbors = Pathfinding.getNeighbors(new Node(cellX, cellY));
+		int cell = cellid;
 		for (Node n : neighbors) {
 			if (!Maps.isInMapRotated(n.getX(), n.getY(), w, h)) continue;
 			int idRotated = Maps.getIdRotated(n.getX(), n.getY(), w, h);
 			ManchouCell manchouCell = map.getCells()[idRotated];
 			if (manchouCell.isTeleporter()) {
-				cellid = manchouCell.getId();
+				cell = manchouCell.getId();
 				break;
 			}
 		}
-		return cellid;
+		return cell;
 	}
 
-	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, boolean only1030, Predicate<Integer> avoidCell) {
+	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, Predicate<Integer> avoidCell) {
 		for (int x = xFrom; x <= xTo; x++)
 			for (int y = yFrom; y <= yTo; y++) {
 				int id = Maps.getId(x, y, map.getWidth());
 				if (avoidCell.test(id))
 					continue;
 				ManchouCell l = map.getCells()[id];
-				if (l.isTeleporter1030()) return id;
-				if (!only1030 && l.isTeleporter()) return id; // permet de chercher les 1030 en prio
+				if (l.isTeleporter()) return id;
 			}
-		if (only1030) return getTeleporter(xFrom, xTo, yFrom, yTo, false, avoidCell); // on search tout si jamais ya pas de 1030
 		return -1;
 	}
 
@@ -1244,14 +1243,6 @@ public class ManchouPerso implements Perso {
 
 	public ManchouCell[] getFarestTeleporters() {
 		return Arrays.stream(getAllTeleporters()).sorted((o1, o2) -> o2.distance(cellId) - o1.distance(cellId)).toArray(ManchouCell[]::new);
-	}
-
-	public ManchouCell[] getNearestTeleporters1030() {
-		return Arrays.stream(getNearestTeleporters()).filter(ManchouCell::isTeleporter1030).toArray(ManchouCell[]::new);
-	}
-
-	public ManchouCell[] getFarestTeleporters1030() {
-		return Arrays.stream(getFarestTeleporters()).filter(ManchouCell::isTeleporter1030).toArray(ManchouCell[]::new);
 	}
 
 	public void moveToRandomNeightbourMap(Predicate<Integer> avoidCell) {
@@ -1406,8 +1397,6 @@ public class ManchouPerso implements Perso {
 			fr.aresrpg.tofumanchou.domain.data.item.Item mov = inv.get(item.getItemUid());
 			if (item.getAmount() > mov.getAmount()) throw new IllegalArgumentException("Can't move item " + item + " | There are not as many item in the inventory ! (" + mov.getAmount() + ")");
 			if (item.getAmount() < 0) throw new IllegalArgumentException("Unable to move " + item.getAmount() + " of " + item);
-			if (item.getAmount() == mov.getAmount()) inv.remove(item.getItemUid());
-			else mov.setAmount(mov.getAmount() - item.getAmount());
 		}
 		ExchangeMoveItemsPacket pkt = new ExchangeMoveItemsPacket();
 		Set<MovedItem> it = new HashSet<>();

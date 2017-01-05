@@ -64,11 +64,26 @@ public class ManchouMap implements Carte {
 		return m;
 	}
 
+	public static ManchouMap test(int id) {
+		ManchouMap manchouMap = new ManchouMap();
+		manchouMap.mapid = id;
+		return manchouMap;
+	}
+
+	public DofusMap serialize() {
+		return new DofusMap(mapid, width, height, musicId, capabilities, outdoor, backgroundId, getProtocolCells());
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) return false;
 		if (obj == this) return true;
-		return obj instanceof Carte && ((Carte) obj).getMapId() == mapid;
+		return obj instanceof ManchouMap && ((ManchouMap) obj).getMapId() == mapid;
+	}
+
+	@Override
+	public int hashCode() {
+		return mapid;
 	}
 
 	private static ManchouCell[] parseCells(fr.aresrpg.dofus.structures.map.Cell[] cells, int width, int height) {

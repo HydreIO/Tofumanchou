@@ -923,7 +923,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 						.getEntities()
 						.get(
 								pkt
-								.getEntityId());
+										.getEntityId());
 				if (enti == null) break;
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
@@ -1366,7 +1366,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		event.send();
 		pkt.setAdd(event.isAdd());
 		pkt.setKamas(event.getKamas());
-		pkt.setMoved(((ManchouItem) event.getMoved()).serializeProtocol());
+		if (event.getMoved() != null) pkt.setMoved(((ManchouItem) event.getMoved()).serializeProtocol());
 		transmit(pkt);
 	}
 

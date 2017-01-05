@@ -116,7 +116,8 @@ public class ManchouCell implements Cell {
 	}
 
 	public fr.aresrpg.dofus.structures.map.Cell serialize() {
-		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, getMovement(), layerGroundNum, groundSlope, layerGroundFlip, getLayerObject1Num(), layerObject1Rot,
+		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, getMovement(), layerGroundNum, groundSlope, layerGroundFlip, getLayerObject1Num(),
+				layerObject1Rot,
 				layerObject1Flip, layerObject2Flip, layerObject2Interactive, getLayerObject2Num());
 	}
 
@@ -167,6 +168,7 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public boolean isInterractable() {
+		if (movement == 1) return true;
 		return Interractable.isInterractable(getLayerObject2Num());
 	}
 
@@ -199,11 +201,7 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public boolean isTeleporter() {
-		return getMovement() == 2 || getLayerObject1Num() == 1030 || getLayerObject2Num() == 1030;
-	}
-
-	public boolean isTeleporter1030() {
-		return getLayerObject1Num() == 1030 || getLayerObject2Num() == 1030;
+		return layerObject1Num == 1030 || layerObject2Num == 1030 || layerObject1Num == 1029 || layerObject2Num == 1029;
 	}
 
 	@Override
@@ -233,7 +231,8 @@ public class ManchouCell implements Cell {
 	}
 
 	/**
-	 * @param movement the movement to set
+	 * @param movement
+	 *            the movement to set
 	 */
 	public void setMovement(int movement) {
 		this.movement = movement;
@@ -247,7 +246,8 @@ public class ManchouCell implements Cell {
 	}
 
 	/**
-	 * @param layerObject1Num the layerObject1Num to set
+	 * @param layerObject1Num
+	 *            the layerObject1Num to set
 	 */
 	public void setLayerObject1Num(int layerObject1Num) {
 		this.layerObject1Num = layerObject1Num;
@@ -261,7 +261,8 @@ public class ManchouCell implements Cell {
 	}
 
 	/**
-	 * @param layerObject2Num the layerObject2Num to set
+	 * @param layerObject2Num
+	 *            the layerObject2Num to set
 	 */
 	public void setLayerObject2Num(int layerObject2Num) {
 		this.layerObject2Num = layerObject2Num;
