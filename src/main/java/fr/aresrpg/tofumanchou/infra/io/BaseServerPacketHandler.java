@@ -47,6 +47,7 @@ import fr.aresrpg.dofus.protocol.specialization.server.SpecializationSetPacket;
 import fr.aresrpg.dofus.protocol.spell.server.SpellChangeOptionPacket;
 import fr.aresrpg.dofus.protocol.spell.server.SpellListPacket;
 import fr.aresrpg.dofus.protocol.subarea.server.SubareaListPacket;
+import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
@@ -157,7 +158,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 
 	@Override
 	public boolean parse(ProtocolRegistry registry, String packet) {
-		if (registry == null) {
+		if (registry == null && isMitm()) {
 			try {
 				System.out.println("[RECEIVE direct] " + packet);
 				((SocketChannel) getProxy().getLocalConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
@@ -683,6 +684,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(GameEndPacket pkt) {
 		log(pkt);
 		getPerso().getMap().getEntities().clear();
+		getPerso().getSpells().values().forEach(s -> ((ManchouSpell) s).setRelance(0));
 		FightEndEvent event = new FightEndEvent(client, pkt.getDuration(), pkt.getFirstPlayerId(), pkt.getBonus(), pkt.getResult());
 		event.send();
 		pkt.setBonus(event.getBonus());
@@ -707,6 +709,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		if (pkt.getState() == GameType.FIGHT) {
 			ManchouMap map = getPerso().getMap();
+			map.getEntities().clear();
 			map.setEnded(false);
 			map.setFightType(pkt.getFightType());
 			map.setSpectator(pkt.isSpectator());
@@ -865,7 +868,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				break;
 			case KILL:
 				GameKillAction actionk = (GameKillAction) pkt.getAction();
-				Entity de = getPerso().getMap().getEntities().get(actionk.getKilled());
+				Entity de = getPerso().getMap().getEntities().remove(actionk.getKilled());
 				EntityDieEvent eevent = new EntityDieEvent(client, de);
 				eevent.send();
 				actionk.setKilled(eevent.getEntity().getUUID());
@@ -988,6 +991,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				} else {
 					Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
 					Player p = (Player) entity;
+					if (p == null) break;
 					HarvestTimeReceiveEvent eventss = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), p);
 					eventss.send();
 					actionh.setCellId(eventss.getCellId());
@@ -1645,6 +1649,12 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		GroupMembersPositionsEvent event = new GroupMembersPositionsEvent(client, pkt.getPlayers());
 		event.send();
 		pkt.setPlayers(event.getPlayers());
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(SubwayLeavePacket pkt) {
+		log(pkt);
 		transmit(pkt);
 	}
 

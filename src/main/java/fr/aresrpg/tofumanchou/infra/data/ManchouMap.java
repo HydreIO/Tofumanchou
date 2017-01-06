@@ -12,6 +12,7 @@ import java.awt.Point;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 /**
  * 
@@ -62,6 +63,13 @@ public class ManchouMap implements Carte {
 		m.area = MapsData.getArea(map.getId());
 		m.subarea = MapsData.getSubArea(map.getId());
 		return m;
+	}
+
+	public Predicate<Cell> cellAccessible() {
+		return c -> {
+			ManchouCell cl = cells[c.getId()];
+			return cl.lineOfSight && !cl.hasMobOn(); // FIXME
+		};
 	}
 
 	public static ManchouMap test(int id) {
@@ -433,8 +441,8 @@ public class ManchouMap implements Carte {
 	public String toString() {
 		return "ManchouMap [mapid=" + mapid + ", x=" + x + ", y=" + y + ", width=" + width + ", height=" + height + ", backgroundId=" + backgroundId + ", musicId=" + musicId + ", cells="
 				+ cells.length + ", entities=" + entities.size() + ", fightType=" + fightType + ", team0Places=" + Arrays.toString(team0Places) + ", team1Places=" + Arrays.toString(team1Places)
-				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", currentTurn=" + currentTurn
-				+ ", spectator=" + spectator + ", startTimer=" + startTimer + ", duel=" + duel + "]";
+				+ ", blocked=" + blocked + ", specBlocked=" + specBlocked + ", groupBlocked=" + groupBlocked + ", helpNeeded=" + helpNeeded + ", ended=" + ended + ", spectator=" + spectator
+				+ ", startTimer=" + startTimer + ", duel=" + duel + "]";
 	}
 
 	@Override

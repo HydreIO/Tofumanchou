@@ -192,7 +192,8 @@ public enum AgressiveMobs {
 			DofusMobs.MAITRE_ZOTH_3,
 			DofusMobs.SERGENT_ZOTH_1,
 			DofusMobs.SERGENT_ZOTH_2,
-			DofusMobs.SERGENT_ZOTH_3);
+			DofusMobs.SERGENT_ZOTH_3),
+	CHAMP(1, DofusMobs.SANGLIER, DofusMobs.SANGLIER_1, DofusMobs.SANGLIER_DES_PLAINES, DofusMobs.SANGLIER_AGRESSIF);
 
 	private int distance;
 	private DofusMobs[] ids;

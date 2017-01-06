@@ -2,6 +2,7 @@ package fr.aresrpg.tofumanchou.infra.data;
 
 import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
+import fr.aresrpg.commons.domain.concurrent.Threads;
 import fr.aresrpg.commons.domain.util.Randoms;
 import fr.aresrpg.commons.domain.util.exception.NotImplementedException;
 import fr.aresrpg.dofus.protocol.DofusConnection;
@@ -29,6 +30,9 @@ import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer.PlayerOutsideFight
 import fr.aresrpg.dofus.protocol.item.client.*;
 import fr.aresrpg.dofus.protocol.party.PartyRefusePacket;
 import fr.aresrpg.dofus.protocol.party.client.*;
+import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
+import fr.aresrpg.dofus.protocol.subway.client.SubwayUsePacket;
+import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
 import fr.aresrpg.dofus.structures.*;
 import fr.aresrpg.dofus.structures.character.Character;
@@ -856,6 +860,10 @@ public class ManchouPerso implements Perso {
 		return cellId;
 	}
 
+	public ManchouCell getCell() {
+		return map.getCells()[cellId];
+	}
+
 	/**
 	 * @param cellId
 	 *            the cellId to set
@@ -1386,7 +1394,21 @@ public class ManchouPerso implements Perso {
 
 	@Override
 	public void useZaapi(Zaapi current, Zaapi destination) {
-		throw new NotImplementedException();
+		interract(Skills.SE_FAIRE_TRANSPORTER, current.getCellid());
+		Threads.uSleep(500, TimeUnit.MILLISECONDS);
+		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
+		subwayUsePacket.setMapid(destination.getMapid());
+		sendPacketToServer(subwayUsePacket);
+	}
+
+	@Override
+	public void leaveZaap() {
+		sendPacketToServer(new ZaapLeavePacket());
+	}
+
+	@Override
+	public void leaveZaapi() {
+		sendPacketToServer(new SubwayLeavePacket());
 	}
 
 	@Override

@@ -38,6 +38,8 @@ import fr.aresrpg.dofus.protocol.party.PartyRefusePacket;
 import fr.aresrpg.dofus.protocol.party.client.*;
 import fr.aresrpg.dofus.protocol.spell.client.SpellBoostPacket;
 import fr.aresrpg.dofus.protocol.spell.client.SpellMoveToUsedPacket;
+import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
+import fr.aresrpg.dofus.protocol.subway.client.SubwayUsePacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
 import fr.aresrpg.tofumanchou.domain.Accounts;
@@ -668,6 +670,18 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 
 	@Override
 	public void handle(SpellBoostPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(SubwayLeavePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(SubwayUsePacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}

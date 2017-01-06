@@ -78,14 +78,17 @@ public class PlayerBean {
 	public static class PersoBean {
 		private String pseudo;
 		private String server;
+		private long uuid;
 
 		/**
 		 * @param pseudo
 		 * @param server
+		 * @param uuid
 		 */
-		public PersoBean(String pseudo, String server) {
+		public PersoBean(String pseudo, String server, long uuid) {
 			this.pseudo = pseudo;
 			this.server = server;
+			this.uuid = uuid;
 		}
 
 		public PersoBean() {
@@ -95,8 +98,23 @@ public class PlayerBean {
 		 * @param pseudo2
 		 * @param henual
 		 */
-		public PersoBean(String pseudo, Server server) {
-			this(pseudo, server.name().toLowerCase());
+		public PersoBean(String pseudo, Server server, long uuid) {
+			this(pseudo, server.name().toLowerCase(), uuid);
+		}
+
+		/**
+		 * @return the uuid
+		 */
+		public long getUuid() {
+			return uuid;
+		}
+
+		/**
+		 * @param uuid
+		 *            the uuid to set
+		 */
+		public void setUuid(long uuid) {
+			this.uuid = uuid;
 		}
 
 		/**
@@ -136,6 +154,13 @@ public class PlayerBean {
 		@Override
 		public String toString() {
 			return "PersoBean [pseudo=" + pseudo + ", server=" + server + "]";
+		}
+
+		/**
+		 * @return
+		 */
+		public long getUUID() {
+			return uuid;
 		}
 
 	}

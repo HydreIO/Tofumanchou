@@ -1,5 +1,7 @@
 package fr.aresrpg.tofumanchou.infra.config.dao;
 
+import fr.aresrpg.dofus.structures.server.Server;
+
 import java.util.*;
 
 /**
@@ -10,19 +12,40 @@ public class GroupBean {
 
 	private String label;
 	private String chef;
+	private String server;
 	private List<String> members = new ArrayList<>();
 
 	/**
 	 * @param chef
 	 * @param members
 	 */
-	public GroupBean(String label, String chef, String... members) {
+	public GroupBean(String label, Server srv, String chef, String... members) {
 		this.chef = chef;
 		this.label = label;
+		this.server = srv.name().toLowerCase();
 		Arrays.stream(members).forEach(this.members::add);
 	}
 
 	public GroupBean() {
+	}
+
+	/**
+	 * @return the server
+	 */
+	public String getServer() {
+		return server;
+	}
+
+	/**
+	 * @param server
+	 *            the server to set
+	 */
+	public void setServer(Server server) {
+		this.server = server.name().toLowerCase();
+	}
+
+	public Server getServerObject() {
+		return Server.valueOf(server.toUpperCase());
 	}
 
 	public GroupBean addMember(String... members) {

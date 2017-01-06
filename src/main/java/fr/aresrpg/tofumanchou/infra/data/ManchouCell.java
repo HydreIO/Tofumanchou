@@ -87,6 +87,18 @@ public class ManchouCell implements Cell {
 	private ManchouCell() {
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		return obj instanceof ManchouCell && ((ManchouCell) obj).getId() == id;
+	}
+
+	@Override
+	public int hashCode() {
+		return id;
+	}
+
 	public static ManchouCell parseCell(fr.aresrpg.dofus.structures.map.Cell cell, int width, int height) {
 		ManchouCell c = new ManchouCell();
 		c.id = cell.getId();
@@ -138,6 +150,10 @@ public class ManchouCell implements Cell {
 		if (frame.isInteractive() != null) {
 			this.layerObject2Interactive = frame.isInteractive();
 		}
+	}
+
+	public boolean isOnSameLineOrCollumn(ManchouCell c) {
+		return c.getX() == x || c.getY() == y;
 	}
 
 	@Override

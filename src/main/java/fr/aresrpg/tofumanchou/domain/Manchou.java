@@ -50,9 +50,9 @@ public class Manchou {
 			LOGGER.info("Configuration created ! please configure and then restart.");
 			System.exit(0);
 		}), Optional.of(() -> {
-			Variables.ACCOUNTS.add(new PlayerBean("compte1", "password1", new PersoBean("Xx-Immortal-xX", Server.HENUAL), new PersoBean("Frahiko", Server.ERATZ)));
+			Variables.ACCOUNTS.add(new PlayerBean("compte1", "password1", new PersoBean("Xx-Immortal-xX", Server.HENUAL, 0), new PersoBean("Frahiko", Server.ERATZ, 0)));
 			Variables.ACCOUNTS.add(new PlayerBean("compte2", "password2"));
-			Variables.GROUPS.add(new GroupBean("testgroup", "Jawad", "Tthomax", "Goodyxx", "Juste-puissant"));
+			Variables.GROUPS.add(new GroupBean("testgroup", Server.HENUAL, "Jawad", "Tthomax", "Goodyxx", "Juste-puissant"));
 		}));
 		try {
 			plugins = PluginLoader.getInstance().loadPlugins();

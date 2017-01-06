@@ -9,6 +9,7 @@ import java.awt.Point;
 public enum Bank {
 	ASTRUB(4, -16, 142),
 	SUFOKIA(14, 25, 269),
+	BONTA(-32, -58, 325),
 	AMAKNA(2, -2, 238);
 	private int x, y, cellid;
 

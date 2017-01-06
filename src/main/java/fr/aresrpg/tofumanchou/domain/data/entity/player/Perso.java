@@ -67,6 +67,10 @@ public interface Perso extends Player {
 
 	int getPods();
 
+	void leaveZaapi();
+
+	void leaveZaap();
+
 	void activateChat(Chat... chts);
 
 	void desactivateChat(Chat... chts);
