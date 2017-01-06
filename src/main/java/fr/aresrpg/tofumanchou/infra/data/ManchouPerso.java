@@ -3,7 +3,6 @@ package fr.aresrpg.tofumanchou.infra.data;
 import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.concurrent.Threads;
-import fr.aresrpg.commons.domain.util.Randoms;
 import fr.aresrpg.commons.domain.util.exception.NotImplementedException;
 import fr.aresrpg.dofus.protocol.DofusConnection;
 import fr.aresrpg.dofus.protocol.Packet;
@@ -45,7 +44,6 @@ import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.Maps;
 import fr.aresrpg.dofus.util.Pathfinding;
-import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.dofus.util.Pathfinding.PathValidator;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.Job;
@@ -65,7 +63,6 @@ import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -1004,73 +1001,6 @@ public class ManchouPerso implements Perso {
 		sendPacketToServer(new ExchangeReplayCraftPacket());
 	}
 
-	public Perso move(Orientation direction, Predicate<Integer> avoidCell) {
-		return moveToCell(getTp(direction, avoidCell), true, true, true);
-	}
-
-	@Override
-	public Perso moveUp(Predicate<Integer> avoidCell) {
-		return move(Orientation.UP, avoidCell);
-	}
-
-	@Override
-	public Perso moveDown(Predicate<Integer> avoidCell) {
-		return move(Orientation.DOWN, avoidCell);
-	}
-
-	@Override
-	public Perso moveLeft(Predicate<Integer> avoidCell) {
-		return move(Orientation.LEFT, avoidCell);
-	}
-
-	@Override
-	public Perso moveRight(Predicate<Integer> avoidCell) {
-		return move(Orientation.RIGHT, avoidCell);
-	}
-
-	public Perso moveUpLeft(Predicate<Integer> avoidCell) {
-		return move(Orientation.UP_LEFT, avoidCell);
-	}
-
-	public Perso moveUpRight(Predicate<Integer> avoidCell) {
-		return move(Orientation.UP_RIGHT, avoidCell);
-	}
-
-	public Perso moveDownLeft(Predicate<Integer> avoidCell) {
-		return move(Orientation.DOWN_LEFT, avoidCell);
-	}
-
-	public Perso moveDownRight(Predicate<Integer> avoidCell) {
-		return move(Orientation.DOWN_RIGHT, avoidCell);
-	}
-
-	public int getTp(Orientation direction, Predicate<Integer> avoidCell) {
-		return getTp(direction, getTeleporters(avoidCell));
-	}
-
-	public int getTp(Orientation direction, int[] tps) {
-		switch (direction) {
-			case DOWN:
-				return tps[2];
-			case DOWN_LEFT:
-				return tps[4];
-			case DOWN_RIGHT:
-				return tps[5];
-			case LEFT:
-				return tps[1];
-			case RIGHT:
-				return tps[3];
-			case UP:
-				return tps[0];
-			case UP_LEFT:
-				return tps[6];
-			case UP_RIGHT:
-				return tps[7];
-			default:
-				throw new IllegalArgumentException("Invalid direction " + direction);
-		}
-	}
-
 	@Override
 	public Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs) {
 		return move(searchPath(cellid, avoidMobs, diagonals), teleport);
@@ -1142,84 +1072,6 @@ public class ManchouPerso implements Perso {
 		return true;
 	}
 
-	public int[] getTeleporters(Predicate<Integer> avoidCell) {
-		int[] t = new int[8];
-		Arrays.fill(t, -1);
-		int w = map.getWidth();
-		int h = map.getHeight();
-		int leftUpCorner = 0; // left up corner
-		int leftUpCornerX = Maps.getXRotated(leftUpCorner, w, h);
-		int leftUpCornerY = Maps.getYRotated(leftUpCorner, w, h) + 1;
-		leftUpCorner = Maps.getIdRotated(leftUpCornerX, leftUpCornerY, w, h);
-		if (!map.getCells()[leftUpCorner].isTeleporter()) leftUpCorner = getNeighborsTeleporters(w, h, leftUpCorner, leftUpCornerX, leftUpCornerY);
-
-		int rightUpCorner = w - 1;// right up corner
-		int rightUpCornerX = Maps.getXRotated(rightUpCorner, w, h) - 1;
-		int rightUpCornerY = Maps.getYRotated(rightUpCorner, w, h);
-		rightUpCorner = Maps.getIdRotated(rightUpCornerX, rightUpCornerY, w, h);
-		if (!map.getCells()[rightUpCorner].isTeleporter()) rightUpCorner = getNeighborsTeleporters(w, h, rightUpCorner, rightUpCornerX, rightUpCornerY);
-
-		int rightDownCorner = map.getCells().length - 1; // right down corner
-		int rightDownCornerX = Maps.getXRotated(rightDownCorner, w, h);
-		int rightDownCornerY = Maps.getYRotated(rightDownCorner, w, h) - 1;
-		rightDownCorner = Maps.getIdRotated(rightDownCornerX, rightDownCornerY, w, h);
-		if (!map.getCells()[rightDownCorner].isTeleporter()) rightDownCorner = getNeighborsTeleporters(w, h, rightDownCorner, rightDownCornerX, rightDownCornerY);
-
-		int leftDownCorner = (map.getCells().length - 1) - (w - 1); // left down corner
-		int leftDownCornerX = Maps.getXRotated(leftDownCorner, w, h) + 1; // +1 car on veut la case d'a coté
-		int leftDownCornerY = Maps.getYRotated(leftDownCorner, w, h);
-		leftDownCorner = Maps.getIdRotated(leftDownCornerX, leftDownCornerY, w, h);
-		if (!map.getCells()[leftDownCorner].isTeleporter()) leftDownCorner = getNeighborsTeleporters(w, h, leftDownCorner, leftDownCornerX, leftDownCornerY);
-
-		for (int i = 0; i < map.getHeight() * 2; i++) {
-			int dHi = ((map.getHeight() - 1) * 2) - i;
-			int dWi = (map.getWidth() * 2 - 1) - i;
-			if (t[0] == -1)
-				t[0] = getTeleporter(i, dWi, i, i, avoidCell);
-			if (t[1] == -1)
-				t[1] = getTeleporter(i, i, i, dHi, avoidCell);
-			if (t[2] == -1)
-				t[2] = getTeleporter(i, dWi, dHi, dHi, avoidCell);
-			if (t[3] == -1)
-				t[3] = getTeleporter(dWi, dWi, i, dHi, avoidCell);
-		}
-		t[4] = map.getCells()[leftDownCorner].isTeleporter() ? avoidCell.negate().test(leftDownCorner) ? leftDownCorner : -1 : -1; // downleft
-		t[5] = map.getCells()[rightDownCorner].isTeleporter() ? avoidCell.negate().test(rightDownCorner) ? rightDownCorner : -1 : -1;//downright
-		t[6] = map.getCells()[leftUpCorner].isTeleporter() ? avoidCell.negate().test(leftUpCorner) ? leftUpCorner : -1 : -1;//upleft
-		t[7] = map.getCells()[rightUpCorner].isTeleporter() ? avoidCell.negate().test(rightUpCorner) ? rightUpCorner : -1 : -1;//upright
-		LOGGER.debug("Teleporters = up:" + t[0] + ", down:" + t[2] + ", right:" + t[3] + ", left:" + t[1]);
-		LOGGER.debug("Teleporters = downleft(" + leftDownCorner + "):" + t[4] + ", downright(" + rightDownCorner + "):" + t[5] + ", upleft(" + leftUpCorner + "):" + t[6] + ", upright(" + rightUpCorner
-				+ "):" + t[7]);
-		return t;
-	}
-
-	private int getNeighborsTeleporters(int w, int h, int cellid, int cellX, int cellY) {
-		Node[] neighbors = Pathfinding.getNeighbors(new Node(cellX, cellY));
-		int cell = cellid;
-		for (Node n : neighbors) {
-			if (!Maps.isInMapRotated(n.getX(), n.getY(), w, h)) continue;
-			int idRotated = Maps.getIdRotated(n.getX(), n.getY(), w, h);
-			ManchouCell manchouCell = map.getCells()[idRotated];
-			if (manchouCell.isTeleporter()) {
-				cell = manchouCell.getId();
-				break;
-			}
-		}
-		return cell;
-	}
-
-	public int getTeleporter(int xFrom, int xTo, int yFrom, int yTo, Predicate<Integer> avoidCell) {
-		for (int x = xFrom; x <= xTo; x++)
-			for (int y = yFrom; y <= yTo; y++) {
-				int id = Maps.getId(x, y, map.getWidth());
-				if (avoidCell.test(id))
-					continue;
-				ManchouCell l = map.getCells()[id];
-				if (l.isTeleporter()) return id;
-			}
-		return -1;
-	}
-
 	public ManchouCell findRandomCellExept(List<fr.aresrpg.tofumanchou.domain.data.map.Cell> cells) {
 		for (ManchouCell cell : getMap().getCells())
 			if (!cells.contains(cell) && cell.isWalkeable() && !cell.isTeleporter() && cell.getEntityOn() == null) return cell;
@@ -1251,14 +1103,6 @@ public class ManchouPerso implements Perso {
 
 	public ManchouCell[] getFarestTeleporters() {
 		return Arrays.stream(getAllTeleporters()).sorted((o1, o2) -> o2.distance(cellId) - o1.distance(cellId)).toArray(ManchouCell[]::new);
-	}
-
-	public void moveToRandomNeightbourMap(Predicate<Integer> avoidCell) {
-		int nextInt = Randoms.nextInt(40);
-		if (nextInt > 30) moveUp(avoidCell);
-		else if (nextInt > 20) moveDown(avoidCell);
-		else if (nextInt > 10) moveLeft(avoidCell);
-		else moveRight(avoidCell);
 	}
 
 	@Override
