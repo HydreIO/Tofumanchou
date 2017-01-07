@@ -7,7 +7,6 @@ import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 
 import java.io.*;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 public class PluginLoader {
@@ -48,7 +47,7 @@ public class PluginLoader {
 		URL[] urls = new URL[flist.length];
 		for (int i = 0; i < flist.length; i++)
 			urls[i] = flist[i].toURI().toURL();
-		URLClassLoader ucl = new URLClassLoader(urls);
+		ClassLoader ucl = ClassLoader.getSystemClassLoader();
 
 		ServiceLoader<ManchouPlugin> sl = ServiceLoader.load(ManchouPlugin.class, ucl);
 		Iterator<ManchouPlugin> apit = sl.iterator();

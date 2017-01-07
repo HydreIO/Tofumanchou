@@ -2,11 +2,13 @@ package fr.aresrpg.tofumanchou.domain;
 
 import fr.aresrpg.commons.domain.concurrent.Threads;
 import fr.aresrpg.commons.domain.condition.Option;
+import fr.aresrpg.commons.domain.database.Database;
 import fr.aresrpg.commons.domain.event.Events;
 import fr.aresrpg.commons.domain.event.Listener;
 import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
+import fr.aresrpg.commons.infra.database.mongodb.MongoDBDatabase;
 import fr.aresrpg.dofus.structures.server.*;
 import fr.aresrpg.tofumanchou.domain.command.Command;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
@@ -36,6 +38,7 @@ public class Manchou {
 	public static final Logger LOGGER = new LoggerBuilder("TofuM").setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
+	private static Database database;
 	private static final Map<String, Command> commands = new HashMap<>();
 	private static Set<ManchouPlugin> plugins;
 	private static final Manchou instance = new Manchou();
@@ -54,6 +57,7 @@ public class Manchou {
 			Variables.ACCOUNTS.add(new PlayerBean("compte2", "password2"));
 			Variables.GROUPS.add(new GroupBean("testgroup", Server.HENUAL, "Jawad", "Tthomax", "Goodyxx", "Juste-puissant"));
 		}));
+		if (Variables.CUSTOM_LANGS) initDb();
 		try {
 			plugins = PluginLoader.getInstance().loadPlugins();
 		} catch (IOException e) {
@@ -88,6 +92,24 @@ public class Manchou {
 		LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
 				+ AnsiColor.PURPLE + p.getSubVersion());
 		Executors.FIXED.execute(p::onEnable);
+	}
+
+	private void initDb() {
+		try {
+			database = new MongoDBDatabase(Variables.DB_NAME);
+			database.connect(Variables.MONGO_IP, Variables.MONGO_PORT, Variables.MONGO_USER, Variables.MONGO_PASS);
+		} catch (Exception e) {
+			LOGGER.warning("Unable to use the database ! CustomLangs disabled.");
+			LOGGER.debug(e);
+			database = null;
+		}
+	}
+
+	/**
+	 * @return the database
+	 */
+	public static Database getDatabase() {
+		return database;
 	}
 
 	/**

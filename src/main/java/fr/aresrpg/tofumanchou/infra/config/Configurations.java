@@ -70,7 +70,7 @@ public class Configurations {
 				Configured an = f.getAnnotation(Configured.class);
 				Object t = null;
 				try {
-					t = getConf().get(an.value() + f.getName(), f.get(null));
+					t = getConf().get(an.value().isEmpty() ? f.getName() : an.value(), f.get(null));
 					f.set(null, t);
 				} catch (Exception e) {
 					LOGGER.error(e, "Unable to set field " + f.getName() + " with type " + t);
@@ -83,7 +83,7 @@ public class Configurations {
 			Arrays.stream(getBundle().getFields()).filter(f -> f.isAnnotationPresent(Configured.class)).forEach(f -> { // NOSONAR
 				Configured an = f.getAnnotation(Configured.class);
 				try {
-					getConf().set(an.value() + f.getName(), f.get(null));
+					getConf().set(an.value().isEmpty() ? f.getName() : an.value(), f.get(null));
 				} catch (Exception e) {
 					LOGGER.error(e, "Unable to apply config !");
 				}

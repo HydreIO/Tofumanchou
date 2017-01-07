@@ -5,6 +5,7 @@ import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.dofus.structures.map.Cell;
 import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.tofumanchou.domain.data.MapsData;
+import fr.aresrpg.tofumanchou.domain.data.MapsData.MapDataBean;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 
@@ -50,7 +51,8 @@ public class ManchouMap implements Carte {
 	public static ManchouMap fromDofusMap(DofusMap map) {
 		ManchouMap m = new ManchouMap();
 		m.mapid = map.getId();
-		Point coords = MapsData.getCoords(map.getId());
+		MapDataBean data = MapsData.getData(map.getId());
+		Point coords = new Point(data.getX(), data.getY());
 		m.x = coords.x;
 		m.y = coords.y;
 		m.width = map.getWidth();
@@ -60,8 +62,8 @@ public class ManchouMap implements Carte {
 		m.cells = parseCells(map.getCells(), map.getWidth(), map.getHeight());
 		m.outdoor = map.isOutdoor();
 		m.capabilities = map.getCapabilities();
-		m.area = MapsData.getArea(map.getId());
-		m.subarea = MapsData.getSubArea(map.getId());
+		m.area = data.getArea();
+		m.subarea = data.getSubarea();
 		return m;
 	}
 

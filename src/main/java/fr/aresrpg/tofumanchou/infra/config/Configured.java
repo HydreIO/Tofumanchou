@@ -1,11 +1,12 @@
 package fr.aresrpg.tofumanchou.infra.config;
 
+import fr.aresrpg.tofumanchou.infra.config.Configurations.Config;
+
 import java.lang.annotation.*;
 
 /**
  * A configured field in {@link Config}
  * 
- * @author Duarte David {@literal <deltaduartedavid@gmail.com>}
  * @author Sceat {@literal <sceat@aresrpg.fr>}
  */
 @Target(ElementType.FIELD)
@@ -19,5 +20,5 @@ public @interface Configured {
 	 * 
 	 * @return the path in the configuration
 	 */
-	String value() default "var.";
+	String value() default "";
 }
