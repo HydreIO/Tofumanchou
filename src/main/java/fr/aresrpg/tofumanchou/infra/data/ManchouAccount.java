@@ -34,6 +34,18 @@ public class ManchouAccount implements Account {
 		this.perso = perso;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		return obj instanceof ManchouAccount && ((ManchouAccount) obj).id == id;
+	}
+
+	@Override
+	public int hashCode() {
+		return id;
+	}
+
 	/**
 	 * @param pass
 	 *            the pass to set

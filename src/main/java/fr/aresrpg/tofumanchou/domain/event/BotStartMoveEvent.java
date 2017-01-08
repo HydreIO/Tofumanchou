@@ -17,14 +17,31 @@ public class BotStartMoveEvent implements Event<BotStartMoveEvent> {
 	private static final EventBus<BotStartMoveEvent> BUS = new EventBus<>(BotStartMoveEvent.class);
 	private Account client;
 	private List<PathFragment> path;
+	private boolean teleport;
 
 	/**
 	 * @param client
 	 * @param path
 	 */
-	public BotStartMoveEvent(Account client, List<PathFragment> path) {
+	public BotStartMoveEvent(Account client, List<PathFragment> path, boolean teleport) {
 		this.client = client;
+		this.teleport = teleport;
 		this.path = path;
+	}
+
+	/**
+	 * @return the teleport
+	 */
+	public boolean isTeleport() {
+		return teleport;
+	}
+
+	/**
+	 * @param teleport
+	 *            the teleport to set
+	 */
+	public void setTeleport(boolean teleport) {
+		this.teleport = teleport;
 	}
 
 	/**

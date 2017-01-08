@@ -734,7 +734,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		try {
 			InputStream downloadMap = Maps.downloadMap(pkt.getMapId(), pkt.getSubid());
 			Map<String, Object> extractVariable = SwfVariableExtractor.extractVariable(downloadMap);
-			m = Maps.loadMap(extractVariable, pkt.getDecryptKey());
+			m = Maps.loadMap(extractVariable, pkt.getDecryptKey(), pkt.getSubid());
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
@@ -777,6 +777,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 					if (player.getId() == getPerso().getUUID()) {
 						getPerso().updateMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), getPerso());
+						new EntityPlayerJoinMapEvent(client, getPerso()).send(); // ASYNCHRONE
 					} else {
 						ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), parseMovement);
@@ -1655,6 +1656,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(SubwayLeavePacket pkt) {
 		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(GameCellObjectPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(GameCellUpdatePacket pkt) {
+		log(pkt);
+		DofusMap map = getPerso().getMap().serialize();
+		pkt.updateCells(map);
+		getPerso().getMap().updateFields(map);
 		transmit(pkt);
 	}
 

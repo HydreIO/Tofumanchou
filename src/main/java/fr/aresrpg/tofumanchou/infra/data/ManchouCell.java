@@ -37,6 +37,12 @@ public class ManchouCell implements Cell {
 	protected boolean layerObject2Interactive;
 	private int layerObject2Num;
 	protected int frame;
+	protected int permanentLevel;
+	protected boolean active;
+	protected String layerObjectExternal = "";
+	protected boolean layerObjectExternalInteractive = false;
+	private String layerObjectExternalData = "";
+	protected boolean layerObjectExternalAutoSize;
 	private Entity entityOn;
 
 	/**
@@ -87,6 +93,27 @@ public class ManchouCell implements Cell {
 	private ManchouCell() {
 	}
 
+	public boolean fieldsEquals(ManchouCell cell) {
+		return cell.id == id &&
+				cell.mapWidth == mapWidth &&
+				cell.mapHeight == mapHeight &&
+				cell.lineOfSight == lineOfSight &&
+				cell.layerGroundRot == layerGroundRot &&
+				cell.groundLevel == groundLevel &&
+				cell.movement == movement &&
+				cell.layerGroundNum == layerGroundNum &&
+				cell.groundSlope == groundSlope &&
+				cell.x == x &&
+				cell.y == y &&
+				cell.layerGroundFlip == layerGroundFlip &&
+				cell.layerObject1Num == layerObject1Num &&
+				cell.layerObject1Rot == layerObject1Rot &&
+				cell.layerObject1Flip == layerObject1Flip &&
+				cell.layerObject2Flip == layerObject2Flip &&
+				cell.layerObject2Interactive == layerObject2Interactive &&
+				cell.layerObject2Num == layerObject2Num;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) return false;
@@ -120,6 +147,12 @@ public class ManchouCell implements Cell {
 		c.layerObject2Interactive = cell.isLayerObject2Interactive();
 		c.setLayerObject2Num(cell.getLayerObject2Num());
 		c.frame = cell.getFrame();
+		c.active = cell.isActive();
+		c.permanentLevel = cell.getPermanentLevel();
+		c.layerObjectExternal = cell.getLayerObjectExternal();
+		c.layerObjectExternalInteractive = cell.isLayerObjectExternalInteractive();
+		c.layerObjectExternalData = cell.getLayerObjectExternalData();
+		c.layerObjectExternalInteractive = cell.isLayerObjectExternalInteractive();
 		return c;
 	}
 
@@ -128,9 +161,16 @@ public class ManchouCell implements Cell {
 	}
 
 	public fr.aresrpg.dofus.structures.map.Cell serialize() {
-		return new fr.aresrpg.dofus.structures.map.Cell(id, lineOfSight, layerGroundRot, groundLevel, getMovement(), layerGroundNum, groundSlope, layerGroundFlip, getLayerObject1Num(),
+		fr.aresrpg.dofus.structures.map.Cell cell = new fr.aresrpg.dofus.structures.map.Cell(id, active, lineOfSight, layerGroundRot, groundLevel, getMovement(), layerGroundNum, groundSlope,
+				layerGroundFlip, getLayerObject1Num(),
 				layerObject1Rot,
 				layerObject1Flip, layerObject2Flip, layerObject2Interactive, getLayerObject2Num());
+		cell.setPermanentLevel(permanentLevel);
+		cell.setLayerObjectExternal(layerObjectExternal);
+		cell.setLayerObjectExternalInteractive(layerObjectExternalInteractive);
+		cell.setLayerObjectExternalData(layerObjectExternalData);
+		cell.setLayerObjectExternalInteractive(layerObjectExternalInteractive);
+		return cell;
 	}
 
 	public int getRandomNeighborCell(Carte map, boolean diagonale, List<Integer> avoid) {

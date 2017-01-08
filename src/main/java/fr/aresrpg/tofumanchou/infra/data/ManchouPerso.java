@@ -142,7 +142,8 @@ public class ManchouPerso implements Perso {
 		this.lvl = c.getLevel();
 		this.guild = c.getGuild();
 		this.colors = new ManchouColors(c.getColor1(), c.getColor2(), c.getColor3());
-		inventory.replaceContent(Arrays.stream(c.getItems()).collect(Collectors.toList()));
+		if (c.getItems() != null)
+			inventory.replaceContent(Arrays.stream(c.getItems()).collect(Collectors.toList()));
 	}
 
 	public MovementPlayer serialize() {
@@ -1016,7 +1017,7 @@ public class ManchouPerso implements Perso {
 			return this;
 		}
 		LOGGER.severe("le path = " + shortpath);
-		new BotStartMoveEvent(getAccount(), shortpath).send();
+		new BotStartMoveEvent(getAccount(), shortpath, teleport).send();
 		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
 		LOGGER.severe("le path = " + gameClientActionPacket);
 		sendPacketToServer(gameClientActionPacket);

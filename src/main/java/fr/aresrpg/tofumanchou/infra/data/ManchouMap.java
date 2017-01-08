@@ -24,6 +24,7 @@ public class ManchouMap implements Carte {
 	private int mapid;
 	private int x;
 	private int y;
+	private long date;
 	private int width;
 	private int height;
 	private int backgroundId;
@@ -55,6 +56,7 @@ public class ManchouMap implements Carte {
 		Point coords = new Point(data.getX(), data.getY());
 		m.x = coords.x;
 		m.y = coords.y;
+		m.date = map.getDate();
 		m.width = map.getWidth();
 		m.height = map.getHeight();
 		m.backgroundId = map.getBackgroundId();
@@ -67,6 +69,24 @@ public class ManchouMap implements Carte {
 		return m;
 	}
 
+	public void updateFields(DofusMap map) {
+		mapid = map.getId();
+		MapDataBean data = MapsData.getData(map.getId());
+		Point coords = new Point(data.getX(), data.getY());
+		x = coords.x;
+		y = coords.y;
+		date = map.getDate();
+		width = map.getWidth();
+		height = map.getHeight();
+		backgroundId = map.getBackgroundId();
+		musicId = map.getMusicId();
+		cells = parseCells(map.getCells(), map.getWidth(), map.getHeight());
+		outdoor = map.isOutdoor();
+		capabilities = map.getCapabilities();
+		area = data.getArea();
+		subarea = data.getSubarea();
+	}
+
 	public Predicate<Cell> cellAccessible() {
 		return c -> {
 			ManchouCell cl = cells[c.getId()];
@@ -74,14 +94,12 @@ public class ManchouMap implements Carte {
 		};
 	}
 
-	public static ManchouMap test(int id) {
-		ManchouMap manchouMap = new ManchouMap();
-		manchouMap.mapid = id;
-		return manchouMap;
+	public long getDate() {
+		return date;
 	}
 
 	public DofusMap serialize() {
-		return new DofusMap(mapid, width, height, musicId, capabilities, outdoor, backgroundId, getProtocolCells());
+		return new DofusMap(mapid, date, width, height, musicId, capabilities, outdoor, backgroundId, getProtocolCells());
 	}
 
 	@Override

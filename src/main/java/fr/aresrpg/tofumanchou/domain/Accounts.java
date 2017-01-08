@@ -73,8 +73,8 @@ public class Accounts {
 		return perso;
 	}
 
-	private Account createAccount(String accountname, String password) {
-		int id = accounts.size();
+	private synchronized Account createAccount(String accountname, String password) {
+		int id = accounts.size(); // reason of the synchronized
 		return new ManchouAccount(id, null, accountname, password, null);
 	}
 
