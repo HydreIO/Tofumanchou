@@ -22,6 +22,7 @@ import fr.aresrpg.dofus.protocol.aks.Aks0MessagePacket;
 import fr.aresrpg.dofus.protocol.basic.server.BasicConfirmPacket;
 import fr.aresrpg.dofus.protocol.chat.ChatSubscribeChannelPacket;
 import fr.aresrpg.dofus.protocol.chat.server.ChatMessageOkPacket;
+import fr.aresrpg.dofus.protocol.chat.server.ChatServerMessagePacket;
 import fr.aresrpg.dofus.protocol.dialog.DialogLeavePacket;
 import fr.aresrpg.dofus.protocol.dialog.server.*;
 import fr.aresrpg.dofus.protocol.exchange.server.*;
@@ -1660,17 +1661,23 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameCellObjectPacket pkt) {
+	public void handle(GameCellObjectPacket pkt) { // TODO faire packet
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameCellUpdatePacket pkt) {
+	public void handle(GameCellUpdatePacket pkt) { // TODO creer event
 		log(pkt);
 		DofusMap map = getPerso().getMap().serialize();
 		pkt.updateCells(map);
 		getPerso().getMap().updateFields(map);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(ChatServerMessagePacket pkt) { // TODO creer event
+		log(pkt);
 		transmit(pkt);
 	}
 

@@ -14,7 +14,7 @@ public class ChatMsgEvent implements Event<ChatMsgEvent> {
 	private static final EventBus<ChatMsgEvent> BUS = new EventBus<>(ChatMsgEvent.class);
 	private Account client;
 	private Chat chat;
-	private int playerId;
+	private long playerId;
 	private String pseudo;
 	private String msg;
 
@@ -25,7 +25,7 @@ public class ChatMsgEvent implements Event<ChatMsgEvent> {
 	 * @param pseudo
 	 * @param msg
 	 */
-	public ChatMsgEvent(Account client, Chat chat, int playerId, String pseudo, String msg) {
+	public ChatMsgEvent(Account client, Chat chat, long playerId, String pseudo, String msg) {
 		this.client = client;
 		this.chat = chat;
 		this.playerId = playerId;
@@ -53,7 +53,7 @@ public class ChatMsgEvent implements Event<ChatMsgEvent> {
 	 * @param playerId
 	 *            the playerId to set
 	 */
-	public void setPlayerId(int playerId) {
+	public void setPlayerId(long playerId) {
 		this.playerId = playerId;
 	}
 
@@ -83,7 +83,7 @@ public class ChatMsgEvent implements Event<ChatMsgEvent> {
 	/**
 	 * @return the playerId
 	 */
-	public int getPlayerId() {
+	public long getPlayerId() {
 		return playerId;
 	}
 

@@ -1,5 +1,7 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
+import fr.aresrpg.commons.domain.util.ArrayUtils;
+import fr.aresrpg.dofus.Constants;
 import fr.aresrpg.dofus.structures.item.Interractable;
 import fr.aresrpg.dofus.structures.map.Frame;
 import fr.aresrpg.dofus.util.Maps;
@@ -97,7 +99,7 @@ public class ManchouCell implements Cell {
 		return cell.id == id &&
 				cell.mapWidth == mapWidth &&
 				cell.mapHeight == mapHeight &&
-				cell.lineOfSight == lineOfSight &&
+				//	cell.lineOfSight == lineOfSight &&
 				cell.layerGroundRot == layerGroundRot &&
 				cell.groundLevel == groundLevel &&
 				cell.movement == movement &&
@@ -257,7 +259,7 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public boolean isTeleporter() {
-		return layerObject1Num == 1030 || layerObject2Num == 1030 || layerObject1Num == 1029 || layerObject2Num == 1029;
+		return ArrayUtils.contains(layerObject1Num, Constants.TELEPORT_TEXTURES) || ArrayUtils.contains(layerObject2Num, Constants.TELEPORT_TEXTURES);
 	}
 
 	@Override
