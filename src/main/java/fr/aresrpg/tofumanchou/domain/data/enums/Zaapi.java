@@ -1,6 +1,7 @@
 package fr.aresrpg.tofumanchou.domain.data.enums;
 
 import java.awt.Point;
+import java.util.Arrays;
 
 /**
  * 
@@ -24,6 +25,10 @@ public enum Zaapi {
 		this.coords = coords;
 		this.mapid = mapid;
 		this.city = city;
+	}
+
+	public static int[] getMapsIds(City city) {
+		return Arrays.stream(values()).filter(c -> c.city == city).mapToInt(Zaapi::getMapid).toArray();
 	}
 
 	/**
