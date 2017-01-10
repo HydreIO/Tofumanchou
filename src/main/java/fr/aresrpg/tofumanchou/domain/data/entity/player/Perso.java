@@ -183,14 +183,6 @@ public interface Perso extends Player {
 		items.forEach(i -> useItem(i.getUUID()));
 	}
 
-	default void useItem(DofusItems item) {
-		useAllItemsWithType(item.getId());
-	}
-
-	default void useItem(DofusItems2 item) {
-		useAllItemsWithType(item.getId());
-	}
-
 	public static enum BuyResult {
 		SUCCESS("Sucess"),
 		NO_KAMA("Kamas insuffisants"),

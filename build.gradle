@@ -1,9 +1,16 @@
 apply plugin: 'java'
+apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 group = 'fr.aresrpg.tofumanchou'
 
 version = '1.0'
+
+eclipse {
+    jdt {
+        javaRuntimeName = "jdk1.8.0_112"
+    }
+}
 
 compileJava.options.encoding='UTF-8'
 
@@ -15,10 +22,23 @@ sourceSets {
 		} }
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+
+
 task fatJar(type: Jar) {
 	baseName = project.name
 	from {
-		configurations.include.collect {
+		configurations.export.collect {
 			it.isDirectory() ? it : zipTree(it)
 		}
 	}
@@ -26,8 +46,8 @@ task fatJar(type: Jar) {
 }
 
 configurations {
-	include
-	compile.extendsFrom include
+	export
+	compile.extendsFrom export
 }
 
 repositories {
@@ -44,8 +64,10 @@ repositories {
 }
 
 dependencies {
-	compile 'org.yaml:snakeyaml:1.17'
-	compile 'fr.aresrpg:AresCommons:0.7'
+	export 'org.yaml:snakeyaml:1.17'
+	export ('fr.aresrpg:AresCommons:+') {changing=true}
+	export 'fr.aresrpg:AresCommons-MongoDB:+'
+	export 'fr.aresrpg.dofus:dofus-protocol-1.29:+'
 }
 
 

@@ -8,6 +8,8 @@
  *******************************************************************************/
 package fr.aresrpg.tofumanchou.domain.data.enums;
 
+import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
+
 /**
  * 
  * @since
@@ -224,6 +226,15 @@ public enum AgressiveMobs {
 			}
 		}
 		return 0;
+	}
+
+	public static int getDistanceAgro(MobGroup group) {
+		int max = 0;
+		for (int i : group.getEntitiesTypes()) {
+			int dist = getDistanceAgro(i);
+			if (dist > max) max = dist;
+		}
+		return max;
 	}
 
 	public static AgressiveMobs byId(int id) {
