@@ -66,8 +66,8 @@ repositories {
 dependencies {
 	export 'org.yaml:snakeyaml:1.17'
 	export ('fr.aresrpg:AresCommons:+') {changing=true}
-	export 'fr.aresrpg:AresCommons-MongoDB:+'
-	export 'fr.aresrpg.dofus:dofus-protocol-1.29:+'
+	export ('fr.aresrpg:AresCommons-MongoDB:+') {changing=true}
+	export ('fr.aresrpg.dofus:dofus-protocol-1.29:+') {changing=true}
 }
 
 

@@ -5,6 +5,7 @@ import fr.aresrpg.dofus.protocol.exchange.client.ExchangeMoveItemsPacket.MovedIt
 import fr.aresrpg.dofus.structures.*;
 import fr.aresrpg.dofus.structures.item.ItemCategory;
 import fr.aresrpg.dofus.structures.job.Jobs;
+import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.Job;
 import fr.aresrpg.tofumanchou.domain.data.Spell;
@@ -14,7 +15,6 @@ import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.domain.exception.ZaapException;
 import fr.aresrpg.tofumanchou.infra.data.PlayerInventory;
 
-import java.awt.Point;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -86,7 +86,7 @@ public interface Perso extends Player {
 
 	Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs);
 
-	Perso move(List<Point> p, boolean teleport);
+	Perso move(List<Node> p, boolean teleport);
 
 	void moveToRandomCell();
 

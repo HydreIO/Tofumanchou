@@ -88,6 +88,12 @@ public class Manchou {
 		}
 	}
 
+	public static DofusServer getServer(Server srv) {
+		if (srv == Server.ERATZ) return ERATZ;
+		else if (srv == Server.HENUAL) return HENUAL;
+		else throw new IllegalArgumentException("The server '" + srv + "' is invalid !");
+	}
+
 	public static void directRegistry(ManchouPlugin p) {
 		LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
 				+ AnsiColor.PURPLE + p.getSubVersion());

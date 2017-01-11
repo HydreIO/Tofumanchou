@@ -44,6 +44,7 @@ import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.Maps;
 import fr.aresrpg.dofus.util.Pathfinding;
+import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.dofus.util.Pathfinding.PathValidator;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.Job;
@@ -1008,7 +1009,7 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public Perso move(List<Point> p, boolean teleport) {
+	public Perso move(List<Node> p, boolean teleport) {
 		if (p == null) throw new NullPointerException("The path is null !");
 		float time = Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
@@ -1025,7 +1026,7 @@ public class ManchouPerso implements Perso {
 		return this;
 	}
 
-	private List<Point> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
+	private List<Node> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
 		if (cellid == -1) return null;
 		int width = getMap().getWidth();
 		int height = getMap().getHeight();
@@ -1110,7 +1111,7 @@ public class ManchouPerso implements Perso {
 	public void moveToRandomCell() {
 		ManchouCell c = null;
 		List<fr.aresrpg.tofumanchou.domain.data.map.Cell> cells = new ArrayList<>();
-		List<Point> path = null;
+		List<Node> path = null;
 		int security = 0;
 		do {
 			c = findRandomCellExept(cells);
@@ -1378,7 +1379,7 @@ public class ManchouPerso implements Perso {
 			GameRefuseDuelAction actionr = new GameRefuseDuelAction();
 			actionr.setTargetId(uuid);
 			sendPacketToServer(new GameClientActionPacket(GameActions.REFUSE_DUEL, actionr));
-		} , cancelAfter, unit);
+		}, cancelAfter, unit);
 	}
 
 	@Override
