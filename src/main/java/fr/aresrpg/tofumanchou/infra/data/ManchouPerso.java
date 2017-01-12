@@ -55,7 +55,6 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.event.*;
-import fr.aresrpg.tofumanchou.domain.exception.ZaapException;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.io.*;
 
@@ -1004,26 +1003,26 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs) {
+	public long moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs) {
 		return move(searchPath(cellid, avoidMobs, diagonals), teleport);
 	}
 
 	@Override
-	public Perso move(List<Node> p, boolean teleport) {
+	public long move(List<Node> p, boolean teleport) {
 		if (p == null) throw new NullPointerException("The path is null !");
-		float time = Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false);
+		long time = (long) (Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false) * 30);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
 		if (shortpath == null) {
 			LOGGER.error("Unable to find a path ! The point list is invalid ! " + p);
-			return this;
+			return -1;
 		}
 		LOGGER.severe("le path = " + shortpath);
 		new BotStartMoveEvent(getAccount(), shortpath, teleport).send();
 		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
 		LOGGER.severe("le path = " + gameClientActionPacket);
 		sendPacketToServer(gameClientActionPacket);
-		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), (long) (time * 30), TimeUnit.MILLISECONDS);
-		return this;
+		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), time, TimeUnit.MILLISECONDS);
+		return time;
 	}
 
 	private List<Node> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
@@ -1232,16 +1231,18 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void useZaap(Zaap current, Zaap destination) throws ZaapException {
+	public void useZaap(int cell, Zaap destination) {
+		interract(Skills.UTILISER, cell);
+		Threads.uSleep(1500, TimeUnit.MILLISECONDS);
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		sendPacketToServer(pkt);
 	}
 
 	@Override
-	public void useZaapi(Zaapi current, Zaapi destination) {
-		interract(Skills.SE_FAIRE_TRANSPORTER, current.getCellid());
-		Threads.uSleep(500, TimeUnit.MILLISECONDS);
+	public void useZaapi(int cell, Zaapi destination) {
+		interract(Skills.SE_FAIRE_TRANSPORTER, cell);
+		Threads.uSleep(1500, TimeUnit.MILLISECONDS);
 		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
 		subwayUsePacket.setMapid(destination.getMapid());
 		sendPacketToServer(subwayUsePacket);

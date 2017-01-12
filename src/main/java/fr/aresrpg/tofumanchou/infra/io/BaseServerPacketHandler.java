@@ -304,17 +304,17 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		if (isBot())
 			for (AvailableCharacter c : pkt.getCharacters())
 			if (client.getPerso().getPseudo().equals(c.getPseudo())) {
-				ManchouPerso p = getPerso();
-				p.setUuid(c.getId());
-				p.setLvl(c.getLevel());
-				p.setColors(c.getColor1(), c.getColor2(), c.getColor3());
-				p.setAccessories(c.getAccessories());
-				p.setMerchant(c.isMerchant());
-				p.setServer(Server.fromId(c.getServerId()));
-				p.setDead(c.isDead());
-				p.setDeathCount(c.getDeathCount());
-				p.setLvlMax(c.getLvlMax());
-				sendPkt(new AccountSelectCharacterPacket().setCharacterId(c.getId()));
+			ManchouPerso p = getPerso();
+			p.setUuid(c.getId());
+			p.setLvl(c.getLevel());
+			p.setColors(c.getColor1(), c.getColor2(), c.getColor3());
+			p.setAccessories(c.getAccessories());
+			p.setMerchant(c.isMerchant());
+			p.setServer(Server.fromId(c.getServerId()));
+			p.setDead(c.isDead());
+			p.setDeathCount(c.getDeathCount());
+			p.setLvlMax(c.getLvlMax());
+			sendPkt(new AccountSelectCharacterPacket().setCharacterId(c.getId()));
 			}
 		CharacterListEvent event = new CharacterListEvent(client, pkt.getSubscriptionTime(), pkt.getPersoTot(), pkt.getCharacters());
 		event.send();
@@ -778,11 +778,11 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 					if (player.getId() == getPerso().getUUID()) {
 						getPerso().updateMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), getPerso());
-						new EntityPlayerJoinMapEvent(client, getPerso()).send(); // ASYNCHRONE
+						new EntityPlayerJoinMapEvent(client, getPerso()).send();
 					} else {
 						ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), parseMovement);
-						new EntityPlayerJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+						new EntityPlayerJoinMapEvent(client, parseMovement).send(); 
 					}
 					return;
 				case CREATE_INVOCATION:
@@ -985,7 +985,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 								break;
 						}
 						sendPkt(new GameActionACKPacket().setActionId(action));
-					} , actionh.getTime(), TimeUnit.MILLISECONDS);
+					}, actionh.getTime(), TimeUnit.MILLISECONDS);
 					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), getPerso());
 					eventh.send();
 					actionh.setCellId(eventh.getCellId());

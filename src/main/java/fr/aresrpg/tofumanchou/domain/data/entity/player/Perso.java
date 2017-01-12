@@ -12,7 +12,6 @@ import fr.aresrpg.tofumanchou.domain.data.Spell;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
-import fr.aresrpg.tofumanchou.domain.exception.ZaapException;
 import fr.aresrpg.tofumanchou.infra.data.PlayerInventory;
 
 import java.util.*;
@@ -84,9 +83,9 @@ public interface Perso extends Player {
 
 	void replaceCraft();
 
-	Perso moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs);
+	long moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs);
 
-	Perso move(List<Node> p, boolean teleport);
+	long move(List<Node> p, boolean teleport);
 
 	void moveToRandomCell();
 
@@ -124,9 +123,9 @@ public interface Perso extends Player {
 
 	void npcBuyChoice(int itemId, int quantity);
 
-	void useZaap(Zaap current, Zaap destination) throws ZaapException;
+	void useZaap(int cell, Zaap destination);
 
-	void useZaapi(Zaapi current, Zaapi destination);
+	void useZaapi(int cell, Zaapi destination);
 
 	void moveItem(MovedItem items);
 

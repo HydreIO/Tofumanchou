@@ -26,6 +26,7 @@ public final class Executors {
 
 	public static ExecutorService FIXED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
+			.setDaemon(false)
 			.setName("ThreadManchou[%d]"))
 					.setType(PoolType.FIXED)
 					.setParallelism(70)

@@ -215,7 +215,12 @@ public class ManchouCell implements Cell {
 
 	@Override
 	public Interractable getInterractable() {
-		return Interractable.fromId(getLayerObject2Num());
+		return Interractable.fromId(getInterractableId());
+	}
+
+	public int getInterractableId() {
+		if (layerObject2Num == 0) return layerObject1Num;
+		return layerObject2Num;
 	}
 
 	public boolean isRessource() {
@@ -227,7 +232,7 @@ public class ManchouCell implements Cell {
 	@Override
 	public boolean isInterractable() {
 		if (movement == 1) return true;
-		return Interractable.isInterractable(getLayerObject2Num());
+		return Interractable.isInterractable(getInterractableId());
 	}
 
 	@Override
@@ -260,6 +265,18 @@ public class ManchouCell implements Cell {
 	@Override
 	public boolean isTeleporter() {
 		return ArrayUtils.contains(layerObject1Num, Constants.TELEPORT_TEXTURES) || ArrayUtils.contains(layerObject2Num, Constants.TELEPORT_TEXTURES);
+	}
+
+	public boolean isZaapOrZaapi() {
+		return isZaap() || isZaapi();
+	}
+
+	public boolean isZaap() {
+		return Interractable.isZaap(layerObject1Num) || Interractable.isZaap(layerObject2Num);
+	}
+
+	public boolean isZaapi() {
+		return Interractable.isZaapi(layerObject1Num) || Interractable.isZaapi(layerObject2Num);
 	}
 
 	@Override

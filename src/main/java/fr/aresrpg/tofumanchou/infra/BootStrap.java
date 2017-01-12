@@ -2,6 +2,7 @@ package fr.aresrpg.tofumanchou.infra;
 
 import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
+import fr.aresrpg.commons.domain.concurrent.Threads;
 import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.*;
@@ -19,6 +20,7 @@ import java.util.Set;
  */
 public class BootStrap {
 	public static void main(String[] args) throws IOException {
+		new Manchou();
 		LOGGER.info("Initialising items..");
 		BenchTime t = new BenchTime();
 		ItemsData.getInstance().init(Variables.CUSTOM_LANGS);
@@ -35,7 +37,7 @@ public class BootStrap {
 		if (plugins != null) plugins.forEach(p -> {
 			LOGGER.info(AnsiColor.GREEN + "Enabling plugin " + AnsiColor.PURPLE + p.getName() + AnsiColor.GREEN + " v" + AnsiColor.PURPLE + p.getVersion() + AnsiColor.GREEN + "."
 					+ AnsiColor.PURPLE + p.getSubVersion());
-			Executors.FIXED.execute(p::onEnable);
+			Executors.FIXED.execute(Threads.threadContextSwitch("Main %1$d", p::onEnable));
 		});
 	}
 

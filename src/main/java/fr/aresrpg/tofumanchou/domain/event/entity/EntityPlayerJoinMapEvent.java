@@ -9,7 +9,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
  * 
  * @since
  */
-public class EntityPlayerJoinMapEvent implements Event<EntityPlayerJoinMapEvent> { // ASYNCHRONE
+public class EntityPlayerJoinMapEvent implements Event<EntityPlayerJoinMapEvent> {
 
 	private static final EventBus<EntityPlayerJoinMapEvent> BUS = new EventBus<>(EntityPlayerJoinMapEvent.class);
 	private Account client;
@@ -61,7 +61,7 @@ public class EntityPlayerJoinMapEvent implements Event<EntityPlayerJoinMapEvent>
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 }

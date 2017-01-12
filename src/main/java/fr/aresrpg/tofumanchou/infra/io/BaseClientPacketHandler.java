@@ -191,7 +191,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	@Override
 	public void handle(AccountAuthPacket pkt) {
 		log(pkt);
-		Account account = Accounts.getAccount(pkt.getPseudo());
+		Account account = Accounts.getAccount(pkt.getPseudo()); // FIXME Account is null while mitm change server
 		if (account == null) {
 			proxy.shutdown();
 			throw new NullPointerException("This account is not registered !");

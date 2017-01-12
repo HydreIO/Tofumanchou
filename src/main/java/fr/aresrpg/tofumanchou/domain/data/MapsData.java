@@ -30,7 +30,6 @@ public class MapsData {
 
 	public void init(boolean fromDb) throws IOException {
 		try {
-
 			if (fromDb) {
 				LOGGER.info("Using mongodb..");
 				initFromDb();

@@ -13,4 +13,10 @@ public enum City {
 		if (y < -40) return BONTA;
 		return BRAKMAR;
 	}
+
+	public static City valueOf(int id) {
+		if (id == 1) return BONTA;
+		if (id == 2) return BRAKMAR;
+		return null;
+	}
 }

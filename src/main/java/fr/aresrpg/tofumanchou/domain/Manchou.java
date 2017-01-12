@@ -41,13 +41,14 @@ public class Manchou {
 	private static Database database;
 	private static final Map<String, Command> commands = new HashMap<>();
 	private static Set<ManchouPlugin> plugins;
-	private static final Manchou instance = new Manchou();
+	private static Manchou instance;
 	private static Selector selector;
 	private final Config config;
 	private boolean running;
 
 	public Manchou() {
 		LOGGER.success("Starting Tofumanchou..");
+		instance = this;
 		this.running = true;
 		this.config = Configurations.generate("Tofumanchou.yml", Variables.class, Optional.of(() -> {
 			LOGGER.info("Configuration created ! please configure and then restart.");
