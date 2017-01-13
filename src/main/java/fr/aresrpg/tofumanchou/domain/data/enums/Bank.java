@@ -7,23 +7,23 @@ import java.awt.Point;
  * @since
  */
 public enum Bank {
-	ASTRUB(4, -16, 142),
-	SUFOKIA(14, 25, 269),
-	BONTA(-32, -58, 325),
-	AMAKNA(2, -2, 238);
-	private int x, y, cellid;
+	ASTRUB(4, -16, 7549),
+	SUFOKIA(14, 25, -1),
+	BONTA(-32, -58, 5703),
+	AMAKNA(2, -2, -1);
+	private int x, y, mapId;
 
-	private Bank(int x, int y, int cellid) {
+	private Bank(int x, int y, int mapId) {
 		this.x = x;
 		this.y = y;
-		this.cellid = cellid;
+		this.mapId = mapId;
 	}
 
 	/**
 	 * @return the cellid
 	 */
-	public int getCellid() {
-		return cellid;
+	public int getMapId() {
+		return mapId;
 	}
 
 	/**

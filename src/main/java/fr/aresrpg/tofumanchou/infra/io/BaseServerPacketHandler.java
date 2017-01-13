@@ -35,6 +35,7 @@ import fr.aresrpg.dofus.protocol.game.actions.server.*;
 import fr.aresrpg.dofus.protocol.game.client.*;
 import fr.aresrpg.dofus.protocol.game.movement.*;
 import fr.aresrpg.dofus.protocol.game.server.*;
+import fr.aresrpg.dofus.protocol.guild.server.GuildJoinErrorPacket;
 import fr.aresrpg.dofus.protocol.guild.server.GuildStatPacket;
 import fr.aresrpg.dofus.protocol.hello.server.HelloConnectionPacket;
 import fr.aresrpg.dofus.protocol.hello.server.HelloGamePacket;
@@ -116,6 +117,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	private String ticket;
 	private Server current;
 	private String hc;
+
+	private Balking balking = new Balking();
 
 	public BaseServerPacketHandler(Account client) {
 		Objects.requireNonNull(client);
@@ -584,7 +587,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		pkt.setType(event.getType());
 		pkt.setMessageId(event.getMessageId());
 		pkt.setExtraDatas(event.getExtraDatas());
-		transmit(pkt);
+		if (isMitm() && !balking.receive(InfoMessagePacket.class).overflow(10))
+			transmit(pkt);
 	}
 
 	@Override
@@ -838,6 +842,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameServerActionPacket pkt) {
 		log(pkt);
+		boolean transmit = true;
 		switch (pkt.getType()) {
 			case ERROR:
 				break;
@@ -917,18 +922,15 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				FightJoinErrorEvent e2 = new FightJoinErrorEvent(client, actionj.getError());
 				e2.send();
 				actionj.setError(e2.getError());
+				if (isMitm())
+					transmit = !balking.receive(GameJoinErrorAction.class).overflow(10);
 				break;
 			case MOVE:
 				GameMoveAction actionm = (GameMoveAction) pkt.getAction();
 				int cell = actionm.getPath().get(actionm.getPath().size() - 1).getCellId();
 				Entity enti = null;
 				if (pkt.getEntityId() == getPerso().getUUID()) enti = getPerso();
-				else enti = getPerso()
-						.getMap()
-						.getEntities()
-						.get(
-								pkt
-										.getEntityId());
+				else enti = getPerso().getMap().getEntities().get(pkt.getEntityId());
 				if (enti == null) break;
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
@@ -944,6 +946,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				duelRequestEvent.send();
 				pkt.setEntityId(duelRequestEvent.getSender().getUUID());
 				actiond.setTargetId(duelRequestEvent.getTarget().getUUID());
+				if (isMitm())
+					transmit = !balking.receive(GameDuelServerAction.class).overflow(10);
 				break;
 			case ACCEPT_DUEL:
 				GameAcceptDuelAction actionda = (GameAcceptDuelAction) pkt.getAction();
@@ -962,6 +966,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				refusevent.send();
 				pkt.setEntityId(refusevent.getSender().getUUID());
 				actiondr.setTargetId(refusevent.getTarget().getUUID());
+				if (isMitm())
+					transmit = !balking.receive(GameRefuseDuelAction.class).overflow(10);
 				break;
 			case SPELL_LAUNCHED:
 				GameSpellLaunchedAction actionsp = (GameSpellLaunchedAction) pkt.getAction();
@@ -1007,7 +1013,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			default:
 				break;
 		}
-		transmit(pkt);
+		if (transmit) transmit(pkt);
 	}
 
 	@Override
@@ -1441,7 +1447,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(PartyRefusePacket pkt) {
 		log(pkt);
 		new PlayerRefuseGroupInvitationEvent(client).send();
-		transmit(pkt);
+		if (isMitm() && !balking.receive(PartyRefusePacket.class).overflow(10))
+			transmit(pkt);
 	}
 
 	@Override
@@ -1451,7 +1458,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		event.send();
 		pkt.setInvited(event.getInvited());
 		pkt.setInviter(event.getInviter());
-		transmit(pkt);
+		if (isMitm() && !balking.receive(PartyInviteRequestOkPacket.class).overflow(10))
+			transmit(pkt);
 	}
 
 	@Override
@@ -1460,7 +1468,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		GroupInviteErrorEvent event = new GroupInviteErrorEvent(client, pkt.getReason());
 		event.send();
 		pkt.setReason(event.getReason());
-		transmit(pkt);
+		if (isMitm() && !balking.receive(PartyInviteRequestErrorPacket.class).overflow(10))
+			transmit(pkt);
 	}
 
 	@Override
@@ -1679,6 +1688,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(ChatServerMessagePacket pkt) { // TODO creer event
 		log(pkt);
 		transmit(pkt);
+	}
+
+	@Override
+	public void handle(GuildJoinErrorPacket pkt) {
+		log(pkt);
+		if (isMitm() && !balking.receive(pkt.getError().getClass()).overflow(10))
+			transmit(pkt);
 	}
 
 }

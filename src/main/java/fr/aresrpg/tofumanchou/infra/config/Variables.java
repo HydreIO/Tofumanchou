@@ -28,6 +28,8 @@ public class Variables {
 	public static String MONGO_USER = "admin";
 	@Configured("mongo.auth.pass")
 	public static String MONGO_PASS = "admin";
+	@Configured("option.balking")
+	public static boolean DROP_PKT = true;
 	@Configured("data.accounts")
 	public static List<PlayerBean> ACCOUNTS = new ArrayList<>();
 	@Configured("data.groups")
