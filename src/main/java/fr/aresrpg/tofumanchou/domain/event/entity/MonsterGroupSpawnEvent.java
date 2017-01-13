@@ -9,7 +9,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
  * 
  * @since
  */
-public class MonsterGroupSpawnEvent implements Event<MonsterGroupSpawnEvent> { // ASYNCHRONE
+public class MonsterGroupSpawnEvent implements Event<MonsterGroupSpawnEvent> {
 
 	private static final EventBus<MonsterGroupSpawnEvent> BUS = new EventBus<>(MonsterGroupSpawnEvent.class);
 	private Account client;
@@ -61,7 +61,7 @@ public class MonsterGroupSpawnEvent implements Event<MonsterGroupSpawnEvent> { /
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 	@Override

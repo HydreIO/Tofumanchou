@@ -8,7 +8,7 @@ import fr.aresrpg.tofumanchou.domain.data.Account;
  * 
  * @since
  */
-public class EntityLeaveMapEvent implements Event<EntityLeaveMapEvent> { // ASYNCHRONE
+public class EntityLeaveMapEvent implements Event<EntityLeaveMapEvent> {
 
 	private static final EventBus<EntityLeaveMapEvent> BUS = new EventBus<>(EntityLeaveMapEvent.class);
 	private Account client;
@@ -60,7 +60,7 @@ public class EntityLeaveMapEvent implements Event<EntityLeaveMapEvent> { // ASYN
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 }

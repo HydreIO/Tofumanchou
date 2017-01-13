@@ -9,7 +9,7 @@ import fr.aresrpg.tofumanchou.domain.data.map.Cell;
  * 
  * @since
  */
-public class RessourceSpawnEvent implements Event<RessourceSpawnEvent> { // ASYNCHRONOUS EVENT
+public class RessourceSpawnEvent implements Event<RessourceSpawnEvent> {
 
 	private static final EventBus<RessourceSpawnEvent> BUS = new EventBus<>(RessourceSpawnEvent.class);
 	private Account client;
@@ -61,7 +61,7 @@ public class RessourceSpawnEvent implements Event<RessourceSpawnEvent> { // ASYN
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 	@Override

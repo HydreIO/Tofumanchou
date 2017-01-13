@@ -9,7 +9,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
  * 
  * @since
  */
-public class NpcJoinMapEvent implements Event<NpcJoinMapEvent> { // ASYNCHRONE
+public class NpcJoinMapEvent implements Event<NpcJoinMapEvent> {
 
 	private static final EventBus<NpcJoinMapEvent> BUS = new EventBus<>(NpcJoinMapEvent.class);
 	private Account client;
@@ -61,7 +61,7 @@ public class NpcJoinMapEvent implements Event<NpcJoinMapEvent> { // ASYNCHRONE
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 }

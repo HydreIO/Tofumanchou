@@ -754,7 +754,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			ManchouCell cell = getPerso().getMap().getCells()[id];
 			cell.applyFrame(frame);
 			new FrameUpdateEvent(client, cell, frame.getId()).send();
-			if (cell.isRessource() && cell.isRessourceSpawned()) new RessourceSpawnEvent(client, cell).send(); // event asynchrone
+			if (cell.isRessource() && cell.isRessourceSpawned()) new RessourceSpawnEvent(client, cell).send();
 		});
 		transmit(pkt);
 	}
@@ -766,7 +766,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			pkt.getActors().forEach(v -> {
 				MovementRemoveActor actor = (MovementRemoveActor) (Object) v.getSecond();
 				getPerso().getMap().getEntities().remove(actor.getId());
-				new EntityLeaveMapEvent(client, actor.getId()).send(); // ASYNCHRONE
+				new EntityLeaveMapEvent(client, actor.getId()).send();
 			});
 			transmit(pkt);
 			return;
@@ -782,7 +782,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 					} else {
 						ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), parseMovement);
-						new EntityPlayerJoinMapEvent(client, parseMovement).send(); 
+						new EntityPlayerJoinMapEvent(client, parseMovement).send();
 					}
 					return;
 				case CREATE_INVOCATION:
@@ -790,19 +790,19 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 					MovementMonster mob = (MovementMonster) (Object) e.getSecond();
 					ManchouMob parseMovement = ManchouMob.parseMovement(mob);
 					getPerso().getMap().getEntities().put(mob.getId(), parseMovement);
-					new MonsterJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+					new MonsterJoinMapEvent(client, parseMovement).send();
 					return;
 				case CREATE_MONSTER_GROUP:
 					MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getSecond();
 					ManchouMobGroup mobsgroup = ManchouMobGroup.parseMovement(mobs);
 					getPerso().getMap().getEntities().put(mobs.getId(), mobsgroup);
-					new MonsterGroupSpawnEvent(client, mobsgroup).send(); // ASYNCHRONE
+					new MonsterGroupSpawnEvent(client, mobsgroup).send();
 					return;
 				case CREATE_NPC:
 					MovementNpc npc = (MovementNpc) (Object) e.getSecond();
 					ManchouNpc npcm = ManchouNpc.parseMovement(npc);
 					getPerso().getMap().getEntities().put(npc.getId(), npcm);
-					new NpcJoinMapEvent(client, npcm).send(); // ASYNCHRONE
+					new NpcJoinMapEvent(client, npcm).send();
 					return;
 				default:
 					break;
@@ -885,7 +885,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 							else {
 								ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 								getPerso().getMap().getEntities().put(player.getId(), parseMovement);
-								new EntityPlayerJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+								new EntityPlayerJoinMapEvent(client, parseMovement).send();
 							}
 							return;
 						case CREATE_INVOCATION:
@@ -893,19 +893,19 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 							MovementMonster mob = (MovementMonster) (Object) e.getValue();
 							ManchouMob parseMovement = ManchouMob.parseMovement(mob);
 							getPerso().getMap().getEntities().put(mob.getId(), parseMovement);
-							new MonsterJoinMapEvent(client, parseMovement).send(); // ASYNCHRONE
+							new MonsterJoinMapEvent(client, parseMovement).send();
 							return;
 						case CREATE_MONSTER_GROUP:
 							MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getValue();
 							ManchouMobGroup mobsgroup = ManchouMobGroup.parseMovement(mobs);
 							getPerso().getMap().getEntities().put(mobs.getId(), mobsgroup);
-							new MonsterGroupSpawnEvent(client, mobsgroup).send(); // ASYNCHRONE
+							new MonsterGroupSpawnEvent(client, mobsgroup).send();
 							return;
 						case CREATE_NPC:
 							MovementNpc npc = (MovementNpc) (Object) e.getValue();
 							ManchouNpc npcm = ManchouNpc.parseMovement(npc);
 							getPerso().getMap().getEntities().put(npc.getId(), npcm);
-							new NpcJoinMapEvent(client, npcm).send(); // ASYNCHRONE
+							new NpcJoinMapEvent(client, npcm).send();
 							return;
 						default:
 							break;

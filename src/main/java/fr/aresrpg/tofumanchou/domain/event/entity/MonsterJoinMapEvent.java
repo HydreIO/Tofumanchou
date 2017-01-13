@@ -9,7 +9,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
  * 
  * @since
  */
-public class MonsterJoinMapEvent implements Event<MonsterJoinMapEvent> { // ASYNCHRONE
+public class MonsterJoinMapEvent implements Event<MonsterJoinMapEvent> {
 
 	private static final EventBus<MonsterJoinMapEvent> BUS = new EventBus<>(MonsterJoinMapEvent.class);
 	private Account client;
@@ -61,7 +61,7 @@ public class MonsterJoinMapEvent implements Event<MonsterJoinMapEvent> { // ASYN
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 	@Override
