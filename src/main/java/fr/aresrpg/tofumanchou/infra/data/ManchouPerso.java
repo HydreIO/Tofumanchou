@@ -1233,7 +1233,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public void useZaap(int cell, Zaap destination) {
 		interract(Skills.UTILISER, cell);
-		Threads.uSleep(1500, TimeUnit.MILLISECONDS);
+		Threads.uSleep(1500, TimeUnit.MILLISECONDS); // avoid server error
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		sendPacketToServer(pkt);
