@@ -831,11 +831,12 @@ public class ManchouPerso implements Perso {
 	public boolean equals(Object obj) {
 		if (obj == null) return false;
 		if (obj == this) return true;
-		if (obj instanceof Entity) {
-			Entity e = (Entity) obj;
-			return e.getUUID() == uuid;
-		}
-		return false;
+		return obj instanceof Entity && ((Entity) obj).getUUID() == uuid;
+	}
+
+	@Override
+	public int hashCode() {
+		return (int) uuid;
 	}
 
 	@Override
@@ -1039,7 +1040,7 @@ public class ManchouPerso implements Perso {
 		Map<Long, Entity> entities = getMap().getEntities();
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
-		if (c.hasMobOn()) return false;
+		if (c.hasMobGroupOn()) return false;
 		for (Entity en : getMap().getEntities().values()) {
 			if (!(en instanceof MobGroup)) continue;
 			MobGroup grp = (MobGroup) en;
@@ -1059,7 +1060,7 @@ public class ManchouPerso implements Perso {
 		int cellId = Maps.getIdRotated(p.x, p.y, map.getWidth(), map.getHeight());
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
-		if (c.hasMobOn()) return false;
+		if (c.hasMobGroupOn()) return false;
 		for (Entity en : getMap().getEntities().values()) {
 			if (!(en instanceof MobGroup)) continue;
 			MobGroup grp = (MobGroup) en;
@@ -1075,7 +1076,7 @@ public class ManchouPerso implements Perso {
 
 	public ManchouCell findRandomCellExept(List<fr.aresrpg.tofumanchou.domain.data.map.Cell> cells) {
 		for (ManchouCell cell : getMap().getCells())
-			if (!cells.contains(cell) && cell.isWalkeable() && !cell.isTeleporter() && cell.getEntityOn() == null) return cell;
+			if (!cells.contains(cell) && cell.isWalkeable() && !cell.isTeleporter() && !cell.hasMobGroupOn()) return cell;
 		return null;
 	}
 

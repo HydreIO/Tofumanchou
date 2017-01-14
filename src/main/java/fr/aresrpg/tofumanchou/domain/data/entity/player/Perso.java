@@ -11,6 +11,7 @@ import fr.aresrpg.tofumanchou.domain.data.Job;
 import fr.aresrpg.tofumanchou.domain.data.Spell;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.data.inventory.Inventory;
+import fr.aresrpg.tofumanchou.domain.data.item.Item;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.infra.data.PlayerInventory;
 
@@ -173,7 +174,15 @@ public interface Perso extends Player {
 
 	default void useRessourceBags() {
 		PlayerInventory inv = (PlayerInventory) getInventory();
-		inv.getItemsByCategory(ItemCategory.RESOURCEBAG).forEach(i -> useItem(i.getUUID()));
+		inv.getItemsByCategory(ItemCategory.RESOURCEBAG).forEach(i -> useItemStack(i.getUUID()));
+	}
+
+	default void useItemStack(long uid) {
+		PlayerInventory inv = (PlayerInventory) getInventory();
+		Item item = inv.getItem(uid);
+		if (item != null)
+			for (int i = 0; i < item.getAmount(); i++)
+			useItem(item.getUUID());
 	}
 
 	default void useAllItemsWithType(int itemType) {

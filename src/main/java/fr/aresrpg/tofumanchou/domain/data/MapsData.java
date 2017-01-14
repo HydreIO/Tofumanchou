@@ -97,7 +97,7 @@ public class MapsData {
 			int areaId = areaa.getSecond();
 			String arean = area.get(areaId);
 			String subarean = areaa.getFirst();
-			maps.put(k, new MapDataBean(mapid, x, y, arean, subarean));
+			maps.put(k, new MapDataBean(mapid, x, y, areaId, subareaId, arean, subarean));
 		});
 		LOGGER.debug("[" + coords.size() + "] Mapdata loaded !");
 	}
@@ -130,15 +130,49 @@ public class MapsData {
 		int mapid;
 		int x;
 		int y;
+		int areaId;
+		int subareaId;
 		String area;
 		String subarea;
 
-		public MapDataBean(int mapid, int x, int y, String area, String subarea) {
+		public MapDataBean(int mapid, int x, int y, int areaId, int subareaId, String area, String subarea) {
 			this.mapid = mapid;
 			this.x = x;
 			this.y = y;
+			this.areaId = areaId;
+			this.subareaId = subareaId;
 			this.area = area;
 			this.subarea = subarea;
+		}
+
+		/**
+		 * @return the areaId
+		 */
+		public int getAreaId() {
+			return areaId;
+		}
+
+		/**
+		 * @param areaId
+		 *            the areaId to set
+		 */
+		public void setAreaId(int areaId) {
+			this.areaId = areaId;
+		}
+
+		/**
+		 * @return the subareaId
+		 */
+		public int getSubareaId() {
+			return subareaId;
+		}
+
+		/**
+		 * @param subareaId
+		 *            the subareaId to set
+		 */
+		public void setSubareaId(int subareaId) {
+			this.subareaId = subareaId;
 		}
 
 		/**

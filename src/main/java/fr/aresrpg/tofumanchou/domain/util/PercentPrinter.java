@@ -8,6 +8,7 @@ import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
  */
 public class PercentPrinter {
 
+	public static final String FORMAT = "[%s%%]";
 	private final int total;
 	private int current;
 	private int lastPercent;
@@ -59,7 +60,7 @@ public class PercentPrinter {
 		int total = 7800;
 		PercentPrinter printer = new PercentPrinter(total);
 		for (int i = 0; i < total; i++)
-			printer.incrementAndPrint("Loading.. [%s%%]");
+			printer.incrementAndPrint("Loading.. " + FORMAT);
 	}
 
 	@Override

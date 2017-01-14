@@ -4,6 +4,7 @@ import fr.aresrpg.dofus.protocol.game.movement.MovementNpc;
 import fr.aresrpg.dofus.structures.Orientation;
 import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.structures.item.Accessory;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
@@ -46,6 +47,18 @@ public class ManchouNpc implements Npc {
 		m.entityType = npc.getSpriteType();
 		m.uuid = npc.getId();
 		return m;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		return obj instanceof Entity && ((Entity) obj).getUUID() == uuid;
+	}
+
+	@Override
+	public int hashCode() {
+		return (int) uuid;
 	}
 
 	@Override

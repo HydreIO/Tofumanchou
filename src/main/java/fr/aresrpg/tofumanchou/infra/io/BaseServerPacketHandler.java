@@ -770,22 +770,27 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			pkt.getActors().forEach(v -> {
 				MovementRemoveActor actor = (MovementRemoveActor) (Object) v.getSecond();
 				getPerso().getMap().getEntities().remove(actor.getId());
+				for (ManchouCell cell : getPerso().getMap().getCells())
+					cell.getEntitiesOn().removeIf(e -> e.getUUID() == actor.getId());
 				new EntityLeaveMapEvent(client, actor.getId()).send();
 			});
 			transmit(pkt);
 			return;
 		}
 		pkt.getActors().forEach(e -> {
+			ManchouCell cell = getPerso().getMap().getCells()[e.getSecond().getCellId()];
 			switch (e.getFirst()) {
 				case DEFAULT:
 					MovementPlayer player = (MovementPlayer) (Object) e.getSecond();
 					if (player.getId() == getPerso().getUUID()) {
 						getPerso().updateMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), getPerso());
+						cell.addEntityOn(getPerso());
 						new EntityPlayerJoinMapEvent(client, getPerso()).send();
 					} else {
 						ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 						getPerso().getMap().getEntities().put(player.getId(), parseMovement);
+						cell.addEntityOn(parseMovement);
 						new EntityPlayerJoinMapEvent(client, parseMovement).send();
 					}
 					return;
@@ -794,18 +799,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 					MovementMonster mob = (MovementMonster) (Object) e.getSecond();
 					ManchouMob parseMovement = ManchouMob.parseMovement(mob);
 					getPerso().getMap().getEntities().put(mob.getId(), parseMovement);
+					cell.addEntityOn(parseMovement);
 					new MonsterJoinMapEvent(client, parseMovement).send();
 					return;
 				case CREATE_MONSTER_GROUP:
 					MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getSecond();
 					ManchouMobGroup mobsgroup = ManchouMobGroup.parseMovement(mobs);
 					getPerso().getMap().getEntities().put(mobs.getId(), mobsgroup);
+					cell.addEntityOn(mobsgroup);
 					new MonsterGroupSpawnEvent(client, mobsgroup).send();
 					return;
 				case CREATE_NPC:
 					MovementNpc npc = (MovementNpc) (Object) e.getSecond();
 					ManchouNpc npcm = ManchouNpc.parseMovement(npc);
 					getPerso().getMap().getEntities().put(npc.getId(), npcm);
+					cell.addEntityOn(npcm);
 					new NpcJoinMapEvent(client, npcm).send();
 					return;
 				default:
@@ -883,13 +891,17 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case SUMMON:
 				GameSummonAction actions = (GameSummonAction) pkt.getAction();
 				for (Entry<GameMovementAction, MovementAction> e : actions.getSummoned().entrySet()) {
+					ManchouCell cell = getPerso().getMap().getCells()[e.getValue().getCellId()];
 					switch (e.getKey()) {
 						case DEFAULT:
 							MovementPlayer player = (MovementPlayer) (Object) e.getValue();
-							if (player.getId() == getPerso().getUUID()) getPerso().updateMovement(player);
-							else {
+							if (player.getId() == getPerso().getUUID()) {
+								getPerso().updateMovement(player);
+								cell.addEntityOn(getPerso());
+							} else {
 								ManchouPlayerEntity parseMovement = ManchouPlayerEntity.parseMovement(player);
 								getPerso().getMap().getEntities().put(player.getId(), parseMovement);
+								cell.addEntityOn(parseMovement);
 								new EntityPlayerJoinMapEvent(client, parseMovement).send();
 							}
 							return;
@@ -898,18 +910,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 							MovementMonster mob = (MovementMonster) (Object) e.getValue();
 							ManchouMob parseMovement = ManchouMob.parseMovement(mob);
 							getPerso().getMap().getEntities().put(mob.getId(), parseMovement);
+							cell.addEntityOn(parseMovement);
 							new MonsterJoinMapEvent(client, parseMovement).send();
 							return;
 						case CREATE_MONSTER_GROUP:
 							MovementMonsterGroup mobs = (MovementMonsterGroup) (Object) e.getValue();
 							ManchouMobGroup mobsgroup = ManchouMobGroup.parseMovement(mobs);
 							getPerso().getMap().getEntities().put(mobs.getId(), mobsgroup);
+							cell.addEntityOn(mobsgroup);
 							new MonsterGroupSpawnEvent(client, mobsgroup).send();
 							return;
 						case CREATE_NPC:
 							MovementNpc npc = (MovementNpc) (Object) e.getValue();
 							ManchouNpc npcm = ManchouNpc.parseMovement(npc);
 							getPerso().getMap().getEntities().put(npc.getId(), npcm);
+							cell.addEntityOn(npcm);
 							new NpcJoinMapEvent(client, npcm).send();
 							return;
 						default:
@@ -932,6 +947,9 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				if (pkt.getEntityId() == getPerso().getUUID()) enti = getPerso();
 				else enti = getPerso().getMap().getEntities().get(pkt.getEntityId());
 				if (enti == null) break;
+				ManchouCell[] cells = getPerso().getMap().getCells();
+				cells[enti.getCellId()].removeEntityOn(enti);
+				cells[cell].addEntityOn(enti);
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
 				ec.send();

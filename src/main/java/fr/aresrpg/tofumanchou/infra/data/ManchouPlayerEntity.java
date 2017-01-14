@@ -11,6 +11,7 @@ import fr.aresrpg.dofus.structures.item.Accessory;
 import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
+import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
@@ -127,6 +128,18 @@ public class ManchouPlayerEntity implements Player {
 			e.restrictions = of.getRestrictions();
 		}
 		return e;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (obj == this) return true;
+		return obj instanceof Entity && ((Entity) obj).getUUID() == uuid;
+	}
+
+	@Override
+	public int hashCode() {
+		return (int) uuid;
 	}
 
 	/**

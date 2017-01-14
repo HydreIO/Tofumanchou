@@ -90,7 +90,7 @@ public class ManchouMap implements Carte {
 	public Predicate<Cell> cellAccessible() {
 		return c -> {
 			ManchouCell cl = cells[c.getId()];
-			return cl.lineOfSight && !cl.hasMobOn(); // FIXME
+			return cl.lineOfSight && !cl.hasEntityOn(); // FIXME
 		};
 	}
 
@@ -159,13 +159,6 @@ public class ManchouMap implements Carte {
 
 	public boolean isOnCoords(int x, int y) {
 		return this.x == x && this.y == y;
-	}
-
-	/**
-	 * @return the mapid
-	 */
-	public int getMapid() {
-		return mapid;
 	}
 
 	@Override

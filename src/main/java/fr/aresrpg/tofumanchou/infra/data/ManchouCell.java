@@ -13,7 +13,7 @@ import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 import fr.aresrpg.tofumanchou.domain.data.map.Cell;
 
 import java.awt.Point;
-import java.util.List;
+import java.util.*;
 
 /**
  * 
@@ -45,7 +45,7 @@ public class ManchouCell implements Cell {
 	protected boolean layerObjectExternalInteractive = false;
 	private String layerObjectExternalData = "";
 	protected boolean layerObjectExternalAutoSize;
-	private Entity entityOn;
+	private Set<Entity> entitiesOn = new HashSet<>();;
 
 	/**
 	 * @param id
@@ -67,7 +67,6 @@ public class ManchouCell implements Cell {
 	 * @param layerObject2Interactive
 	 * @param layerObject2Num
 	 * @param frame
-	 * @param entityOn
 	 */
 	public ManchouCell(int id, int mapWidth, int mapHeight, boolean lineOfSight, int layerGroundRot, int groundLevel, int movement, int layerGroundNum, int groundSlope, int x, int y,
 		boolean layerGroundFlip, int layerObject1Num, int layerObject1Rot, boolean layerObject1Flip, boolean layerObject2Flip, boolean layerObject2Interactive, int layerObject2Num, int frame) {
@@ -182,7 +181,7 @@ public class ManchouCell implements Cell {
 			int id = Maps.getIdRotated(n.getX(), n.getY(), mapWidth, mapHeight);
 			if (avoid.contains(id) || !Maps.isInMap(id, mapWidth, mapHeight)) continue;
 			Cell cell = map.getCells()[id];
-			if (cell.isWalkeable() && cell.getEntityOn() == null) return id;
+			if (cell.isWalkeable() && !((ManchouCell) cell).hasMobGroupOn()) return id;
 		}
 		return -1;
 	}
@@ -211,6 +210,18 @@ public class ManchouCell implements Cell {
 	@Override
 	public int getY() {
 		return y;
+	}
+
+	/**
+	 * @param entityOn
+	 *            the entityOn to set
+	 */
+	public void addEntityOn(Entity entityOn) {
+		entitiesOn.add(entityOn);
+	}
+
+	public void removeEntityOn(Entity entityon) {
+		entitiesOn.remove(entityon);
 	}
 
 	@Override
@@ -280,14 +291,18 @@ public class ManchouCell implements Cell {
 	}
 
 	@Override
-	public Entity getEntityOn() {
-		return entityOn;
+	public Set<Entity> getEntitiesOn() {
+		return entitiesOn;
 	}
 
-	public boolean hasMobOn() {
-		Entity e = getEntityOn();
-		if (e == null) return false;
-		return e instanceof MobGroup;
+	public boolean hasMobGroupOn() {
+		for (Entity e : getEntitiesOn())
+			if (e != null && e instanceof MobGroup) return true;
+		return false;
+	}
+
+	public boolean hasEntityOn() {
+		return !entitiesOn.isEmpty();
 	}
 
 	@Override
@@ -295,7 +310,7 @@ public class ManchouCell implements Cell {
 		return "ManchouCell [id=" + id + ", mapWidth=" + mapWidth + ", mapHeight=" + mapHeight + ", lineOfSight=" + lineOfSight + ", layerGroundRot=" + layerGroundRot + ", groundLevel=" + groundLevel
 				+ ", movement=" + getMovement() + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
 				+ ", layerObject1Num=" + getLayerObject1Num() + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
-				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + getLayerObject2Num() + ", frame=" + frame + ", entityOn=" + entityOn + "]";
+				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + getLayerObject2Num() + ", frame=" + frame + ", entityOn=" + entitiesOn + "]";
 	}
 
 	/**

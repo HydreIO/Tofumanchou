@@ -3,6 +3,8 @@ package fr.aresrpg.tofumanchou.domain.data.map;
 import fr.aresrpg.dofus.structures.item.Interractable;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 
+import java.util.Set;
+
 /**
  * 
  * @since
@@ -25,6 +27,6 @@ public interface Cell {
 
 	boolean isTeleporter();
 
-	Entity getEntityOn();
+	Set<Entity> getEntitiesOn();
 
 }
