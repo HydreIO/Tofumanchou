@@ -101,6 +101,7 @@ public class ManchouProxy implements Proxy {
 					connection.start();
 				} catch (Exception e) {
 					LOGGER.info(AnsiColor.CYAN + "Client déconnecté !");
+					LOGGER.severe(e);
 					shutdown();
 				}
 			});
