@@ -75,8 +75,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
-import fr.aresrpg.tofumanchou.domain.event.ClientCrashEvent;
-import fr.aresrpg.tofumanchou.domain.event.ServerStateEvent;
+import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.event.aproach.*;
 import fr.aresrpg.tofumanchou.domain.event.chat.*;
 import fr.aresrpg.tofumanchou.domain.event.duel.DuelRequestEvent;
@@ -197,7 +196,10 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		try {
 			getClient().getConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(client, e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
+			if (event.isShutdownClient()) proxy.shutdown();
 		}
 	}
 
@@ -853,6 +855,9 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		boolean transmit = true;
 		switch (pkt.getType()) {
 			case ERROR:
+				ActionErrorEvent actionErrorEvent = new ActionErrorEvent(client, pkt.getLastAction());
+				actionErrorEvent.send();
+				pkt.setLastAction(actionErrorEvent.getLastAction());
 				break;
 			case LIFE_CHANGE:
 				GameLifeChangeAction actionl = (GameLifeChangeAction) pkt.getAction();

@@ -171,6 +171,10 @@ public class ManchouCell implements Cell {
 		cell.setLayerObjectExternalInteractive(layerObjectExternalInteractive);
 		cell.setLayerObjectExternalData(layerObjectExternalData);
 		cell.setLayerObjectExternalInteractive(layerObjectExternalInteractive);
+		cell.setX(Maps.getX(id, mapWidth));
+		cell.setY(Maps.getY(id, mapWidth));
+		cell.setxRot(Maps.getXRotated(id, mapWidth, mapHeight));
+		cell.setyRot(Maps.getYRotated(id, mapWidth, mapHeight));
 		return cell;
 	}
 

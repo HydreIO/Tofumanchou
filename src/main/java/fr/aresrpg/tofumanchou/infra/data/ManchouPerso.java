@@ -930,7 +930,9 @@ public class ManchouPerso implements Perso {
 		try {
 			getAccount().getProxy().getLocalConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(getAccount(), e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
 		}
 	}
 
@@ -939,7 +941,9 @@ public class ManchouPerso implements Perso {
 		try {
 			getAccount().getConnection().send(pkt);
 		} catch (IOException e) {
-			e.printStackTrace();
+			ClientCrashEvent event = new ClientCrashEvent(getAccount(), e);
+			event.send();
+			if (event.isShowException()) LOGGER.error(e);
 		}
 	}
 
@@ -1234,7 +1238,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public void useZaap(int cell, Zaap destination) {
 		interract(Skills.UTILISER, cell);
-		Threads.uSleep(1500, TimeUnit.MILLISECONDS); // avoid server error
+		Threads.uSleep(3, TimeUnit.SECONDS); // avoid server error
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		sendPacketToServer(pkt);
@@ -1243,7 +1247,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public void useZaapi(int cell, Zaapi destination) {
 		interract(Skills.SE_FAIRE_TRANSPORTER, cell);
-		Threads.uSleep(1500, TimeUnit.MILLISECONDS);
+		Threads.uSleep(3, TimeUnit.SECONDS);
 		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
 		subwayUsePacket.setMapid(destination.getMapid());
 		sendPacketToServer(subwayUsePacket);

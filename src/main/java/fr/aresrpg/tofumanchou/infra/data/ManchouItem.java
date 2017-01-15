@@ -48,7 +48,6 @@ public class ManchouItem implements Item {
 		if (item == null) return null;
 		ManchouItem i = new ManchouItem();
 		i.uuid = item.getUid();
-		System.out.println(item);
 		if (item.getItemTypeId() == -1) return i;
 		LangItem langItem = ItemsData.get(item.getItemTypeId());
 		i.name = langItem.getName();
