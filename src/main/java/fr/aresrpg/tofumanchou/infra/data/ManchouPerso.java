@@ -999,9 +999,12 @@ public class ManchouPerso implements Perso {
 	public long moveToCell(int cellid, boolean diagonals, boolean avoidMobs) {
 		if (moving) {
 			long timeToWait = (lastMoved + 250) - System.currentTimeMillis();
-			if (timeToWait > 0) Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
-			moveListener.cancel(true);
-			sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
+			LOGGER.debug("time to wait = " + timeToWait);
+			if (timeToWait > 0) {
+				Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
+				moveListener.cancel(true);
+				sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
+			}
 		}
 		return move(searchPath(cellid, avoidMobs, diagonals));
 	}
@@ -1050,6 +1053,7 @@ public class ManchouPerso implements Perso {
 	public boolean canGoOnCellAvoidingMobs(int xfrom, int yfrom, int xto, int yto) {
 		if (!Maps.isInMapRotated(xto, yto, map.getWidth(), map.getHeight())) return false;
 		int cellId = Maps.getIdRotated(xto, yto, map.getWidth(), map.getHeight());
+		if (cellId < 0 || cellId >= map.getCells().length) return false;
 		Map<Long, Entity> entities = getMap().getEntities();
 		ManchouCell c = getMap().getCells()[cellId];
 		if (c.isTeleporter()) return true;
@@ -1250,6 +1254,7 @@ public class ManchouPerso implements Perso {
 		Threads.uSleep(3, TimeUnit.SECONDS); // avoid server error
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
+		LOGGER.debug("Want to use zaap to go to " + destination);
 		sendPacketToServer(pkt);
 	}
 

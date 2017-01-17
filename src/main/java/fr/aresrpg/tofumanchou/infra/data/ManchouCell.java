@@ -379,7 +379,7 @@ public class ManchouCell implements Cell {
 	@Override
 	public boolean isRessourceSpawned() {
 		if (!isInterractable()) return false;
-		return frame == 0 || frame == 5;
+		return layerObject2Interactive;
 	}
 
 	public int distance(int cellid) {
