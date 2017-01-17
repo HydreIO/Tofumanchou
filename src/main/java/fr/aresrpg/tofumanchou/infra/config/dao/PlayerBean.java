@@ -80,11 +80,6 @@ public class PlayerBean {
 		private String server;
 		private long uuid;
 
-		/**
-		 * @param pseudo
-		 * @param server
-		 * @param uuid
-		 */
 		public PersoBean(String pseudo, String server, long uuid) {
 			this.pseudo = pseudo;
 			this.server = server;

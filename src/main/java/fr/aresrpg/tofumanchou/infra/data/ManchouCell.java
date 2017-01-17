@@ -217,6 +217,132 @@ public class ManchouCell implements Cell {
 	}
 
 	/**
+	 * @return the mapWidth
+	 */
+	public int getMapWidth() {
+		return mapWidth;
+	}
+
+	/**
+	 * @return the mapHeight
+	 */
+	public int getMapHeight() {
+		return mapHeight;
+	}
+
+	/**
+	 * @return the layerGroundRot
+	 */
+	public int getLayerGroundRot() {
+		return layerGroundRot;
+	}
+
+	/**
+	 * @return the groundLevel
+	 */
+	public int getGroundLevel() {
+		return groundLevel;
+	}
+
+	/**
+	 * @return the layerGroundNum
+	 */
+	public int getLayerGroundNum() {
+		return layerGroundNum;
+	}
+
+	/**
+	 * @return the groundSlope
+	 */
+	public int getGroundSlope() {
+		return groundSlope;
+	}
+
+	/**
+	 * @return the layerGroundFlip
+	 */
+	public boolean isLayerGroundFlip() {
+		return layerGroundFlip;
+	}
+
+	/**
+	 * @return the layerObject1Rot
+	 */
+	public int getLayerObject1Rot() {
+		return layerObject1Rot;
+	}
+
+	/**
+	 * @return the layerObject1Flip
+	 */
+	public boolean isLayerObject1Flip() {
+		return layerObject1Flip;
+	}
+
+	/**
+	 * @return the layerObject2Flip
+	 */
+	public boolean isLayerObject2Flip() {
+		return layerObject2Flip;
+	}
+
+	/**
+	 * @return the layerObject2Interactive
+	 */
+	public boolean isLayerObject2Interactive() {
+		return layerObject2Interactive;
+	}
+
+	/**
+	 * @return the frame
+	 */
+	public int getFrame() {
+		return frame;
+	}
+
+	/**
+	 * @return the permanentLevel
+	 */
+	public int getPermanentLevel() {
+		return permanentLevel;
+	}
+
+	/**
+	 * @return the active
+	 */
+	public boolean isActive() {
+		return active;
+	}
+
+	/**
+	 * @return the layerObjectExternal
+	 */
+	public String getLayerObjectExternal() {
+		return layerObjectExternal;
+	}
+
+	/**
+	 * @return the layerObjectExternalInteractive
+	 */
+	public boolean isLayerObjectExternalInteractive() {
+		return layerObjectExternalInteractive;
+	}
+
+	/**
+	 * @return the layerObjectExternalData
+	 */
+	public String getLayerObjectExternalData() {
+		return layerObjectExternalData;
+	}
+
+	/**
+	 * @return the layerObjectExternalAutoSize
+	 */
+	public boolean isLayerObjectExternalAutoSize() {
+		return layerObjectExternalAutoSize;
+	}
+
+	/**
 	 * @param entityOn
 	 *            the entityOn to set
 	 */
@@ -312,9 +438,18 @@ public class ManchouCell implements Cell {
 	@Override
 	public String toString() {
 		return "ManchouCell [id=" + id + ", mapWidth=" + mapWidth + ", mapHeight=" + mapHeight + ", lineOfSight=" + lineOfSight + ", layerGroundRot=" + layerGroundRot + ", groundLevel=" + groundLevel
-				+ ", movement=" + getMovement() + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
-				+ ", layerObject1Num=" + getLayerObject1Num() + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
-				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + getLayerObject2Num() + ", frame=" + frame + ", entityOn=" + entitiesOn + "]";
+				+ ", movement=" + movement + ", layerGroundNum=" + layerGroundNum + ", groundSlope=" + groundSlope + ", x=" + x + ", y=" + y + ", layerGroundFlip=" + layerGroundFlip
+				+ ", layerObject1Num=" + layerObject1Num + ", layerObject1Rot=" + layerObject1Rot + ", layerObject1Flip=" + layerObject1Flip + ", layerObject2Flip=" + layerObject2Flip
+				+ ", layerObject2Interactive=" + layerObject2Interactive + ", layerObject2Num=" + layerObject2Num + ", frame=" + frame + ", permanentLevel=" + permanentLevel + ", active=" + active
+				+ ", layerObjectExternal=" + layerObjectExternal + ", layerObjectExternalInteractive=" + layerObjectExternalInteractive + ", layerObjectExternalData=" + layerObjectExternalData
+				+ ", layerObjectExternalAutoSize=" + layerObjectExternalAutoSize + ", entitiesOn=" + entitiesOn + "]";
+	}
+
+	/**
+	 * @return the lineOfSight
+	 */
+	public boolean isLineOfSight() {
+		return lineOfSight;
 	}
 
 	/**

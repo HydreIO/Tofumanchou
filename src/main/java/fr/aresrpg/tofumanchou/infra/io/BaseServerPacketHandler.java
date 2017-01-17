@@ -662,6 +662,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameActionFinishPacket pkt) {
 		log(pkt);
+		if (isBot()) sendPkt(new GameActionACKPacket().setActionId(pkt.getAckId()));
 		transmit(pkt);
 	}
 
@@ -1003,18 +1004,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case HARVEST_TIME:
 				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
 				if (pkt.getEntityId() == getPerso().getUUID()) {
-					if (isBot() && getPerso().getJob() != null) Executors.SCHEDULED.schedule(() -> {
-						int action = 0;
-						switch (getPerso().getJob().getType()) {
-							case JOB_BUCHERON:
-								action = 1;
-								break;
-
-							default:
-								break;
-						}
-						sendPkt(new GameActionACKPacket().setActionId(action));
-					}, actionh.getTime(), TimeUnit.MILLISECONDS);
+					if (isBot() && getPerso().getJob() != null) Executors.SCHEDULED.schedule(() -> sendPkt(new GameActionACKPacket().setActionId(pkt.getLastAction() != 0 ? pkt.getLastAction() : 0)),
+							actionh.getTime(), TimeUnit.MILLISECONDS);
 					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), getPerso());
 					eventh.send();
 					actionh.setCellId(eventh.getCellId());

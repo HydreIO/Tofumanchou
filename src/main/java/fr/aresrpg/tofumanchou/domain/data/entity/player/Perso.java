@@ -84,9 +84,18 @@ public interface Perso extends Player {
 
 	void replaceCraft();
 
-	long moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs);
+	long moveToCell(int cellid, boolean diagonals, boolean avoidMobs);
 
-	long move(List<Node> p, boolean teleport);
+	/**
+	 * move the player using a path
+	 * 
+	 * @param p
+	 *            the path
+	 * @deprecated this method doesn't support the path cancelling ! use moveToCell instead
+	 * @return the path time
+	 */
+	@Deprecated
+	long move(List<Node> p);
 
 	void moveToRandomCell();
 

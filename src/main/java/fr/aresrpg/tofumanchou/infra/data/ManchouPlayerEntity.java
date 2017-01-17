@@ -15,7 +15,6 @@ import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
 import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
-import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
 
 import java.util.*;
 
@@ -31,7 +30,6 @@ public class ManchouPlayerEntity implements Player {
 	private String pseudo;
 	private Classe classe;
 	private EntityColor colors;
-	private Genre sex;
 	private int level;
 	private int life;
 	private int lifeMax;
@@ -64,7 +62,7 @@ public class ManchouPlayerEntity implements Player {
 	private int side;
 
 	public MovementPlayer serialize() {
-		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, sex.ordinal(), alignement, rank.getValue(), null, null);
+		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, 9/* FIXME */, alignement, rank.getValue(), null, null);
 		if (inFight) {
 			PlayerInFight inf = new PlayerInFight(level, colors.getFirstColor(), colors.getSecondColor(), colors.getThirdColor(), accessories, life, getStat(Stat.PA).getTotal(),
 					getStat(Stat.PM).getTotal(), null, team);
@@ -94,8 +92,8 @@ public class ManchouPlayerEntity implements Player {
 		e.scaleX = player.getScaleX();
 		e.scaleY = player.getScaleY();
 		e.orientation = player.getOrientation();
-		e.sex = Genre.valueOf(player.getSex());
 		e.sprite = player.getSprite();
+		e.classe = Classe.getClasse(e.sprite);
 		e.alignement = player.getAlignement();
 		e.rank = player.getRank() == -1 ? null : new Rank(player.getRank(), 0, 0, true);
 		if (player.isFight()) {
@@ -259,11 +257,6 @@ public class ManchouPlayerEntity implements Player {
 	}
 
 	@Override
-	public Genre getSex() {
-		return sex;
-	}
-
-	@Override
 	public int getLevel() {
 		return level;
 	}
@@ -303,14 +296,6 @@ public class ManchouPlayerEntity implements Player {
 	 */
 	public void setColors(EntityColor colors) {
 		this.colors = colors;
-	}
-
-	/**
-	 * @param sex
-	 *            the sex to set
-	 */
-	public void setSex(Genre sex) {
-		this.sex = sex;
 	}
 
 	/**
@@ -580,7 +565,7 @@ public class ManchouPlayerEntity implements Player {
 
 	@Override
 	public String toString() {
-		return "ManchouPlayerEntity [uuid=" + uuid + ", effects=" + effects + ", cellId=" + cellId + ", pseudo=" + pseudo + ", classe=" + classe + ", colors=" + colors + ", sex=" + sex + ", level="
+		return "ManchouPlayerEntity [uuid=" + uuid + ", effects=" + effects + ", cellId=" + cellId + ", pseudo=" + pseudo + ", classe=" + classe + ", colors=" + colors + ", level="
 				+ level + ", life=" + life + ", lifeMax=" + lifeMax + ", initiative=" + initiative + ", alignement=" + alignement + ", rank=" + rank + ", prospection=" + prospection + ", stats="
 				+ stats + ", accessories=" + Arrays.toString(accessories) + ", server=" + server + ", merchant=" + merchant + ", dead=" + dead + ", deathCount=" + deathCount + ", lvlMax=" + lvlMax
 				+ ", guild=" + guild + ", team=" + team + ", aura=" + aura + ", emot=" + emot + ", emotTimer=" + emotTimer + ", guildName=" + guildName + ", emblem=" + Arrays.toString(emblem)

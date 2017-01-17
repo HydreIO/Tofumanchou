@@ -269,7 +269,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 		log(pkt);
 		if (pkt.getType() == GameActions.MOVE) {
 			GameMoveAction action = (GameMoveAction) pkt.getAction();
-			LOGGER.severe("" + action);
+			LOGGER.debug("clientAction = " + action);
 		}
 		transmit(pkt);
 
@@ -534,8 +534,9 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	}
 
 	@Override
-	public void handle(GameActionCancel pkt) {
+	public void handle(GameActionCancelPacket pkt) {
 		log(pkt);
+		LOGGER.debug("Cancelling at " + pkt.getParams());
 		transmit(pkt);
 
 	}

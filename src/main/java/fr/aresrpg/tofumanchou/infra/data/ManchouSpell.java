@@ -88,7 +88,7 @@ public class ManchouSpell implements Spell {
 	 * @return the maxPo
 	 */
 	public int getMaxPo() {
-		return 10;
+		return 11;
 	}
 
 	/**

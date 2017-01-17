@@ -9,7 +9,6 @@ import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
-import fr.aresrpg.tofumanchou.domain.data.enums.Genre;
 
 import java.util.Map;
 
@@ -24,8 +23,6 @@ public interface Player extends Entity {
 	Classe getClasse();
 
 	EntityColor getColors();
-
-	Genre getSex();
 
 	int getLevel();
 

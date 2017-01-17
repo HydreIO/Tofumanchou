@@ -50,6 +50,7 @@ public class Manchou {
 		LOGGER.success("Starting Tofumanchou..");
 		instance = this;
 		this.running = true;
+
 		this.config = Configurations.generate("Tofumanchou.yml", Variables.class, Optional.of(() -> {
 			LOGGER.info("Configuration created ! please configure and then restart.");
 			System.exit(0);

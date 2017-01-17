@@ -3,17 +3,17 @@ package fr.aresrpg.tofumanchou.domain.event.map;
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.tofumanchou.domain.data.Account;
-import fr.aresrpg.tofumanchou.domain.data.map.Cell;
+import fr.aresrpg.tofumanchou.infra.data.ManchouCell;
 
 /**
  * 
  * @since
  */
-public class FrameUpdateEvent implements Event<FrameUpdateEvent> { // ASYNCHRONOUS EVENT
+public class FrameUpdateEvent implements Event<FrameUpdateEvent> {
 
 	private static final EventBus<FrameUpdateEvent> BUS = new EventBus<>(FrameUpdateEvent.class);
 	private Account client;
-	private Cell cell;
+	private ManchouCell cell;
 	private int frame;
 
 	/**
@@ -21,7 +21,7 @@ public class FrameUpdateEvent implements Event<FrameUpdateEvent> { // ASYNCHRONO
 	 * @param cell
 	 * @param frame
 	 */
-	public FrameUpdateEvent(Account client, Cell cell, int frame) {
+	public FrameUpdateEvent(Account client, ManchouCell cell, int frame) {
 		this.client = client;
 		this.cell = cell;
 		this.frame = frame;
@@ -45,7 +45,7 @@ public class FrameUpdateEvent implements Event<FrameUpdateEvent> { // ASYNCHRONO
 	/**
 	 * @return the cell
 	 */
-	public Cell getCell() {
+	public ManchouCell getCell() {
 		return cell;
 	}
 
@@ -53,7 +53,7 @@ public class FrameUpdateEvent implements Event<FrameUpdateEvent> { // ASYNCHRONO
 	 * @param cell
 	 *            the cell to set
 	 */
-	public void setCell(Cell cell) {
+	public void setCell(ManchouCell cell) {
 		this.cell = cell;
 	}
 
@@ -79,7 +79,7 @@ public class FrameUpdateEvent implements Event<FrameUpdateEvent> { // ASYNCHRONO
 
 	@Override
 	public boolean isAsynchronous() {
-		return true;
+		return false;
 	}
 
 	@Override

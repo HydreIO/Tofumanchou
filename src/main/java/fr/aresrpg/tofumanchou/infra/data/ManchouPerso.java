@@ -62,6 +62,7 @@ import java.awt.Point;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -80,8 +81,6 @@ public class ManchouPerso implements Perso {
 	private int lvlMax;
 	private Classe classe;
 	private EntityColor colors;
-	private Genre genre; // en fait ya un putin de code genre 9 = cra male etc
-	private int sex; // en attendant
 	private int life;
 	private int lifeMax;
 	private int initiative;
@@ -126,6 +125,9 @@ public class ManchouPerso implements Perso {
 
 	private Exchange currentInv;
 	private boolean mitm = true;
+	private ScheduledFuture moveListener;
+	private boolean moving = false;
+	private long lastMoved;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -138,16 +140,16 @@ public class ManchouPerso implements Perso {
 		this.pseudo = c.getPseudo();
 		this.server = server;
 		this.uuid = c.getId();
-		this.sex = c.getSex();
 		this.lvl = c.getLevel();
 		this.guild = c.getGuild();
+		this.classe = Classe.getClasse(c.getGfxId());
 		this.colors = new ManchouColors(c.getColor1(), c.getColor2(), c.getColor3());
 		if (c.getItems() != null)
 			inventory.replaceContent(Arrays.stream(c.getItems()).collect(Collectors.toList()));
 	}
 
 	public MovementPlayer serialize() {
-		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, genre.ordinal(), alignement, rank.getValue(), null, null);
+		MovementPlayer pl = new MovementPlayer(uuid, pseudo, sprite, cellId, scaleX, scaleY, orientation, 9, alignement, rank.getValue(), null, null);
 		if (!getMap().isEnded()) {
 			PlayerInFight inf = new PlayerInFight(lvl, colors.getFirstColor(), colors.getSecondColor(), colors.getThirdColor(), accessories, life, getStat(Stat.PA).getTotal(),
 					getStat(Stat.PM).getTotal(), null, team);
@@ -177,8 +179,8 @@ public class ManchouPerso implements Perso {
 		scaleX = player.getScaleX();
 		scaleY = player.getScaleY();
 		orientation = player.getOrientation();
-		genre = Genre.valueOf(player.getSex());
 		sprite = player.getSprite();
+		this.classe = Classe.getClasse(sprite);
 		alignement = player.getAlignement();
 		if (player.isFight()) {
 			PlayerInFight inf = player.getPlayerInFight();
@@ -228,13 +230,12 @@ public class ManchouPerso implements Perso {
 
 	@Override
 	public void disconnect() {
-		account.getLogger().info("Déconnection de " + pseudo);
+		LOGGER.success("Déconnection de " + pseudo);
 		new BotDisconnectEvent(account, this).send();
-		account.setPerso(null);
 		ManchouProxy proxy = account.getProxy();
 		if (proxy != null) proxy.shutdown();
 		else account.getConnection().closeConnection();
-		account.getLogger().success(pseudo + " déconnecté !");
+		LOGGER.success(pseudo + " déconnecté !");
 	}
 
 	/**
@@ -377,14 +378,6 @@ public class ManchouPerso implements Perso {
 	 */
 	public void setColors(EntityColor colors) {
 		this.colors = colors;
-	}
-
-	/**
-	 * @param genre
-	 *            the genre to set
-	 */
-	public void setGenre(Genre genre) {
-		this.genre = genre;
 	}
 
 	/**
@@ -772,11 +765,6 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public Genre getSex() {
-		return genre;
-	}
-
-	@Override
 	public int getLevel() {
 		return lvl;
 	}
@@ -1008,12 +996,20 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public long moveToCell(int cellid, boolean teleport, boolean diagonals, boolean avoidMobs) {
-		return move(searchPath(cellid, avoidMobs, diagonals), teleport);
+	public long moveToCell(int cellid, boolean diagonals, boolean avoidMobs) {
+		if (moving) {
+			long timeToWait = (lastMoved + 250) - System.currentTimeMillis();
+			if (timeToWait > 0) Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
+			moveListener.cancel(true);
+			sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
+		}
+		return move(searchPath(cellid, avoidMobs, diagonals));
 	}
 
+	@SuppressWarnings("deprecation")
+	@Deprecated
 	@Override
-	public long move(List<Node> p, boolean teleport) {
+	public long move(List<Node> p) {
 		if (p == null) throw new NullPointerException("The path is null !");
 		long time = (long) (Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false) * 30);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
@@ -1022,12 +1018,25 @@ public class ManchouPerso implements Perso {
 			return -1;
 		}
 		LOGGER.severe("le path = " + shortpath);
-		new BotStartMoveEvent(getAccount(), shortpath, teleport).send();
+		new BotStartMoveEvent(getAccount(), shortpath).send();
 		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
-		LOGGER.severe("le path = " + gameClientActionPacket);
 		sendPacketToServer(gameClientActionPacket);
+		moving = true;
+		lastMoved = System.currentTimeMillis();
+		Queue<Node> queue = new LinkedList<>(p);
+		moveListener = Executors.SCHEDULER.register(() -> positionRunner(queue), time / p.size(), TimeUnit.MILLISECONDS);
 		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), time, TimeUnit.MILLISECONDS);
 		return time;
+	}
+
+	public void positionRunner(Queue<Node> path) {
+		Node poll = path.poll();
+		if (poll == null) {
+			moving = false;
+			Executors.FIXED.execute(() -> moveListener.cancel(true));
+			return;
+		}
+		setCellId(Maps.getIdRotated(poll.getX(), poll.getY(), map.getWidth(), map.getHeight()));
 	}
 
 	private List<Node> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
@@ -1127,7 +1136,7 @@ public class ManchouPerso implements Perso {
 			LOGGER.warning("Impossible de bouger sur une cell random ! | aucune cell trouvée");
 			return;
 		}
-		move(path, false);
+		move(path);
 	}
 
 	@Override
@@ -1437,7 +1446,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public String toString() {
 		return "ManchouPerso [uuid=" + uuid + ", cellId=" + cellId + ", server=" + server + ", pseudo=" + pseudo + ", lvl=" + lvl + ", lvlMax=" + lvlMax + ", classe=" + classe + ", colors=" + colors
-				+ ", genre=" + genre + ", life=" + life + ", lifeMax=" + lifeMax + ", initiative=" + initiative + ", alignement=" + alignement + ", rank=" + rank + ", prospection=" + prospection
+				+ ", life=" + life + ", lifeMax=" + lifeMax + ", initiative=" + initiative + ", alignement=" + alignement + ", rank=" + rank + ", prospection=" + prospection
 				+ ", stats=" + stats + ", accessories=" + Arrays.toString(accessories) + ", merchant=" + merchant + ", dead=" + dead + ", deathCount=" + deathCount + ", guild=" + guild + ", team="
 				+ team + ", aura=" + aura + ", emot=" + emot + ", emotTimer=" + emotTimer + ", guildName=" + guildName + ", emblem=" + Arrays.toString(emblem) + ", restrictions=" + restrictions
 				+ ", inventory=" + inventory + ", xp=" + xp + ", xpLow=" + xpLow + ", xpHight=" + xpHight + ", statsPoints=" + statsPoints + ", spellsPoints=" + spellsPoints + ", energy=" + energy

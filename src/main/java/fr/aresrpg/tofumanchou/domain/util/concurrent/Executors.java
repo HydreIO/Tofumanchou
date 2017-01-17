@@ -29,13 +29,13 @@ public final class Executors {
 			.setDaemon(false)
 			.setName("ThreadManchou[%d]"))
 					.setType(PoolType.FIXED)
-					.setParallelism(50)
+					.setParallelism(30)
 					.buildAsService();
 	public static ScheduledExecutorService SCHEDULED = new ThreadPoolBuilder(new ThreadBuilder()
 			.handleException(LOGGER)
 			.setName("ScheduleManchou[%d]"))
 					.setType(PoolType.SCHEDULED)
-					.setParallelism(40)
+					.setParallelism(30)
 					.buildAsScheduled();
 	public static Scheduler SCHEDULER = new Scheduler(SCHEDULED);
 
