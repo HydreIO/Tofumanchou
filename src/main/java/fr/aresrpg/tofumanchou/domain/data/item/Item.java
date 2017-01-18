@@ -39,4 +39,6 @@ public interface Item {
 
 	String showInfos();
 
+	String showInfos(int amount);
+
 }

@@ -40,6 +40,14 @@ public class ManchouItem implements Item {
 		this.pods = pods;
 	}
 
+	public ManchouItem clone() {
+		return clone(amount);
+	}
+
+	public ManchouItem clone(int amount) {
+		return new ManchouItem(uuid, name, desc, category, typeId, amount, position, effects, price, skin, remainingHours, pods);
+	}
+
 	private ManchouItem() {
 
 	}
@@ -185,6 +193,11 @@ public class ManchouItem implements Item {
 
 	@Override
 	public String showInfos() {
+		return "{x" + amount + " " + getName() + "(id:" + getUUID() + ")(pods:" + (getPods() * getAmount()) + ")}";
+	}
+
+	@Override
+	public String showInfos(int amount) {
 		return "{x" + amount + " " + getName() + "(id:" + getUUID() + ")(pods:" + (getPods() * getAmount()) + ")}";
 	}
 

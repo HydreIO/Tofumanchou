@@ -1000,11 +1000,10 @@ public class ManchouPerso implements Perso {
 		if (moving) {
 			long timeToWait = (lastMoved + 250) - System.currentTimeMillis();
 			LOGGER.debug("time to wait = " + timeToWait);
-			if (timeToWait > 0) {
-				Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
-				moveListener.cancel(true);
-				sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
-			}
+			if (timeToWait > 0) Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
+			LOGGER.debug("cancel on " + getCellId());
+			moveListener.cancel(true);
+			sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
 		}
 		return move(searchPath(cellid, avoidMobs, diagonals));
 	}
@@ -1020,6 +1019,7 @@ public class ManchouPerso implements Perso {
 			LOGGER.error("Unable to find a path ! The point list is invalid ! " + p);
 			return -1;
 		}
+		LOGGER.debug("moving from " + cellId + " to " + shortpath.get(shortpath.size() - 1).getCellId() + " list node = " + p);
 		LOGGER.severe("le path = " + shortpath);
 		new BotStartMoveEvent(getAccount(), shortpath).send();
 		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
@@ -1027,14 +1027,22 @@ public class ManchouPerso implements Perso {
 		moving = true;
 		lastMoved = System.currentTimeMillis();
 		Queue<Node> queue = new LinkedList<>(p);
+		if (moveListener != null) moveListener.cancel(true);
 		moveListener = Executors.SCHEDULER.register(() -> positionRunner(queue), time / p.size(), TimeUnit.MILLISECONDS);
 		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), time, TimeUnit.MILLISECONDS);
 		return time;
 	}
 
+	public void cancelRunner() {
+		moving = false;
+		LOGGER.debug("manually, canceling runner");
+		if (moveListener != null) moveListener.cancel(true);
+	}
+
 	public void positionRunner(Queue<Node> path) {
 		Node poll = path.poll();
 		if (poll == null) {
+			LOGGER.debug("moving false, canceling");
 			moving = false;
 			Executors.FIXED.execute(() -> moveListener.cancel(true));
 			return;
@@ -1251,7 +1259,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public void useZaap(int cell, Zaap destination) {
 		interract(Skills.UTILISER, cell);
-		Threads.uSleep(3, TimeUnit.SECONDS); // avoid server error
+		Threads.uSleep(6, TimeUnit.SECONDS); // avoid server error
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		LOGGER.debug("Want to use zaap to go to " + destination);
@@ -1261,7 +1269,7 @@ public class ManchouPerso implements Perso {
 	@Override
 	public void useZaapi(int cell, Zaapi destination) {
 		interract(Skills.SE_FAIRE_TRANSPORTER, cell);
-		Threads.uSleep(3, TimeUnit.SECONDS);
+		Threads.uSleep(6, TimeUnit.SECONDS);
 		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
 		subwayUsePacket.setMapid(destination.getMapid());
 		sendPacketToServer(subwayUsePacket);

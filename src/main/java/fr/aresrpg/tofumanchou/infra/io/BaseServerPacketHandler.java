@@ -35,8 +35,7 @@ import fr.aresrpg.dofus.protocol.game.actions.server.*;
 import fr.aresrpg.dofus.protocol.game.client.*;
 import fr.aresrpg.dofus.protocol.game.movement.*;
 import fr.aresrpg.dofus.protocol.game.server.*;
-import fr.aresrpg.dofus.protocol.guild.server.GuildJoinErrorPacket;
-import fr.aresrpg.dofus.protocol.guild.server.GuildStatPacket;
+import fr.aresrpg.dofus.protocol.guild.server.*;
 import fr.aresrpg.dofus.protocol.hello.server.HelloConnectionPacket;
 import fr.aresrpg.dofus.protocol.hello.server.HelloGamePacket;
 import fr.aresrpg.dofus.protocol.info.server.*;
@@ -164,7 +163,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		if (registry == null && isMitm()) {
 			try {
 				System.out.println("[RECEIVE direct] " + packet);
-				((SocketChannel) getProxy().getLocalConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
+				if (getProxy().getLocalConnection().getChannel().isOpen())
+					((SocketChannel) getProxy().getLocalConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
 			} catch (IOException e) {
 				ClientCrashEvent event = new ClientCrashEvent(client, e);
 				event.send();
@@ -183,7 +183,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	private void transmit(Packet pkt) {
 		if (isBot()) return;
 		try {
-			proxy.getLocalConnection().send(pkt);
+			if (proxy.getLocalConnection().getChannel().isOpen())
+				proxy.getLocalConnection().send(pkt);
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(client, e);
 			event.send();
@@ -194,7 +195,8 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 
 	private void sendPkt(Packet pkt) {
 		try {
-			getClient().getConnection().send(pkt);
+			if (getClient().getConnection().getChannel().isOpen())
+				getClient().getConnection().send(pkt);
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(client, e);
 			event.send();
@@ -1709,6 +1711,16 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		log(pkt);
 		if (isMitm() && !balking.receive(pkt.getError().getClass()).overflow(10))
 			transmit(pkt);
+	}
+
+	@Override
+	public void handle(GuildInvitedPacket pkt) {
+		log(pkt);
+		GuildInvitedEvent event = new GuildInvitedEvent(client, pkt.getPlayer(), pkt.getGuild());
+		event.send();
+		pkt.setGuild(event.getGuild());
+		pkt.setPlayer(event.getSender());
+		transmit(pkt);
 	}
 
 }
