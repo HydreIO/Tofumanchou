@@ -11,6 +11,7 @@ package fr.aresrpg.tofumanchou.infra.io;
 import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.event.Event;
+import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.commons.domain.util.ArrayUtils;
 import fr.aresrpg.dofus.protocol.*;
 import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
@@ -664,6 +665,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameActionFinishPacket pkt) {
 		log(pkt);
+		LOGGER.debug(AnsiColor.RED + "ACTION FINISH " + pkt.getCharacterId() + " ack:" + pkt.getAckId());
 		if (isBot()) sendPkt(new GameActionACKPacket().setActionId(pkt.getAckId()));
 		transmit(pkt);
 	}
@@ -671,6 +673,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameActionStartPacket pkt) {
 		log(pkt);
+		LOGGER.debug(AnsiColor.RED + "ACTION START " + pkt.getCharacterId());
 		transmit(pkt);
 	}
 
