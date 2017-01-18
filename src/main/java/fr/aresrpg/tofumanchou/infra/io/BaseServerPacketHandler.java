@@ -859,6 +859,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(GameServerActionPacket pkt) {
 		log(pkt);
 		boolean transmit = true;
+		if (pkt.getLastAction() != -1) getPerso().setLastAction(pkt.getLastAction());
 		switch (pkt.getType()) {
 			case ERROR:
 				ActionErrorEvent actionErrorEvent = new ActionErrorEvent(client, pkt.getLastAction());
@@ -1009,8 +1010,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case HARVEST_TIME:
 				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
 				if (pkt.getEntityId() == getPerso().getUUID()) {
-					if (isBot() && getPerso().getJob() != null) Executors.SCHEDULED.schedule(() -> sendPkt(new GameActionACKPacket().setActionId(pkt.getLastAction() != 0 ? pkt.getLastAction() : 0)),
-							actionh.getTime(), TimeUnit.MILLISECONDS);
+					if (isBot()) Executors.SCHEDULED.schedule(getPerso()::endAction, actionh.getTime(), TimeUnit.MILLISECONDS);
 					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), getPerso());
 					eventh.send();
 					actionh.setCellId(eventh.getCellId());

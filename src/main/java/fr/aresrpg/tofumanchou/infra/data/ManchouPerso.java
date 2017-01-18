@@ -128,6 +128,7 @@ public class ManchouPerso implements Perso {
 	private ScheduledFuture moveListener;
 	private boolean moving = false;
 	private long lastMoved;
+	private int lastAction;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -169,6 +170,19 @@ public class ManchouPerso implements Perso {
 			pl.setPlayerOutsideFight(pof);
 		}
 		return pl;
+	}
+
+	public void endAction() {
+		if (lastAction != -1)
+			sendPacketToServer(new GameActionACKPacket().setActionId(lastAction));
+	}
+
+	public void setLastAction(int lastAction) {
+		this.lastAction = lastAction;
+	}
+
+	public int getLastAction() {
+		return lastAction;
 	}
 
 	public void updateMovement(MovementPlayer player) {
@@ -1029,7 +1043,7 @@ public class ManchouPerso implements Perso {
 		Queue<Node> queue = new LinkedList<>(p);
 		if (moveListener != null) moveListener.cancel(true);
 		moveListener = Executors.SCHEDULER.register(() -> positionRunner(queue), time / p.size(), TimeUnit.MILLISECONDS);
-		if (!isMitm()) Executors.SCHEDULED.schedule(() -> sendPacketToServer(new GameActionACKPacket().setActionId(0)), time, TimeUnit.MILLISECONDS);
+		if (!isMitm()) Executors.SCHEDULED.schedule(this::endAction, time, TimeUnit.MILLISECONDS);
 		return time;
 	}
 

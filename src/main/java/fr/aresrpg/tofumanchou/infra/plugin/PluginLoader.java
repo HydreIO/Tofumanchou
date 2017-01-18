@@ -5,8 +5,10 @@ import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 public class PluginLoader {
@@ -35,11 +37,7 @@ public class PluginLoader {
 		LOGGER.info("Loading plugins..");
 		Set<ManchouPlugin> hashSet = new HashSet<>();
 		File loc = new File("plugins");
-		File[] flist = loc.listFiles(new FileFilter() {
-			public boolean accept(File file) {
-				return file.getPath().toLowerCase().endsWith(".jar");
-			}
-		});
+		File[] flist = loc.listFiles(file -> file.getName().endsWith(".jar"));
 		if (flist == null || flist.length == 0) {
 			LOGGER.warning("No plugins detected under /plugins/*");
 			return hashSet;
@@ -47,7 +45,7 @@ public class PluginLoader {
 		URL[] urls = new URL[flist.length];
 		for (int i = 0; i < flist.length; i++)
 			urls[i] = flist[i].toURI().toURL();
-		ClassLoader ucl = ClassLoader.getSystemClassLoader();
+		ClassLoader ucl = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
 
 		ServiceLoader<ManchouPlugin> sl = ServiceLoader.load(ManchouPlugin.class, ucl);
 		Iterator<ManchouPlugin> apit = sl.iterator();
@@ -66,7 +64,7 @@ public class PluginLoader {
 					+ AnsiColor.GREEN + "." + AnsiColor.PURPLE + plugin.getSubVersion() + AnsiColor.GREEN + " by " + AnsiColor.PURPLE + plugin.getAuthor());
 			hashSet.add(plugin);
 		}
-		if (hashSet.isEmpty()) LOGGER.warning("No plugins detected under /plugins/*");
+		if (hashSet.isEmpty()) LOGGER.warning("No plugins are registered in the manifest under /plugins/*");
 		return hashSet;
 	}
 
