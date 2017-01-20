@@ -35,8 +35,13 @@ public enum Smiley {
 		return values()[Randoms.nextInt(values().length)];
 	}
 
+	public static Smiley getRandomBadSmiley() {
+		Smiley[] s = { PAS_CONTENT, BLESSE, YEUX_ROUGE, APEURE, MOQUEUR, BOUCHE_W, CRANE, ETONE, SUEUR };
+		return s[Randoms.nextInt(s.length)];
+	}
+
 	public static Smiley getRandomTrollSmiley() {
-		Smiley[] s = { TIRE_LANQUE, Smiley.PLEURE_RIRE, ETONE, AMOUREUX, MOQUEUR };
+		Smiley[] s = { TIRE_LANQUE, PLEURE_RIRE, ETONE, AMOUREUX, MOQUEUR, APEURE, X_X };
 		return s[Randoms.nextInt(s.length)];
 	}
 

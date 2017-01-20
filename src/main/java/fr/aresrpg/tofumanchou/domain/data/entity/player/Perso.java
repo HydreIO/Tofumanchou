@@ -84,7 +84,7 @@ public interface Perso extends Player {
 
 	void replaceCraft();
 
-	long moveToCell(int cellid, boolean diagonals, boolean avoidMobs);
+	void moveToCell(int cellid, boolean diagonals, boolean avoidMobs);
 
 	/**
 	 * move the player using a path
@@ -95,7 +95,7 @@ public interface Perso extends Player {
 	 * @return the path time
 	 */
 	@Deprecated
-	long move(List<Node> p);
+	void move(List<Node> p);
 
 	void moveToRandomCell();
 
@@ -147,9 +147,9 @@ public interface Perso extends Player {
 
 	void interract(Skills s, int cell);
 
-	void dialogLeave();
+	void leaveDialog();
 
-	void exchangeLeave();
+	void leaveExchange();
 
 	void confirmExchange();
 

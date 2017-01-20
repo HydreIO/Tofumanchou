@@ -1,7 +1,9 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
+import fr.aresrpg.commons.domain.util.ArrayUtils;
 import fr.aresrpg.dofus.structures.game.FightSpawn;
 import fr.aresrpg.dofus.structures.game.FightType;
+import fr.aresrpg.dofus.structures.item.Interractable;
 import fr.aresrpg.dofus.structures.map.Cell;
 import fr.aresrpg.dofus.structures.map.DofusMap;
 import fr.aresrpg.tofumanchou.domain.data.MapsData;
@@ -107,6 +109,14 @@ public class ManchouMap implements Carte {
 		if (obj == null) return false;
 		if (obj == this) return true;
 		return obj instanceof ManchouMap && ((ManchouMap) obj).getMapId() == mapid;
+	}
+
+	public boolean hasSpawnedRessources(Interractable... interractable) {
+		for (ManchouCell c : cells) {
+			Interractable ress = c.getInterractable();
+			if (ress != null && c.isRessourceSpawned() && ArrayUtils.contains(ress, interractable)) return true;
+		}
+		return false;
 	}
 
 	@Override

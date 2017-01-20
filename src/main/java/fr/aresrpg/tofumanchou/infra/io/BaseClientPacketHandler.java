@@ -18,6 +18,7 @@ import fr.aresrpg.dofus.protocol.account.client.*;
 import fr.aresrpg.dofus.protocol.basic.client.BasicChatMessageSendPacket;
 import fr.aresrpg.dofus.protocol.basic.client.BasicUseSmileyPacket;
 import fr.aresrpg.dofus.protocol.chat.ChatSubscribeChannelPacket;
+import fr.aresrpg.dofus.protocol.chat.server.ChatMessageOkPacket;
 import fr.aresrpg.dofus.protocol.conquest.client.WorldInfosJoinPacket;
 import fr.aresrpg.dofus.protocol.conquest.client.WorldInfosLeavePacket;
 import fr.aresrpg.dofus.protocol.dialog.DialogLeavePacket;
@@ -30,6 +31,7 @@ import fr.aresrpg.dofus.protocol.friend.client.*;
 import fr.aresrpg.dofus.protocol.game.actions.GameActions;
 import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction;
 import fr.aresrpg.dofus.protocol.game.client.*;
+import fr.aresrpg.dofus.protocol.guild.client.GuildRefuseInvitPacket;
 import fr.aresrpg.dofus.protocol.info.client.InfoMapPacket;
 import fr.aresrpg.dofus.protocol.item.client.*;
 import fr.aresrpg.dofus.protocol.job.client.JobChangeStatsPacket;
@@ -42,8 +44,10 @@ import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
 import fr.aresrpg.dofus.protocol.subway.client.SubwayUsePacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
+import fr.aresrpg.dofus.structures.Chat;
 import fr.aresrpg.tofumanchou.domain.Accounts;
 import fr.aresrpg.tofumanchou.domain.data.Account;
+import fr.aresrpg.tofumanchou.domain.event.AdminCommandEvent;
 import fr.aresrpg.tofumanchou.domain.event.ClientCrashEvent;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.infra.data.ManchouAccount;
@@ -660,7 +664,15 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	@Override
 	public void handle(BasicChatMessageSendPacket pkt) {
 		log(pkt);
-		transmit(pkt);
+		Chat chatType = pkt.getChatType();
+		if (chatType == Chat.ADMIN || chatType == Chat.MEETIC) {
+			ChatMessageOkPacket pkt2 = new ChatMessageOkPacket();
+			pkt2.setChat(chatType);
+			pkt2.setMsg(pkt.getMsg());
+			pkt2.setPseudo(getPerso().getPseudo());
+			getPerso().sendPacketToClient(pkt2);
+			new AdminCommandEvent(client, getPerso(), pkt.getMsg()).send();
+		} else transmit(pkt);
 	}
 
 	@Override
@@ -683,6 +695,12 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 
 	@Override
 	public void handle(SubwayUsePacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(GuildRefuseInvitPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}

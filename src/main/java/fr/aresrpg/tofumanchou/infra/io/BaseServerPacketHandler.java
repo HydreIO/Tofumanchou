@@ -67,6 +67,7 @@ import fr.aresrpg.dofus.structures.server.Server;
 import fr.aresrpg.dofus.structures.stat.Stat;
 import fr.aresrpg.dofus.structures.stat.StatValue;
 import fr.aresrpg.dofus.util.*;
+import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
@@ -90,6 +91,7 @@ import fr.aresrpg.tofumanchou.domain.event.map.*;
 import fr.aresrpg.tofumanchou.domain.event.player.*;
 import fr.aresrpg.tofumanchou.domain.io.Proxy;
 import fr.aresrpg.tofumanchou.domain.io.Proxy.ProxyConnectionType;
+import fr.aresrpg.tofumanchou.domain.util.Functions;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.config.Variables;
 import fr.aresrpg.tofumanchou.infra.data.*;
@@ -102,6 +104,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -550,42 +553,43 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(InfoMessagePacket pkt) {
 		log(pkt);
-		if (pkt.getMessage() == null) return;
 		ManchouMap fight = (ManchouMap) getPerso().getMap();
-		switch (pkt.getMessage()) {
-			case FIGHT_ATTRIBUTE_ALLOW_GROUP_ACTIVE:
-				fight.setGroupBlocked(true);
-				break;
-			case FIGHT_ATTRIBUTE_ALLOW_GROUP_NOT_ACTIVE:
-				fight.setGroupBlocked(false);
-				break;
-			case FIGHT_ATTRIBUTE_DENY_ACTIVE:
-				fight.setBlocked(true);
-				break;
-			case FIGHT_ATTRIBUTE_DENY_NOT_ACTIVE:
-				fight.setBlocked(false);
-				break;
-			case FIGHT_ATTRIBUTE_DENY_SPECTATE_ACTIVE:
-				fight.setSpecBlocked(true);
-				break;
-			case FIGHT_ATTRIBUTE_DENY_SPECTATE_NOT_ACTIVE:
-				fight.setSpecBlocked(false);
-				break;
-			case FIGHT_ATTRIBUTE_NEED_HELP_ACTIVE:
-				fight.setHelpNeeded(true);
-				break;
-			case FIGHT_ATTRIBUTE_NEED_HELP_NOT_ACTIVE:
-				fight.setHelpNeeded(false);
-				break;
-			case EARN_KAMAS:
-				int kamas = Integer.parseInt(pkt.getExtraDatas());
-				client.getBank().addKamas(kamas);
-				break;
-			case CURRENT_ADRESS:
-				if (isBot()) sendPkt(new GameCreatePacket().setGameType(GameType.SOLO));
-				break;
-			default:
-				break;
+		if (pkt.getMessage() != null) {
+			switch (pkt.getMessage()) {
+				case FIGHT_ATTRIBUTE_ALLOW_GROUP_ACTIVE:
+					fight.setGroupBlocked(true);
+					break;
+				case FIGHT_ATTRIBUTE_ALLOW_GROUP_NOT_ACTIVE:
+					fight.setGroupBlocked(false);
+					break;
+				case FIGHT_ATTRIBUTE_DENY_ACTIVE:
+					fight.setBlocked(true);
+					break;
+				case FIGHT_ATTRIBUTE_DENY_NOT_ACTIVE:
+					fight.setBlocked(false);
+					break;
+				case FIGHT_ATTRIBUTE_DENY_SPECTATE_ACTIVE:
+					fight.setSpecBlocked(true);
+					break;
+				case FIGHT_ATTRIBUTE_DENY_SPECTATE_NOT_ACTIVE:
+					fight.setSpecBlocked(false);
+					break;
+				case FIGHT_ATTRIBUTE_NEED_HELP_ACTIVE:
+					fight.setHelpNeeded(true);
+					break;
+				case FIGHT_ATTRIBUTE_NEED_HELP_NOT_ACTIVE:
+					fight.setHelpNeeded(false);
+					break;
+				case EARN_KAMAS:
+					int kamas = Integer.parseInt(pkt.getExtraDatas());
+					client.getBank().addKamas(kamas);
+					break;
+				case CURRENT_ADRESS:
+					if (isBot()) sendPkt(new GameCreatePacket().setGameType(GameType.SOLO));
+					break;
+				default:
+					break;
+			}
 		}
 		InfoMessageEvent event = new InfoMessageEvent(client, pkt.getType(), pkt.getMessageId(), pkt.getExtraDatas());
 		event.send();
@@ -859,7 +863,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	public void handle(GameServerActionPacket pkt) {
 		log(pkt);
 		boolean transmit = true;
-		if (pkt.getLastAction() != -1) getPerso().setLastAction(pkt.getLastAction());
+		if (pkt.getLastAction() != -1 && pkt.getEntityId() == getPerso().getUUID()) getPerso().setLastAction(pkt.getLastAction());
 		switch (pkt.getType()) {
 			case ERROR:
 				ActionErrorEvent actionErrorEvent = new ActionErrorEvent(client, pkt.getLastAction());
@@ -962,8 +966,20 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				ManchouCell[] cells = getPerso().getMap().getCells();
 				cells[enti.getCellId()].removeEntityOn(enti);
 				cells[cell].addEntityOn(enti);
+				ManchouMap map = getPerso().getMap();
+				List<Node> nodes = new ArrayList();
+				long time = 0;
+				if (enti == getPerso() && map.isEnded()) {
+					nodes = Functions.getNodes(enti.getCellId(), actionm.getPath(), getPerso().getMap());
+					time = (long) (Pathfinding.getPathTime(nodes, map.getProtocolCells(), map.getWidth(), map.getHeight(), getPerso().hasMount()) * 30);
+					getPerso().setMoving(true);
+					getPerso().setLastMoved(System.currentTimeMillis());
+					Queue<Node> queue = new LinkedList<>(nodes);
+					ScheduledFuture<?> schFuture = Executors.SCHEDULED.scheduleAtFixedRate(() -> getPerso().positionRunner(queue), 0, time / nodes.size(), TimeUnit.MILLISECONDS);
+					getPerso().setMoveListener(schFuture);
+				}
 				enti.setCellId(cell);
-				EntityMoveEvent ec = new EntityMoveEvent(client, enti, actionm.getPath());
+				EntityMoveEvent ec = new EntityMoveEvent(client, enti, time, actionm.getPath(), nodes);
 				ec.send();
 				pkt.setEntityId(ec.getEntity().getUUID());
 				actionm.setPath(ec.getPath());
@@ -972,6 +988,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				GameDuelServerAction actiond = (GameDuelServerAction) pkt.getAction();
 				Player sender = (Player) getPerso().getMap().getEntities().get(pkt.getEntityId());
 				Player target = (Player) getPerso().getMap().getEntities().get(actiond.getTargetId());
+				if (target.getUUID() == getPerso().getUUID()) getPerso().setDefied(true, sender.getUUID());
 				DuelRequestEvent duelRequestEvent = new DuelRequestEvent(client, sender, target);
 				duelRequestEvent.send();
 				pkt.setEntityId(duelRequestEvent.getSender().getUUID());
@@ -1010,7 +1027,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case HARVEST_TIME:
 				GameHarvestTimeAction actionh = (GameHarvestTimeAction) pkt.getAction();
 				if (pkt.getEntityId() == getPerso().getUUID()) {
-					if (isBot()) Executors.SCHEDULED.schedule(getPerso()::endAction, actionh.getTime(), TimeUnit.MILLISECONDS);
+					if (isBot()) Executors.SCHEDULED.schedule(getPerso()::endAction, actionh.getTime() + 500, TimeUnit.MILLISECONDS);
 					HarvestTimeReceiveEvent eventh = new HarvestTimeReceiveEvent(client, actionh.getCellId(), actionh.getTime(), getPerso());
 					eventh.send();
 					actionh.setCellId(eventh.getCellId());
@@ -1141,6 +1158,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		ManchouMap map = getPerso().getMap();
 		Entity player = map.getEntities().get(pkt.getPlayerId());
 		Entity target = map.getEntities().get(pkt.getTargetId());
+		if (target.getUUID() == getPerso().getUUID()) getPerso().setInvitedExchange(true);
 		ExchangeAcceptedEvent event = new ExchangeAcceptedEvent(client, (Player) player, (Player) target, pkt.getExchange());
 		event.send();
 		pkt.setExchange(event.getExchange());
@@ -1473,6 +1491,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(PartyInviteRequestOkPacket pkt) {
 		log(pkt);
+		if (pkt.getInvited().equalsIgnoreCase(getPerso().getPseudo())) getPerso().setInvitedGrp(true);
 		GroupInvitationAcceptedEvent event = new GroupInvitationAcceptedEvent(client, pkt.getInviter(), pkt.getInvited());
 		event.send();
 		pkt.setInvited(event.getInvited());
@@ -1719,6 +1738,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GuildInvitedPacket pkt) {
 		log(pkt);
+		getPerso().setInvitedGuild(true, pkt.getSprite());
 		GuildInvitedEvent event = new GuildInvitedEvent(client, pkt.getPlayer(), pkt.getGuild());
 		event.send();
 		pkt.setGuild(event.getGuild());

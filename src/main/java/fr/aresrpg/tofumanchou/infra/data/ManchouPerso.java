@@ -10,6 +10,7 @@ import fr.aresrpg.dofus.protocol.ProtocolRegistry.Bound;
 import fr.aresrpg.dofus.protocol.basic.client.BasicChatMessageSendPacket;
 import fr.aresrpg.dofus.protocol.basic.client.BasicUseSmileyPacket;
 import fr.aresrpg.dofus.protocol.chat.ChatSubscribeChannelPacket;
+import fr.aresrpg.dofus.protocol.conquest.client.WorldInfosJoinPacket;
 import fr.aresrpg.dofus.protocol.dialog.DialogLeavePacket;
 import fr.aresrpg.dofus.protocol.dialog.client.DialogCreatePacket;
 import fr.aresrpg.dofus.protocol.dialog.client.DialogResponsePacket;
@@ -26,7 +27,9 @@ import fr.aresrpg.dofus.protocol.game.client.*;
 import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer;
 import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer.PlayerInFight;
 import fr.aresrpg.dofus.protocol.game.movement.MovementPlayer.PlayerOutsideFight;
+import fr.aresrpg.dofus.protocol.guild.client.GuildRefuseInvitPacket;
 import fr.aresrpg.dofus.protocol.item.client.*;
+import fr.aresrpg.dofus.protocol.mount.client.MountPlayerPacket;
 import fr.aresrpg.dofus.protocol.party.PartyRefusePacket;
 import fr.aresrpg.dofus.protocol.party.client.*;
 import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
@@ -55,6 +58,8 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.event.*;
+import fr.aresrpg.tofumanchou.domain.event.player.PersoMoveEndEvent;
+import fr.aresrpg.tofumanchou.domain.util.Validators;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.io.*;
 
@@ -129,6 +134,15 @@ public class ManchouPerso implements Perso {
 	private boolean moving = false;
 	private long lastMoved;
 	private int lastAction;
+	private boolean mount;
+
+	private boolean defied;
+	private long defierId;
+	private boolean invitedGuild;
+	private long guildinvitId;
+	private boolean invitedGrp;
+	private boolean invitedExchange;
+	private int annoyedCount;
 
 	public ManchouPerso(Account account, String pseudo, Server server) {
 		this.account = (ManchouAccount) account;
@@ -170,6 +184,15 @@ public class ManchouPerso implements Perso {
 			pl.setPlayerOutsideFight(pof);
 		}
 		return pl;
+	}
+
+	public boolean hasMount() {
+		return mount;
+	}
+
+	public void mount() {
+		mount = !mount;
+		sendPacketToServer(new MountPlayerPacket());
 	}
 
 	public void endAction() {
@@ -214,6 +237,10 @@ public class ManchouPerso implements Perso {
 			emblem = of.getEmblem();
 			restrictions = of.getRestrictions();
 		}
+	}
+
+	public void askMap() {
+		sendPacketToServer(new WorldInfosJoinPacket());
 	}
 
 	@Override
@@ -1010,7 +1037,8 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public long moveToCell(int cellid, boolean diagonals, boolean avoidMobs) {
+	public void moveToCell(int cellid, boolean diagonals, boolean avoidMobs) {
+		LOGGER.debug("moving = " + moving);
 		if (moving) {
 			long timeToWait = (lastMoved + 250) - System.currentTimeMillis();
 			LOGGER.debug("time to wait = " + timeToWait);
@@ -1019,49 +1047,59 @@ public class ManchouPerso implements Perso {
 			moveListener.cancel(true);
 			sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
 		}
-		return move(searchPath(cellid, avoidMobs, diagonals));
+		move(searchPath(cellid, avoidMobs, diagonals));
 	}
 
 	@SuppressWarnings("deprecation")
 	@Deprecated
 	@Override
-	public long move(List<Node> p) {
+	public void move(List<Node> p) {
 		if (p == null) throw new NullPointerException("The path is null !");
 		long time = (long) (Pathfinding.getPathTime(p, getMap().getProtocolCells(), getMap().getWidth(), getMap().getHeight(), false) * 30);
 		List<PathFragment> shortpath = Pathfinding.makeShortPath(p, getMap().getWidth(), getMap().getHeight());
 		if (shortpath == null) {
 			LOGGER.error("Unable to find a path ! The point list is invalid ! " + p);
-			return -1;
+			return;
 		}
 		LOGGER.debug("moving from " + cellId + " to " + shortpath.get(shortpath.size() - 1).getCellId() + " list node = " + p);
 		LOGGER.severe("le path = " + shortpath);
 		new BotStartMoveEvent(getAccount(), shortpath).send();
+		if (map.isEnded()) setMoving(true);
 		GameClientActionPacket gameClientActionPacket = new GameClientActionPacket(GameActions.MOVE, new GameMoveAction().setPath(shortpath));
 		sendPacketToServer(gameClientActionPacket);
-		moving = true;
-		lastMoved = System.currentTimeMillis();
-		Queue<Node> queue = new LinkedList<>(p);
 		if (moveListener != null) moveListener.cancel(true);
-		moveListener = Executors.SCHEDULER.register(() -> positionRunner(queue), time / p.size(), TimeUnit.MILLISECONDS);
-		if (!isMitm()) Executors.SCHEDULED.schedule(this::endAction, time, TimeUnit.MILLISECONDS);
-		return time;
+		return;
+	}
+
+	public void setMoving(boolean moving) {
+		LOGGER.debug("set moving " + moving);
+		this.moving = moving;
+	}
+
+	public void setLastMoved(long lastMoved) {
+		this.lastMoved = lastMoved;
 	}
 
 	public void cancelRunner() {
-		moving = false;
-		LOGGER.debug("manually, canceling runner");
+		setMoving(false);
+		LOGGER.debug("moving false, canceling");
+		new PersoMoveEndEvent(getAccount(), this).send();
 		if (moveListener != null) moveListener.cancel(true);
 	}
 
 	public void positionRunner(Queue<Node> path) {
 		Node poll = path.poll();
 		if (poll == null) {
-			LOGGER.debug("moving false, canceling");
-			moving = false;
-			Executors.FIXED.execute(() -> moveListener.cancel(true));
+			if (!isMitm()) endAction();
+			cancelRunner();
 			return;
 		}
 		setCellId(Maps.getIdRotated(poll.getX(), poll.getY(), map.getWidth(), map.getHeight()));
+	}
+
+	public void setMoveListener(ScheduledFuture moveListener) {
+		if (this.moveListener != null) this.moveListener.cancel(true);
+		this.moveListener = moveListener;
 	}
 
 	private List<Node> searchPath(int cellid, boolean avoidMobs, boolean diagonals) {
@@ -1069,28 +1107,7 @@ public class ManchouPerso implements Perso {
 		int width = getMap().getWidth();
 		int height = getMap().getHeight();
 		return Pathfinding.getCellPath(getCellId(), cellid, getMap().getProtocolCells(), width, height, diagonals ? Pathfinding::getNeighbors : Pathfinding::getNeighborsWithoutDiagonals,
-				avoidMobs ? this::canGoOnCellAvoidingMobs : PathValidator.alwaysTrue());
-	}
-
-	public boolean canGoOnCellAvoidingMobs(int xfrom, int yfrom, int xto, int yto) {
-		if (!Maps.isInMapRotated(xto, yto, map.getWidth(), map.getHeight())) return false;
-		int cellId = Maps.getIdRotated(xto, yto, map.getWidth(), map.getHeight());
-		if (cellId < 0 || cellId >= map.getCells().length) return false;
-		Map<Long, Entity> entities = getMap().getEntities();
-		ManchouCell c = getMap().getCells()[cellId];
-		if (c.isTeleporter()) return true;
-		if (c.hasMobGroupOn()) return false;
-		for (Entity en : getMap().getEntities().values()) {
-			if (!(en instanceof MobGroup)) continue;
-			MobGroup grp = (MobGroup) en;
-			for (int type : grp.getEntitiesTypes()) {
-				int distanceAgro = AgressiveMobs.getDistanceAgro(type);
-				if (distanceAgro == 0) continue;
-				distanceAgro++; // increment car la distance manathan par de 0
-				if (Maps.distanceManathan(grp.getCellId(), c.getId(), map.getWidth(), map.getHeight()) <= distanceAgro) return false;
-			}
-		}
-		return true;
+				avoidMobs ? Validators.avoidingMobs(map) : PathValidator.alwaysTrue());
 	}
 
 	public boolean canGoOnCellAvoidingMobs(Point p) {
@@ -1340,12 +1357,12 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void dialogLeave() {
+	public void leaveDialog() {
 		sendPacketToServer(new DialogLeavePacket());
 	}
 
 	@Override
-	public void exchangeLeave() {
+	public void leaveExchange() {
 		sendPacketToServer(new ExchangeLeavePacket());
 	}
 
@@ -1424,6 +1441,36 @@ public class ManchouPerso implements Perso {
 		}, cancelAfter, unit);
 	}
 
+	/**
+	 * Refuse une invitation de défi provenant d'un autre joueur
+	 */
+	public void cancelDefiInvit() {
+		GameRefuseDuelAction actionr = new GameRefuseDuelAction();
+		actionr.setTargetId(defierId);
+		sendPacketToServer(new GameClientActionPacket(GameActions.REFUSE_DUEL, actionr));
+		defied = false;
+	}
+
+	public void cancelExchangeInvit() {
+		sendPacketToServer(new ExchangeLeavePacket());
+		invitedExchange = false;
+	}
+
+	/**
+	 * Refuse une invitation de guilde provenant d'un autre joueur
+	 */
+	public void cancelGuildInvit() {
+		GuildRefuseInvitPacket pkt = new GuildRefuseInvitPacket();
+		pkt.setPlayerid(guildinvitId);
+		sendPacketToServer(pkt);
+		invitedGuild = false;
+	}
+
+	public void cancelGroupInvit() {
+		sendPacketToServer(new PartyRefusePacket());
+		invitedGrp = false;
+	}
+
 	@Override
 	public void acceptDefiRequest(long playerid, boolean accept) {
 		GameAction a = accept ? new GameAcceptDuelAction(playerid) : new GameRefuseDuelAction(playerid);
@@ -1468,6 +1515,53 @@ public class ManchouPerso implements Perso {
 		pkt.setAdd(false);
 		pkt.setChannels(chts);
 		sendPacketToServer(pkt);
+	}
+
+	public boolean isDefied() {
+		return defied;
+	}
+
+	public boolean isInvitedExchange() {
+		return invitedExchange;
+	}
+
+	public boolean isInvitedGrp() {
+		return invitedGrp;
+	}
+
+	public boolean isInvitedGuild() {
+		return invitedGuild;
+	}
+
+	public void setDefied(boolean defied, long defier) {
+		annoyedCount++;
+		this.defied = defied;
+		this.defierId = defier;
+	}
+
+	public void setInvitedExchange(boolean invitedExchange) {
+		annoyedCount++;
+		this.invitedExchange = invitedExchange;
+		setInvitedGrp(false);
+	}
+
+	public void setInvitedGrp(boolean invitedGrp) {
+		annoyedCount++;
+		this.invitedGrp = invitedGrp;
+	}
+
+	public void setInvitedGuild(boolean invitedGuild, long inviter) {
+		annoyedCount++;
+		this.invitedGuild = invitedGuild;
+		this.guildinvitId = inviter;
+	}
+
+	public int getAnnoyedCount() {
+		return annoyedCount;
+	}
+
+	public void resetAnnoyedCount() {
+		this.annoyedCount = 0;
 	}
 
 	@Override

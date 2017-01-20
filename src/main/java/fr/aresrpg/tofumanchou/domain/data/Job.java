@@ -20,6 +20,7 @@ public interface Job {
 	int getMaxXp();
 
 	default boolean hasLevelToUse(Skills s) {
+		if (s.getMinLvlToUse() == 1) return true;
 		return getLvl() >= s.getMinLvlToUse();
 	}
 

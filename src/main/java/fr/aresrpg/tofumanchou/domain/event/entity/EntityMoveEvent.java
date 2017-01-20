@@ -3,6 +3,7 @@ package fr.aresrpg.tofumanchou.domain.event.entity;
 import fr.aresrpg.commons.domain.event.Event;
 import fr.aresrpg.commons.domain.event.EventBus;
 import fr.aresrpg.dofus.protocol.game.actions.GameMoveAction.PathFragment;
+import fr.aresrpg.dofus.util.Pathfinding.Node;
 import fr.aresrpg.tofumanchou.domain.data.Account;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 
@@ -18,17 +19,46 @@ public class EntityMoveEvent implements Event<EntityMoveEvent> {
 	private static final EventBus<EntityMoveEvent> BUS = new EventBus<>(EntityMoveEvent.class);
 	private Account client;
 	private Entity entity;
+	private long time;
 	private List<PathFragment> path = new ArrayList<>();
+	private List<Node> nodes = new ArrayList<>();
 
-	/**
-	 * @param client
-	 * @param entity
-	 * @param path
-	 */
-	public EntityMoveEvent(Account client, Entity entity, List<PathFragment> path) {
+	public EntityMoveEvent(Account client, Entity entity, long time, List<PathFragment> path, List<Node> nodes) {
 		this.client = client;
 		this.entity = entity;
+		this.time = time;
 		this.path = path;
+		this.nodes = nodes;
+	}
+
+	/**
+	 * @return the time
+	 */
+	public long getTime() {
+		return time;
+	}
+
+	/**
+	 * @param time
+	 *            the time to set
+	 */
+	public void setTime(long time) {
+		this.time = time;
+	}
+
+	/**
+	 * @return the nodes
+	 */
+	public List<Node> getNodes() {
+		return nodes;
+	}
+
+	/**
+	 * @param nodes
+	 *            the nodes to set
+	 */
+	public void setNodes(List<Node> nodes) {
+		this.nodes = nodes;
 	}
 
 	/**
