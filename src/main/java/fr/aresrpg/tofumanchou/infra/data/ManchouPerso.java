@@ -900,6 +900,18 @@ public class ManchouPerso implements Perso {
 		this.cellId = cellId;
 	}
 
+	public ManchouCell[] getNeighbors() {
+	}
+
+	public ManchouCell[] getNeighborsWithoutDiagonals() {
+		List<ManchouCell> cells = new ArrayList<>();
+		ManchouCell cell = getCell();
+		Node[] nb = Pathfinding.getNeighborsWithoutDiagonals(new Node(cell.getX(), cell.getY()));
+		for (int i = 0; i < 4; i++) {
+
+		}
+	}
+
 	@Override
 	public String getRestriction() {
 		return restrictions;
@@ -1183,9 +1195,10 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void launchSpell(Spell spell, int relance, int cellid) {
+	public void launchSpell(Spell spell, int cellid) {
 		if (spell.getRelance() != 0) return;
-		((ManchouSpell) spell).setRelance(relance);
+		ManchouSpell sp = (ManchouSpell) spell;
+		sp.setRelance(sp.getProperty().getDelayBetweenLaunch());
 		GameLaunchSpellAction action = new GameLaunchSpellAction(spell.getType().getId(), cellid);
 		sendPacketToServer(new GameClientActionPacket(GameActions.LAUNCH_SPELL, action));
 	}

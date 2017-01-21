@@ -1,6 +1,9 @@
 package fr.aresrpg.tofumanchou.infra.data;
 
 import fr.aresrpg.tofumanchou.domain.data.Spell;
+import fr.aresrpg.tofumanchou.domain.data.SpellData;
+import fr.aresrpg.tofumanchou.domain.data.SpellData.LangSpell;
+import fr.aresrpg.tofumanchou.domain.data.SpellData.LangSpellProperty;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 
 /**
@@ -13,8 +16,7 @@ public class ManchouSpell implements Spell {
 	private int spellLvl = 1;
 	private int position;
 	private int relance;
-	private int minPo;
-	private int maxPo;
+	private LangSpell langspell;
 
 	public ManchouSpell(Spells type) {
 		this(type, 1, -1);
@@ -24,6 +26,7 @@ public class ManchouSpell implements Spell {
 		this.type = type;
 		this.spellLvl = lvl;
 		this.position = position;
+		this.langspell = SpellData.get(type.getId());
 	}
 
 	/**
@@ -33,20 +36,24 @@ public class ManchouSpell implements Spell {
 		return relance;
 	}
 
-	/**
-	 * @param minPo
-	 *            the minPo to set
-	 */
-	public void setMinPo(int minPo) {
-		this.minPo = minPo;
+	public int getMaxPo() {
+		return getProperty().getRangeMax();
 	}
 
-	/**
-	 * @param maxPo
-	 *            the maxPo to set
-	 */
-	public void setMaxPo(int maxPo) {
-		this.maxPo = maxPo;
+	public int getMinPo() {
+		return getProperty().getRangeMin();
+	}
+
+	public int getRange() {
+		return getProperty().getEffectsNormal().get(0).getZone();
+	}
+
+	public int getPaCost() {
+		return getProperty().getPaCost();
+	}
+
+	public LangSpellProperty getProperty() {
+		return langspell.getProperties().get(spellLvl - 1);
 	}
 
 	/**
@@ -63,13 +70,6 @@ public class ManchouSpell implements Spell {
 	}
 
 	/**
-	 * @return the minPo
-	 */
-	public int getMinPo() {
-		return 0;
-	}
-
-	/**
 	 * @return the position
 	 */
 	public int getPosition() {
@@ -82,13 +82,6 @@ public class ManchouSpell implements Spell {
 	 */
 	public void setPosition(int position) {
 		this.position = position;
-	}
-
-	/**
-	 * @return the maxPo
-	 */
-	public int getMaxPo() {
-		return 11;
 	}
 
 	/**

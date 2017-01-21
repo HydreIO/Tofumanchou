@@ -99,7 +99,7 @@ public interface Perso extends Player {
 
 	void moveToRandomCell();
 
-	void launchSpell(Spell spell, int relance, int cellid);
+	void launchSpell(Spell spell, int cellid);
 
 	void setFightPosition(int pos);
 

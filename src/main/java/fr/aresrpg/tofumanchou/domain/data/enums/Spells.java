@@ -219,7 +219,7 @@ public enum Spells {
 	FLECHE_ENFLAMMEE(6, Classe.CRA, 165, SpellCharac.FEU),
 	TIR_ELOIGNEE(9, Classe.CRA, 172, SpellCharac.BUFF),
 	FLECHE_EXPIATION(13, Classe.CRA, 167, SpellCharac.EAU),
-	OEIL_DE_TAUPE(17, Classe.CRA, 168, SpellCharac.EAU),
+	OEUIL_DE_TAUPE(17, Classe.CRA, 168, SpellCharac.EAU),
 	TIR_CRITIQUE(21, Classe.CRA, 162, SpellCharac.BUFF),
 	FLECHE_IMMOBILISATION(26, Classe.CRA, 170, SpellCharac.AIR),
 	FLECHE_PUNITIVE(31, Classe.CRA, 171, SpellCharac.TERRE),

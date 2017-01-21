@@ -84,8 +84,8 @@ public class SpellData {
 		return instance;
 	}
 
-	public static LangSpell get(int itemType) {
-		return instance.spells.get(itemType);
+	public static LangSpell get(int spelltype) {
+		return instance.spells.get(spelltype);
 	}
 
 	public static void main(String[] args) throws IOException {
