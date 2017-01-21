@@ -901,15 +901,21 @@ public class ManchouPerso implements Perso {
 	}
 
 	public ManchouCell[] getNeighbors() {
+		ManchouCell cell = getCell();
+		return Arrays.stream(Pathfinding.getNeighbors(new Node(cell.getX(), cell.getY()))).filter(n -> {
+			if (!Maps.isInMapRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight())) return false;
+			int id = Maps.getIdRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight());
+			return id >= 0 && id < map.getCells().length;
+		}).map(n -> map.getCells()[Maps.getIdRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight())]).toArray(ManchouCell[]::new);
 	}
 
 	public ManchouCell[] getNeighborsWithoutDiagonals() {
-		List<ManchouCell> cells = new ArrayList<>();
 		ManchouCell cell = getCell();
-		Node[] nb = Pathfinding.getNeighborsWithoutDiagonals(new Node(cell.getX(), cell.getY()));
-		for (int i = 0; i < 4; i++) {
-
-		}
+		return Arrays.stream(Pathfinding.getNeighborsWithoutDiagonals(new Node(cell.getX(), cell.getY()))).filter(n -> {
+			if (!Maps.isInMapRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight())) return false;
+			int id = Maps.getIdRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight());
+			return id >= 0 && id < map.getCells().length;
+		}).map(n -> map.getCells()[Maps.getIdRotated(n.getX(), n.getY(), map.getWidth(), map.getHeight())]).toArray(ManchouCell[]::new);
 	}
 
 	@Override
@@ -1302,8 +1308,6 @@ public class ManchouPerso implements Perso {
 
 	@Override
 	public void useZaap(int cell, Zaap destination) {
-		interract(Skills.UTILISER, cell);
-		Threads.uSleep(6, TimeUnit.SECONDS); // avoid server error
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		LOGGER.debug("Want to use zaap to go to " + destination);
@@ -1312,8 +1316,6 @@ public class ManchouPerso implements Perso {
 
 	@Override
 	public void useZaapi(int cell, Zaapi destination) {
-		interract(Skills.SE_FAIRE_TRANSPORTER, cell);
-		Threads.uSleep(6, TimeUnit.SECONDS);
 		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
 		subwayUsePacket.setMapid(destination.getMapid());
 		sendPacketToServer(subwayUsePacket);
