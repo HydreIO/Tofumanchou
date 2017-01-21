@@ -1044,7 +1044,7 @@ public class ManchouPerso implements Perso {
 			LOGGER.debug("time to wait = " + timeToWait);
 			if (timeToWait > 0) Threads.uSleep(timeToWait, TimeUnit.MILLISECONDS);
 			LOGGER.debug("cancel on " + getCellId());
-			moveListener.cancel(true);
+			if (moveListener != null) moveListener.cancel(true);
 			sendPacketToServer(new GameActionCancelPacket(0, getCellId() + ""));
 		}
 		move(searchPath(cellid, avoidMobs, diagonals));
