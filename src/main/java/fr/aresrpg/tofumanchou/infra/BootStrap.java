@@ -23,23 +23,23 @@ public class BootStrap {
 		new Manchou();
 		LOGGER.info("Initialising items..");
 		BenchTime t = new BenchTime();
-		ItemsData.getInstance().init(Variables.CUSTOM_LANGS);
+		ItemsData.getInstance().init(!Variables.CUSTOM_LANGS);
 		LOGGER.info("Items initialized ! (" + t.getAsLong() + "ms)");
 		LOGGER.info("Initialising maps..");
 		BenchTime t2 = new BenchTime();
-		MapsData.getInstance().init(Variables.CUSTOM_LANGS);
+		MapsData.getInstance().init(!Variables.CUSTOM_LANGS);
 		LOGGER.info("Maps initialized ! (" + t2.getAsLong() + "ms)");
 		LOGGER.info("Initialising langs..");
 		BenchTime t3 = new BenchTime();
-		InfosData.getInstance().init(Variables.CUSTOM_LANGS);
+		InfosData.getInstance().init(!Variables.CUSTOM_LANGS);
 		LOGGER.info("Langs initialized ! (" + t3.getAsLong() + "ms)");
 		LOGGER.info("Initialising Effects..");
 		BenchTime t4 = new BenchTime();
-		EffectsData.getInstance().init(Variables.CUSTOM_LANGS);
+		EffectsData.getInstance().init(!Variables.CUSTOM_LANGS);
 		LOGGER.info("Effects initialized ! (" + t4.getAsLong() + "ms)");
 		LOGGER.info("Initialising Spells..");
 		BenchTime t5 = new BenchTime();
-		SpellData.getInstance().init(Variables.CUSTOM_LANGS);
+		SpellData.getInstance().init(!Variables.CUSTOM_LANGS);
 		LOGGER.info("Spells initialized ! (" + t5.getAsLong() + "ms)");
 		Set<ManchouPlugin> plugins = Manchou.getPlugins();
 		if (plugins != null) plugins.forEach(p -> {

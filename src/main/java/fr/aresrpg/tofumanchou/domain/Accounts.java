@@ -57,7 +57,7 @@ public class Accounts {
 
 	public static Account getAccount(String accountName) {
 		for (Account a : instance.accounts.values())
-			if (a.getAccountName().equals(accountName)) return a;
+			if (a.getAccountName().toLowerCase().equals(accountName.toLowerCase())) return a;
 		return null;
 	}
 

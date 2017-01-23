@@ -12,18 +12,19 @@ import static fr.aresrpg.tofumanchou.domain.Manchou.LOGGER;
 
 import fr.aresrpg.commons.domain.database.Collection;
 import fr.aresrpg.commons.domain.database.Filter;
+import fr.aresrpg.commons.domain.util.ArrayUtils;
 import fr.aresrpg.dofus.structures.game.Effect;
 import fr.aresrpg.dofus.util.*;
 import fr.aresrpg.tofumanchou.domain.Manchou;
 import fr.aresrpg.tofumanchou.domain.data.EffectsData.LangEffect;
 import fr.aresrpg.tofumanchou.domain.data.enums.Element;
 import fr.aresrpg.tofumanchou.infra.db.DbAccessor;
+import fr.aresrpg.tofumanchou.infra.db.GsonFormat;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * 
@@ -159,10 +160,10 @@ public class SpellData {
 	}
 
 	public static class LangSpellProperty {
-		int lvl, paCost, rangeMin, rangeMax, CC, EC, classid, launchByTurn, launchByPlayerTurn, delayBetweenLaunch, minPlayerLvl;
-		boolean lineOnly, lineOfSight, needFreeCell, poModifiable, ecEndTurn, summon, glyph, trap;
-		List<Integer> requiredStates = new ArrayList<>(), forbiddenStates = new ArrayList<>();
-		List<ZoneEffect> effectsNormal = new ArrayList<>(), effectsCritical = new ArrayList<>();
+		private int lvl, paCost, rangeMin, rangeMax, CC, EC, classid, launchByTurn, launchByPlayerTurn, delayBetweenLaunch, minPlayerLvl;
+		private boolean lineOnly, lineOfSight, needFreeCell, poModifiable, ecEndTurn, summon, glyph, trap;
+		private int[] requiredStates, forbiddenStates;
+		private ZoneEffect[] effectsNormal, effectsCritical;
 
 		/**
 		 * @param lvl
@@ -190,8 +191,8 @@ public class SpellData {
 		 * @param effectsCritical
 		 */
 		public LangSpellProperty(int lvl, int paCost, int rangeMin, int rangeMax, int cC, int eC, int classid, int launchByTurn, int launchByPlayerTurn, int delayBetweenLaunch, int minPlayerLvl,
-			boolean lineOnly, boolean lineOfSight, boolean needFreeCell, boolean poModifiable, boolean ecEndTurn, boolean summon, boolean glyph, boolean trap, List<Integer> requiredStates,
-			List<Integer> forbiddenStates, List<ZoneEffect> effectsNormal, List<ZoneEffect> effectsCritical) {
+			boolean lineOnly, boolean lineOfSight, boolean needFreeCell, boolean poModifiable, boolean ecEndTurn, boolean summon, boolean glyph, boolean trap, int[] requiredStates,
+			int[] forbiddenStates, ZoneEffect[] effectsNormal, ZoneEffect[] effectsCritical) {
 			this.lvl = lvl;
 			this.paCost = paCost;
 			this.rangeMin = rangeMin;
@@ -353,28 +354,28 @@ public class SpellData {
 		/**
 		 * @return the requiredStates
 		 */
-		public List<Integer> getRequiredStates() {
+		public int[] getRequiredStates() {
 			return requiredStates;
 		}
 
 		/**
 		 * @return the forbiddenStates
 		 */
-		public List<Integer> getForbiddenStates() {
+		public int[] getForbiddenStates() {
 			return forbiddenStates;
 		}
 
 		/**
 		 * @return the effectsNormal
 		 */
-		public List<ZoneEffect> getEffectsNormal() {
+		public ZoneEffect[] getEffectsNormal() {
 			return effectsNormal;
 		}
 
 		/**
 		 * @return the effectsCritical
 		 */
-		public List<ZoneEffect> getEffectsCritical() {
+		public ZoneEffect[] getEffectsCritical() {
 			return effectsCritical;
 		}
 
@@ -389,9 +390,9 @@ public class SpellData {
 	}
 
 	public static class ZoneEffect {
-		Effect effect;
-		Element element;
-		int shape, zone;
+		private Effect effect;
+		private String element;
+		private int shape, zone;
 
 		/**
 		 * @param effect
@@ -401,9 +402,13 @@ public class SpellData {
 		 */
 		public ZoneEffect(Effect effect, Element element, int shape, int zone) {
 			this.effect = effect;
-			this.element = element;
+			this.element = element == null ? null : element.name();
 			this.shape = shape;
 			this.zone = zone;
+		}
+
+		public ZoneEffect() {
+
 		}
 
 		/**
@@ -417,7 +422,7 @@ public class SpellData {
 		 * @return the element
 		 */
 		public Element getElement() {
-			return element;
+			return Element.valueOf(element);
 		}
 
 		/**
@@ -445,18 +450,26 @@ public class SpellData {
 		private int spellid;
 		private String name;
 		private String description;
-		private List<LangSpellProperty> properties = new ArrayList<>();
+		private LangSpellProperty[] properties = new LangSpellProperty[0];
 
 		public LangSpell(int spellid, String name, String description, Object[] lvl1, Object[] lvl2, Object[] lvl3, Object[] lvl4, Object[] lvl5, Object[] lvl6) {
 			this.spellid = spellid;
 			this.name = name;
 			this.description = description;
-			if (lvl1 != null) properties.add(parse(1, lvl1));
-			if (lvl2 != null) properties.add(parse(2, lvl2));
-			if (lvl3 != null) properties.add(parse(3, lvl3));
-			if (lvl4 != null) properties.add(parse(4, lvl4));
-			if (lvl5 != null) properties.add(parse(5, lvl5));
-			if (lvl6 != null) properties.add(parse(6, lvl6));
+			if (lvl1 != null) properties = ArrayUtils.addLast(parse(1, lvl1), properties);
+			if (lvl2 != null) properties = ArrayUtils.addLast(parse(2, lvl2), properties);
+			if (lvl3 != null) properties = ArrayUtils.addLast(parse(3, lvl3), properties);
+			if (lvl4 != null) properties = ArrayUtils.addLast(parse(4, lvl4), properties);
+			if (lvl5 != null) properties = ArrayUtils.addLast(parse(5, lvl5), properties);
+			if (lvl6 != null) properties = ArrayUtils.addLast(parse(6, lvl6), properties);
+		}
+
+		public String toJson() {
+			return GsonFormat.GSON.toJson(this);
+		}
+
+		public static LangSpell fromJson(String json) {
+			return GsonFormat.GSON.fromJson(json, LangSpell.class);
 		}
 
 		/**
@@ -483,7 +496,7 @@ public class SpellData {
 		/**
 		 * @return the properties
 		 */
-		public List<LangSpellProperty> getProperties() {
+		public LangSpellProperty[] getProperties() {
 			return properties;
 		}
 
@@ -506,28 +519,28 @@ public class SpellData {
 			return elems;
 		}
 
-		private List<ZoneEffect> getEffectsNormalHitWithArea(Object[] o, List<Pair<Effect, Element>> elems) {
+		private ZoneEffect[] getEffectsNormalHitWithArea(Object[] o, List<Pair<Effect, Element>> elems) {
 			List<Pair<Integer, Integer>> effectZone = getEffectZone(o);
-			List<ZoneEffect> zones = new ArrayList<>();
+			ZoneEffect[] zones = new ZoneEffect[elems.size()];
 			for (int i = 0; i < elems.size(); i++) {
 				Pair<Effect, Element> pair = elems.get(i);
 				Effect effect = pair.getFirst();
 				Element ele = pair.getSecond();
 				Pair<Integer, Integer> aezone = effectZone.get(i);
-				zones.add(new ZoneEffect(effect, ele, aezone.getFirst(), aezone.getSecond()));
+				zones[i] = new ZoneEffect(effect, ele, aezone.getFirst(), aezone.getSecond());
 			}
 			return zones;
 		}
 
-		private List<ZoneEffect> getEffectsCriticalHitWithArea(Object[] o, List<Pair<Effect, Element>> elems) {
+		private ZoneEffect[] getEffectsCriticalHitWithArea(Object[] o, List<Pair<Effect, Element>> elems) {
 			List<Pair<Integer, Integer>> effectZone = getEffectZone(o);
-			List<ZoneEffect> zones = new ArrayList<>();
+			ZoneEffect[] zones = new ZoneEffect[elems.size()];
 			for (int i = 0; i < elems.size(); i++) {
 				Pair<Effect, Element> pair = elems.get(i);
 				Effect effect = pair.getFirst();
 				Element ele = pair.getSecond();
 				Pair<Integer, Integer> aezone = effectZone.get(i);
-				zones.add(new ZoneEffect(effect, ele, aezone.getFirst(), aezone.getSecond()));
+				zones[i] = new ZoneEffect(effect, ele, aezone.getFirst(), aezone.getSecond());
 			}
 			return zones;
 		}
@@ -574,16 +587,16 @@ public class SpellData {
 			return l;
 		}
 
-		private List<Integer> getRequiredStates(Object[] o) {
-			if (o[16] == null || ((Object[]) o[16]).length == 0) return new ArrayList<>();
+		private int[] getRequiredStates(Object[] o) {
+			if (o[16] == null || ((Object[]) o[16]).length == 0) return new int[0];
 			Object[] st = (Object[]) o[16];
-			return Arrays.stream(st).map(obj -> (int) obj).collect(Collectors.toList());
+			return Arrays.stream(st).mapToInt(obj -> (int) obj).toArray();
 		}
 
-		private List<Integer> getForbiddenStates(Object[] o) {
-			if (o[17] == null || ((Object[]) o[17]).length == 0) return new ArrayList<>();
+		private int[] getForbiddenStates(Object[] o) {
+			if (o[17] == null || ((Object[]) o[17]).length == 0) return new int[0];
 			Object[] st = (Object[]) o[17];
-			return Arrays.stream(st).map(obj -> (int) obj).collect(Collectors.toList());
+			return Arrays.stream(st).mapToInt(obj -> (int) obj).toArray();
 		}
 
 		private boolean isLineOnly(Object[] o) {

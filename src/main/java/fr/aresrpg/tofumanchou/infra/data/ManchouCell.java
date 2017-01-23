@@ -435,6 +435,12 @@ public class ManchouCell implements Cell {
 		return !entitiesOn.isEmpty();
 	}
 
+	public boolean hasLivingEntityOn() {
+		for (Entity e : getEntitiesOn())
+			if (!e.isDead()) return true;
+		return false;
+	}
+
 	@Override
 	public String toString() {
 		return "ManchouCell [id=" + id + ", mapWidth=" + mapWidth + ", mapHeight=" + mapHeight + ", lineOfSight=" + lineOfSight + ", layerGroundRot=" + layerGroundRot + ", groundLevel=" + groundLevel

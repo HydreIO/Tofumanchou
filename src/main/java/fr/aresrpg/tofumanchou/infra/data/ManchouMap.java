@@ -6,9 +6,14 @@ import fr.aresrpg.dofus.structures.game.FightType;
 import fr.aresrpg.dofus.structures.item.Interractable;
 import fr.aresrpg.dofus.structures.map.Cell;
 import fr.aresrpg.dofus.structures.map.DofusMap;
+import fr.aresrpg.dofus.util.Pathfinding;
+import fr.aresrpg.dofus.util.Pathfinding.Node;
+import fr.aresrpg.dofus.util.Pathfinding.PathValidator;
 import fr.aresrpg.tofumanchou.domain.data.MapsData;
 import fr.aresrpg.tofumanchou.domain.data.MapsData.MapDataBean;
 import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
+import fr.aresrpg.tofumanchou.domain.data.entity.mob.MobGroup;
+import fr.aresrpg.tofumanchou.domain.data.enums.DofusMobs;
 import fr.aresrpg.tofumanchou.domain.data.map.Carte;
 
 import java.awt.Point;
@@ -117,6 +122,31 @@ public class ManchouMap implements Carte {
 			if (ress != null && c.isRessourceSpawned() && ArrayUtils.contains(ress, interractable)) return true;
 		}
 		return false;
+	}
+
+	public boolean hasMobGroupWithout(Predicate<DofusMobs> avoid) {
+		for (Entity e : getEntities().values()) {
+			if (e instanceof MobGroup) {
+				MobGroup gr = (MobGroup) e;
+				if (Arrays.stream(gr.getEntitiesTypes()).mapToObj(DofusMobs::byId).anyMatch(avoid)) continue;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public MobGroup getAccessibleMobGroupWithout(int playerPos, Predicate<DofusMobs> avoid) {
+		for (Entity e : getEntities().values()) {
+			if (e instanceof MobGroup) {
+				MobGroup gr = (MobGroup) e;
+				if (Arrays.stream(gr.getEntitiesTypes()).mapToObj(DofusMobs::byId).anyMatch(avoid)) continue;
+				List<Node> cellPath = Pathfinding.getCellPath(playerPos, gr.getCellId(), getProtocolCells(), width, height, Pathfinding::getNeighbors,
+						PathValidator.alwaysTrue());
+				if (cellPath == null) continue;
+				return gr;
+			}
+		}
+		return null;
 	}
 
 	@Override

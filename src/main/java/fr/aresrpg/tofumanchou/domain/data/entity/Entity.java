@@ -29,6 +29,10 @@ public interface Entity {
 
 	void setPa(int pa);
 
+	boolean isDead();
+
+	void setDead(boolean dead);
+
 	int getPm();
 
 	void setPm(int pm);

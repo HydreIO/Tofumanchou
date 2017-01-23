@@ -162,4 +162,14 @@ public class ManchouNpc implements Npc {
 		this.pm = pm;
 	}
 
+	@Override
+	public boolean isDead() {
+		return true;
+	}
+
+	@Override
+	public void setDead(boolean dead) {
+
+	}
+
 }

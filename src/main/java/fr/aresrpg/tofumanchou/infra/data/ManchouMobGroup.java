@@ -165,4 +165,14 @@ public class ManchouMobGroup implements MobGroup {
 
 	}
 
+	@Override
+	public boolean isDead() {
+		return true;
+	}
+
+	@Override
+	public void setDead(boolean dead) {
+
+	}
+
 }

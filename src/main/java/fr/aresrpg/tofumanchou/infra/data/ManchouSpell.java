@@ -45,7 +45,7 @@ public class ManchouSpell implements Spell {
 	}
 
 	public int getRange() {
-		return getProperty().getEffectsNormal().get(0).getZone();
+		return getProperty().getEffectsNormal()[0].getZone();
 	}
 
 	public int getPaCost() {
@@ -53,7 +53,14 @@ public class ManchouSpell implements Spell {
 	}
 
 	public LangSpellProperty getProperty() {
-		return langspell.getProperties().get(spellLvl - 1);
+		return langspell.getProperties()[spellLvl - 1];
+	}
+
+	/**
+	 * @return the langspell
+	 */
+	public LangSpell getLangspell() {
+		return langspell;
 	}
 
 	/**

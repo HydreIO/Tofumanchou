@@ -8,8 +8,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.Entity;
 import fr.aresrpg.tofumanchou.domain.data.entity.EntityColor;
 import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 
@@ -314,6 +313,13 @@ public class ManchouMob implements Mob {
 	@Override
 	public int getPm() {
 		return pm;
+	}
+
+	@Override
+	public String toString() {
+		return "ManchouMob [uuid=" + uuid + ", effects=" + effects + ", cellId=" + cellId + ", scaleX=" + scaleX + ", scaleY=" + scaleY + ", orientation=" + orientation + ", entityType=" + entityType
+				+ ", spriteType=" + spriteType + ", noFlip=" + noFlip + ", powerLvl=" + powerLvl + ", colors=" + colors + ", accessories=" + Arrays.toString(accessories) + ", life=" + life
+				+ ", lifeMax=" + lifeMax + ", pa=" + pa + ", pm=" + pm + ", resistances=" + Arrays.toString(resistances) + ", team=" + team + ", dead=" + dead + "]";
 	}
 
 }

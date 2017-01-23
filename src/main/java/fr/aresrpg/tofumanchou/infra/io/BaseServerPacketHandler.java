@@ -50,6 +50,7 @@ import fr.aresrpg.dofus.protocol.spell.server.SpellChangeOptionPacket;
 import fr.aresrpg.dofus.protocol.spell.server.SpellListPacket;
 import fr.aresrpg.dofus.protocol.subarea.server.SubareaListPacket;
 import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
+import fr.aresrpg.dofus.protocol.subway.server.SubwayCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
@@ -75,6 +76,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
+import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
 import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
 import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.event.aproach.*;
@@ -418,6 +420,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			ManchouPerso p = (ManchouPerso) client.getPerso();
 			Character c = pkt.getCharacter();
 			p.setUuid(c.getId());
+			p.setClasse(Classe.getClasse(c.getGfxId()));
 			//			tphis.sex = c.getSex();
 			p.setLvl(c.getLevel());
 			p.setGuild(c.getGuild());
@@ -724,9 +727,10 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	@Override
 	public void handle(GameJoinPacket pkt) {
 		log(pkt);
+		ManchouMap map = getPerso().getMap();
+		map.getEntities().clear();
+		getPerso().cancelRunner();
 		if (pkt.getState() == GameType.FIGHT) {
-			ManchouMap map = getPerso().getMap();
-			map.getEntities().clear();
 			map.setEnded(false);
 			map.setFightType(pkt.getFightType());
 			map.setSpectator(pkt.isSpectator());
@@ -873,7 +877,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case LIFE_CHANGE:
 				GameLifeChangeAction actionl = (GameLifeChangeAction) pkt.getAction();
 				Entity entt = getPerso().getMap().getEntities().get(actionl.getEntity());
-				entt.setLife(actionl.getLife());
+				entt.setLife(entt.getLife() + actionl.getLife());
 				EntityLifeChangeEvent event = new EntityLifeChangeEvent(client, entt, actionl.getLife());
 				event.send();
 				actionl.setEntity(event.getEntity().getUUID());
@@ -882,7 +886,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case PA_CHANGE:
 				GamePaChangeAction actionpa = (GamePaChangeAction) pkt.getAction();
 				Entity enttt = getPerso().getMap().getEntities().get(actionpa.getEntity());
-				enttt.setPa(actionpa.getPa());
+				enttt.setPa(enttt.getPa() + actionpa.getPa());
 				EntityPaChangeEvent eventt = new EntityPaChangeEvent(client, enttt, actionpa.getPa());
 				eventt.send();
 				actionpa.setEntity(eventt.getEntity().getUUID());
@@ -891,7 +895,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case PM_CHANGE:
 				GamePmChangeAction actionpm = (GamePmChangeAction) pkt.getAction();
 				Entity ee = getPerso().getMap().getEntities().get(actionpm.getEntity());
-				ee.setPm(actionpm.getPm());
+				ee.setPm(ee.getPm() + actionpm.getPm());
 				EntityPmChangeEvent ev = new EntityPmChangeEvent(client, ee, actionpm.getPm());
 				ev.send();
 				actionpm.setEntity(ev.getEntity().getUUID());
@@ -899,7 +903,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				break;
 			case KILL:
 				GameKillAction actionk = (GameKillAction) pkt.getAction();
-				Entity de = getPerso().getMap().getEntities().remove(actionk.getKilled());
+				Entity de = getPerso().getMap().getEntities().get(actionk.getKilled());
 				EntityDieEvent eevent = new EntityDieEvent(client, de);
 				eevent.send();
 				actionk.setKilled(eevent.getEntity().getUUID());
@@ -1743,6 +1747,16 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		event.send();
 		pkt.setGuild(event.getGuild());
 		pkt.setPlayer(event.getSender());
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(SubwayCreatePacket pkt) {
+		log(pkt);
+		ZaapiGuiOpenEvent event = new ZaapiGuiOpenEvent(client, pkt.getCurrent(), pkt.getWaypoints());
+		event.send();
+		pkt.setCurrent(event.getCurrent());
+		pkt.setWaypoints(event.getWaypoints());
 		transmit(pkt);
 	}
 
