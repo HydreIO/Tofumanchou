@@ -185,7 +185,7 @@ public class ManchouCell implements Cell {
 			int id = Maps.getIdRotated(n.getX(), n.getY(), mapWidth, mapHeight);
 			if (avoid.contains(id) || !Maps.isInMap(id, mapWidth, mapHeight)) continue;
 			Cell cell = map.getCells()[id];
-			if (cell.isWalkeable() && !((ManchouCell) cell).hasMobGroupOn()) return id;
+			if (cell.isWalkeable(true) && !((ManchouCell) cell).hasMobGroupOn()) return id;
 		}
 		return -1;
 	}
@@ -399,7 +399,8 @@ public class ManchouCell implements Cell {
 	}
 
 	@Override
-	public boolean isWalkeable() {
+	public boolean isWalkeable(boolean last) {
+		if (Interractable.isWalkableRessource(getInterractableId())) return !last;
 		return getMovement() != 0 && !isInterractable();
 	}
 

@@ -44,6 +44,15 @@ public class Validators {
 		return (x1, y1, x2, y2) -> !dangerousCells.contains(Maps.getIdRotated(x2, y2, map.getWidth(), map.getHeight()));
 	}
 
+	public static PathValidator freeCell(ManchouMap map) {
+		return (x1, y1, x2, y2) -> {
+			if (!Maps.isInMapRotated(x2, y2, map.getWidth(), map.getHeight())) return false;
+			int idRotated = Maps.getIdRotated(x2, y2, map.getWidth(), map.getHeight());
+			if (idRotated < 0 || idRotated >= map.getCells().length) return false;
+			return !map.getCells()[idRotated].hasLivingEntityOn();
+		};
+	}
+
 	/**
 	 * @return true if the dest coords are inside the big dofus map
 	 */

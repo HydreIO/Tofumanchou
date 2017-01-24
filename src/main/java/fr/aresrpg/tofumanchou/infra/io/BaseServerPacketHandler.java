@@ -904,6 +904,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 			case KILL:
 				GameKillAction actionk = (GameKillAction) pkt.getAction();
 				Entity de = getPerso().getMap().getEntities().get(actionk.getKilled());
+				de.setDead(true);
 				EntityDieEvent eevent = new EntityDieEvent(client, de);
 				eevent.send();
 				actionk.setKilled(eevent.getEntity().getUUID());
@@ -973,14 +974,17 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				ManchouMap map = getPerso().getMap();
 				List<Node> nodes = new ArrayList();
 				long time = 0;
-				if (enti == getPerso() && map.isEnded()) {
+				if (enti == getPerso()) {
 					nodes = Functions.getNodes(enti.getCellId(), actionm.getPath(), getPerso().getMap());
 					time = (long) (Pathfinding.getPathTime(nodes, map.getProtocolCells(), map.getWidth(), map.getHeight(), getPerso().hasMount()) * 30);
-					getPerso().setMoving(true);
-					getPerso().setLastMoved(System.currentTimeMillis());
-					Queue<Node> queue = new LinkedList<>(nodes);
-					ScheduledFuture<?> schFuture = Executors.SCHEDULED.scheduleAtFixedRate(() -> getPerso().positionRunner(queue), 0, time / nodes.size(), TimeUnit.MILLISECONDS);
-					getPerso().setMoveListener(schFuture);
+					LOGGER.warning("time = " + time);
+					if (map.isEnded()) {
+						getPerso().setMoving(true);
+						getPerso().setLastMoved(System.currentTimeMillis());
+						Queue<Node> queue = new LinkedList<>(nodes);
+						ScheduledFuture<?> schFuture = Executors.SCHEDULED.scheduleAtFixedRate(() -> getPerso().positionRunner(queue), 0, time / nodes.size(), TimeUnit.MILLISECONDS);
+						getPerso().setMoveListener(schFuture);
+					} else if (isBot()) Executors.SCHEDULED.schedule(getPerso()::endAction, time, TimeUnit.MILLISECONDS);
 				}
 				enti.setCellId(cell);
 				EntityMoveEvent ec = new EntityMoveEvent(client, enti, time, actionm.getPath(), nodes);

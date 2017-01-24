@@ -26,7 +26,10 @@ public class Functions {
 		for (PathFragment f : frags) {
 			Orientation dir = f.getDirection();
 			Node current = last;
+			int max = 0;
 			while (Maps.getIdRotated(current.getX(), current.getY(), map.getWidth(), map.getHeight()) != f.getCellId()) {
+				max++;
+				if (max > 500) return nodes;
 				current = Pathfinding.getNeighborNodeInDirection(current.getX(), current.getY(), dir);
 				nodes.add(current);
 			}

@@ -23,7 +23,14 @@ public interface Cell {
 
 	boolean isRessourceSpawned();
 
-	boolean isWalkeable();
+	/**
+	 * Return true si on peut marcher sur la cellule
+	 * 
+	 * @param last
+	 *            les case comme le blé peuvent être traversée tant que ce n'est pas la ou va s'arreter le personnage (mettre false tt le temps pour les combats)
+	 * @return
+	 */
+	boolean isWalkeable(boolean last);
 
 	boolean isTeleporter();
 

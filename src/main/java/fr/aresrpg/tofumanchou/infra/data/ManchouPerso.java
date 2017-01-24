@@ -1150,7 +1150,7 @@ public class ManchouPerso implements Perso {
 
 	public ManchouCell findRandomCellExept(List<fr.aresrpg.tofumanchou.domain.data.map.Cell> cells) {
 		for (ManchouCell cell : getMap().getCells())
-			if (!cells.contains(cell) && cell.isWalkeable() && !cell.isTeleporter() && !cell.hasMobGroupOn()) return cell;
+			if (!cells.contains(cell) && cell.isWalkeable(true) && !cell.isTeleporter() && !cell.hasMobGroupOn()) return cell;
 		return null;
 	}
 

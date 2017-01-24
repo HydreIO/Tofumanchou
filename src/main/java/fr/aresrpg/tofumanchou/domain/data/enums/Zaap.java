@@ -39,10 +39,10 @@ public enum Zaap {
 	TODO_18(354, 4739, null),
 	TODO_19(253, 8785, null),
 	TODO_20(200, 2191, null),
-	TODO_21(199, 10297, null),
-	TODO_22(282, 10349, null),
-	TODO_23(138, 10304, null),
-	TODO_24(195, 10317, null),
+	//TODO_21(199, 10297, null),
+	//TODO_22(282, 10349, null),
+	//TODO_23(138, 10304, null),
+	//TODO_24(195, 10317, null),
 	;
 
 	private int cellId;
