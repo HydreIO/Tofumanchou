@@ -40,7 +40,7 @@ public class ManchouBridge implements Bridge {
 						SocketChannel client = channel.accept();
 						client.configureBlocking(false);
 						LOGGER.info("Client Accepted [" + client.getRemoteAddress() + "]");
-						new ManchouProxy(null, client, SocketChannel.open(SERVER_ADRESS));
+						new ManchouProxy(client, SocketChannel.open(SERVER_ADRESS));
 					}
 				}
 			} catch (Exception e) {

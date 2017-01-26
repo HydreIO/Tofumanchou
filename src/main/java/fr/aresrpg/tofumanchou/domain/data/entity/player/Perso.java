@@ -113,7 +113,7 @@ public interface Perso extends Player {
 
 	void blockToGroup();
 
-	void joinFight(int fightId);
+	void joinFight(long fightId);
 
 	void sit(boolean sit);
 

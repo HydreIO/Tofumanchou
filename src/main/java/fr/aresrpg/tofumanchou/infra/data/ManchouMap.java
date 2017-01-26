@@ -107,6 +107,24 @@ public class ManchouMap implements Carte {
 		return new DofusMap(mapid, date, width, height, musicId, capabilities, outdoor, backgroundId, getProtocolCells());
 	}
 
+	public boolean isTeam0Full() {
+		for (int i : team0Places)
+			if (!cells[i].hasEntityOn()) return false;
+		return true;
+	}
+
+	public boolean isTeam1Full() {
+		for (int i : team1Places)
+			if (!cells[i].hasEntityOn()) return false;
+		return true;
+	}
+
+	public boolean isTeamFull(int team) {
+		if (team == 0) return isTeam0Full();
+		else if (team == 1) return isTeam1Full();
+		else throw new IllegalArgumentException("the team " + team + " is invalid !");
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) return false;

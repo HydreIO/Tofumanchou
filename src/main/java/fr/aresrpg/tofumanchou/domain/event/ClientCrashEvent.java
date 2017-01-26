@@ -14,8 +14,6 @@ public class ClientCrashEvent implements Event<ClientCrashEvent> {
 	private static final EventBus<ClientCrashEvent> BUS = new EventBus<>(ClientCrashEvent.class);
 	private Account client;
 	private Exception exception;
-	private boolean showException = true;
-	private boolean shutdownClient = false;
 
 	/**
 	 * @param client
@@ -24,36 +22,6 @@ public class ClientCrashEvent implements Event<ClientCrashEvent> {
 	public ClientCrashEvent(Account client, Exception exception) {
 		this.client = client;
 		this.exception = exception;
-	}
-
-	/**
-	 * @return the showException
-	 */
-	public boolean isShowException() {
-		return showException;
-	}
-
-	/**
-	 * @param showException
-	 *            the showException to set
-	 */
-	public void setShowException(boolean showException) {
-		this.showException = showException;
-	}
-
-	/**
-	 * @return the shutdownClient
-	 */
-	public boolean isShutdownClient() {
-		return shutdownClient;
-	}
-
-	/**
-	 * @param shutdownClient
-	 *            the shutdownClient to set
-	 */
-	public void setShutdownClient(boolean shutdownClient) {
-		this.shutdownClient = shutdownClient;
 	}
 
 	/**

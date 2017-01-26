@@ -144,10 +144,11 @@ public class ManchouPerso implements Perso {
 	private boolean invitedExchange;
 	private int annoyedCount;
 
-	public ManchouPerso(Account account, String pseudo, Server server) {
+	public ManchouPerso(Account account, String pseudo, Server server, long uuid) {
 		this.account = (ManchouAccount) account;
 		this.pseudo = pseudo;
 		this.server = server;
+		this.uuid = uuid;
 	}
 
 	public ManchouPerso(Account account, Server server, Character c) {
@@ -259,12 +260,16 @@ public class ManchouPerso implements Perso {
 				} catch (Exception e) {
 					ClientCrashEvent event = new ClientCrashEvent(account, e);
 					event.send();
-					if (event.isShowException()) LOGGER.error(e);
-					if (event.isShutdownClient()) dofusConnection.closeConnection();
+					LOGGER.error(e);
+
+				} finally {
+					dofusConnection.closeConnection();
 				}
 			});
 		} catch (IOException e) {
 			LOGGER.error(e);
+			DofusConnection connection = account.getConnection();
+			if (connection != null) connection.closeConnection();
 		}
 		new BotConnectEvent(account, this).send();
 	}
@@ -979,7 +984,9 @@ public class ManchouPerso implements Perso {
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(getAccount(), e);
 			event.send();
-			if (event.isShowException()) LOGGER.error(e);
+			LOGGER.error(e);
+			if (isMitm()) getAccount().getProxy().shutdown();
+			else getAccount().getConnection().closeConnection();
 		}
 	}
 
@@ -990,7 +997,9 @@ public class ManchouPerso implements Perso {
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(getAccount(), e);
 			event.send();
-			if (event.isShowException()) LOGGER.error(e);
+			LOGGER.error(e);
+			if (isMitm()) getAccount().getProxy().shutdown();
+			else getAccount().getConnection().closeConnection();
 		}
 	}
 
@@ -1244,7 +1253,7 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void joinFight(int fightId) {
+	public void joinFight(long fightId) {
 		GameJoinFightAction action = new GameJoinFightAction();
 		action.setFightId(fightId);
 		sendPacketToServer(new GameClientActionPacket(GameActions.JOIN_FIGHT, action));
@@ -1437,6 +1446,7 @@ public class ManchouPerso implements Perso {
 	public void acceptGroupInvitation(boolean accept) {
 		if (accept) sendPacketToServer(new PartyAcceptPacket());
 		else sendPacketToServer(new PartyRefusePacket());
+		invitedGrp = false;
 	}
 
 	@Override

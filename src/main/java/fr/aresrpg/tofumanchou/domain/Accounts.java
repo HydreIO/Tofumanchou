@@ -67,8 +67,8 @@ public class Accounts {
 		return account;
 	}
 
-	public static Perso registerPerso(String pseudo, String accountname, String password, Server server) {
-		Perso perso = instance.createPerso(pseudo, accountname, password, server);
+	public static Perso registerPerso(String pseudo, String accountname, String password, Server server, long uuid) {
+		Perso perso = instance.createPerso(pseudo, accountname, password, server, uuid);
 		instance.accounts.put(perso.getAccount().getId(), perso.getAccount());
 		return perso;
 	}
@@ -78,9 +78,9 @@ public class Accounts {
 		return new ManchouAccount(id, null, accountname, password, null);
 	}
 
-	private Perso createPerso(String pseudo, String accountname, String password, Server server) {
+	private Perso createPerso(String pseudo, String accountname, String password, Server server, long uuid) {
 		Account account = createAccount(accountname, password);
-		ManchouPerso manchouPerso = new ManchouPerso(account, pseudo, server);
+		ManchouPerso manchouPerso = new ManchouPerso(account, pseudo, server, uuid);
 		((ManchouAccount) account).setPerso(manchouPerso);
 		return manchouPerso;
 	}

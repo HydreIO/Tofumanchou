@@ -38,6 +38,7 @@ public class Manchou {
 	public static final Logger LOGGER = new LoggerBuilder("TofuM").setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
+	public static ServerSocketChannel SOCKET_SERVER;
 	private static Database database;
 	private static final Map<String, Command> commands = new HashMap<>();
 	private static Set<ManchouPlugin> plugins;
@@ -68,12 +69,12 @@ public class Manchou {
 		}
 		try {
 			selector = Selector.open();
-			ServerSocketChannel socket = ServerSocketChannel.open();
+			SOCKET_SERVER = ServerSocketChannel.open();
 			InetSocketAddress addr = new InetSocketAddress(Variables.PASSERELLE_IP, Variables.PASSERELLE_PORT);
-			socket.bind(addr);
-			socket.configureBlocking(false);
-			socket.register(selector, socket.validOps());
-			Executors.FIXED.execute(() -> new ManchouBridge("Passerelle", socket));
+			SOCKET_SERVER.bind(addr);
+			SOCKET_SERVER.configureBlocking(false);
+			SOCKET_SERVER.register(selector, SOCKET_SERVER.validOps());
+			Executors.FIXED.execute(() -> new ManchouBridge("Passerelle", SOCKET_SERVER));
 		} catch (IOException e) {
 			LOGGER.error(e, "Unable to open the connection ! please contact DeltaEvo");
 			shutdown();

@@ -36,14 +36,6 @@ public class GroupBean {
 		return server;
 	}
 
-	/**
-	 * @param server
-	 *            the server to set
-	 */
-	public void setServer(Server server) {
-		this.server = server.name().toLowerCase();
-	}
-
 	public Server getServerObject() {
 		return Server.valueOf(server.toUpperCase());
 	}
@@ -58,6 +50,14 @@ public class GroupBean {
 	 */
 	public String getLabel() {
 		return label;
+	}
+
+	/**
+	 * @param server
+	 *            the server to set
+	 */
+	public void setServer(String server) {
+		this.server = server;
 	}
 
 	/**

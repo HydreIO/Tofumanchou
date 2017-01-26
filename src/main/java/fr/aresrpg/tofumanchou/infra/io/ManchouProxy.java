@@ -33,7 +33,7 @@ public class ManchouProxy implements Proxy {
 	private Account account;
 	private String hc;
 
-	public ManchouProxy(Account account, SocketChannel localChannel, SocketChannel remoteChannel) throws IOException {
+	public ManchouProxy(SocketChannel localChannel, SocketChannel remoteChannel) throws IOException {
 		this.remoteHandler = new BaseServerPacketHandler(this);
 		this.localHandler = new BaseClientPacketHandler(this);
 		changeConnection(new DofusConnection<>("Local", localChannel, localHandler, Bound.CLIENT), ProxyConnectionType.LOCAL);

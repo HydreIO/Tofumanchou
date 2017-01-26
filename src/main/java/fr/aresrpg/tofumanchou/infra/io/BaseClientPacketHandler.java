@@ -97,8 +97,8 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(client, e);
 			event.send();
-			if (event.isShowException()) LOGGER.error(e);
-			if (event.isShutdownClient()) proxy.shutdown();
+			LOGGER.error(e);
+			proxy.shutdown();
 		}
 	}
 
@@ -108,8 +108,8 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 		} catch (IOException e) {
 			ClientCrashEvent event = new ClientCrashEvent(client, e);
 			event.send();
-			if (event.isShowException()) LOGGER.error(e);
-			if (event.isShutdownClient()) proxy.shutdown();
+			LOGGER.error(e);
+			proxy.shutdown();
 		}
 	}
 
@@ -122,8 +122,8 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 			} catch (IOException e) {
 				ClientCrashEvent event = new ClientCrashEvent(client, e);
 				event.send();
-				if (event.isShowException()) LOGGER.error(e);
-				if (event.isShutdownClient()) proxy.shutdown();
+				LOGGER.error(e);
+				proxy.shutdown();
 			}
 			return true;
 		}
