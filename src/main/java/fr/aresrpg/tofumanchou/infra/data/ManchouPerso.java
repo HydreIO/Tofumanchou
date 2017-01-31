@@ -106,9 +106,9 @@ public class ManchouPerso implements Perso {
 	private String[] emblem;
 	private String restrictions;
 	private PlayerInventory inventory = new PlayerInventory();
-	private int xp;
-	private int xpLow;
-	private int xpHight;
+	private long xp;
+	private long xpLow;
+	private long xpHight;
 	private int statsPoints;
 	private int spellsPoints;
 	private int energy;
@@ -127,6 +127,7 @@ public class ManchouPerso implements Perso {
 	private Map<Jobs, Job> jobs = new HashMap<>();
 	private int pods;
 	private int maxPods;
+	private Set<Zaap> zaaps = new HashSet<>();
 
 	private Exchange currentInv;
 	private boolean mitm = true;
@@ -207,6 +208,11 @@ public class ManchouPerso implements Perso {
 
 	public int getLastAction() {
 		return lastAction;
+	}
+
+	@Override
+	public Set<Zaap> getZaaps() {
+		return zaaps;
 	}
 
 	public void updateMovement(MovementPlayer player) {
@@ -722,7 +728,7 @@ public class ManchouPerso implements Perso {
 	/**
 	 * @return the xp
 	 */
-	public int getXp() {
+	public long getXp() {
 		return xp;
 	}
 
@@ -730,7 +736,7 @@ public class ManchouPerso implements Perso {
 	 * @param xp
 	 *            the xp to set
 	 */
-	public void setXp(int xp) {
+	public void setXp(long xp) {
 		this.xp = xp;
 	}
 
@@ -738,7 +744,7 @@ public class ManchouPerso implements Perso {
 	 * @param xpLow
 	 *            the xpLow to set
 	 */
-	public void setXpLow(int xpLow) {
+	public void setXpLow(long xpLow) {
 		this.xpLow = xpLow;
 	}
 
@@ -746,7 +752,7 @@ public class ManchouPerso implements Perso {
 	 * @param xpHight
 	 *            the xpHight to set
 	 */
-	public void setXpHight(int xpHight) {
+	public void setXpHight(long xpHight) {
 		this.xpHight = xpHight;
 	}
 
@@ -821,12 +827,12 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public int getXpMin() {
+	public long getXpMin() {
 		return xpLow;
 	}
 
 	@Override
-	public int getXpMax() {
+	public long getXpMax() {
 		return xpHight;
 	}
 

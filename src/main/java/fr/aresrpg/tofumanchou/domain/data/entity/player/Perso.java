@@ -32,11 +32,11 @@ public interface Perso extends Player {
 
 	void disconnect();
 
-	int getXp();
+	long getXp();
 
-	int getXpMin();
+	long getXpMin();
 
-	int getXpMax();
+	long getXpMax();
 
 	Job getJob();
 
@@ -83,6 +83,8 @@ public interface Perso extends Player {
 	void cancelCraft();
 
 	void replaceCraft();
+
+	Set<Zaap> getZaaps();
 
 	void moveToCell(int cellid, boolean diagonals, boolean avoidMobs);
 

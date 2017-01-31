@@ -26,7 +26,7 @@ public class ManchouSpell implements Spell {
 		this.type = type;
 		this.spellLvl = lvl;
 		this.position = position;
-		this.langspell = SpellData.get(type.getId());
+		if (type != null) this.langspell = SpellData.get(type.getId());
 	}
 
 	/**

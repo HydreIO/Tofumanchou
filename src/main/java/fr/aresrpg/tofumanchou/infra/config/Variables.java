@@ -16,6 +16,8 @@ public class Variables {
 	public static String PASSERELLE_IP = "127.0.0.1";
 	@Configured("internal.passerelle.port")
 	public static int PASSERELLE_PORT = 2727;
+	@Configured("internal.server.ip")
+	public static String SERVER_IP = "80.239.173.166";
 	@Configured("mongo.use_custom_langs")
 	public static boolean CUSTOM_LANGS = false;
 	@Configured("mongo.ip")

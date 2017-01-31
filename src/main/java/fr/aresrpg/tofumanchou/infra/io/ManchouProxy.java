@@ -66,6 +66,7 @@ public class ManchouProxy implements Proxy {
 	}
 
 	public void shutdown() {
+		LOGGER.debug("shutdown proxy !");
 		getLocalConnection().closeConnection();
 		getRemoteConnection().closeConnection();
 	}
@@ -100,9 +101,7 @@ public class ManchouProxy implements Proxy {
 				try {
 					connection.start();
 				} catch (Exception e) {
-					LOGGER.info(AnsiColor.CYAN + "Client déconnecté !");
-					LOGGER.severe(e);
-					shutdown();
+					LOGGER.info(AnsiColor.CYAN + account.getAccountName() + " déconnecté.");
 				}
 			});
 		} catch (Exception e2) {

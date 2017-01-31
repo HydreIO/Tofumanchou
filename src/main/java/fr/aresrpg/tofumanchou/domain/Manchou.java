@@ -10,6 +10,7 @@ import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
 import fr.aresrpg.commons.infra.database.mongodb.MongoDBDatabase;
 import fr.aresrpg.dofus.structures.server.*;
+import fr.aresrpg.dofus.util.Pair;
 import fr.aresrpg.tofumanchou.domain.command.Command;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
@@ -19,13 +20,13 @@ import fr.aresrpg.tofumanchou.infra.config.Variables;
 import fr.aresrpg.tofumanchou.infra.config.dao.GroupBean;
 import fr.aresrpg.tofumanchou.infra.config.dao.PlayerBean;
 import fr.aresrpg.tofumanchou.infra.config.dao.PlayerBean.PersoBean;
+import fr.aresrpg.tofumanchou.infra.io.Lifetimer;
 import fr.aresrpg.tofumanchou.infra.io.ManchouBridge;
 import fr.aresrpg.tofumanchou.infra.plugin.PluginLoader;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.*;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -38,6 +39,7 @@ public class Manchou {
 	public static final Logger LOGGER = new LoggerBuilder("TofuM").setUseConsoleHandler(true, true, Option.none(), Option.none()).build();
 	public static final DofusServer ERATZ = new DofusServer(Server.ERATZ.getId(), ServerState.ONLINE, -1, true);
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
+	public static final List<Pair<SocketChannel, SocketChannel>> SOCKETS = new ArrayList<>();
 	public static ServerSocketChannel SOCKET_SERVER;
 	private static Database database;
 	private static final Map<String, Command> commands = new HashMap<>();
@@ -80,6 +82,7 @@ public class Manchou {
 			shutdown();
 		}
 		LOGGER.success("Tofumanchou started !");
+		Lifetimer.init();
 		Executors.FIXED.execute(this::startScanner);
 	}
 

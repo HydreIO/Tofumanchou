@@ -76,8 +76,7 @@ import fr.aresrpg.tofumanchou.domain.data.entity.mob.Mob;
 import fr.aresrpg.tofumanchou.domain.data.entity.npc.Npc;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Perso;
 import fr.aresrpg.tofumanchou.domain.data.entity.player.Player;
-import fr.aresrpg.tofumanchou.domain.data.enums.Classe;
-import fr.aresrpg.tofumanchou.domain.data.enums.Spells;
+import fr.aresrpg.tofumanchou.domain.data.enums.*;
 import fr.aresrpg.tofumanchou.domain.event.*;
 import fr.aresrpg.tofumanchou.domain.event.aproach.*;
 import fr.aresrpg.tofumanchou.domain.event.chat.*;
@@ -167,47 +166,57 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public boolean parse(ProtocolRegistry registry, String packet) throws IOException {
+	public boolean parse(ProtocolRegistry registry, String packet) {
 		if (registry == null && isMitm()) {
 			System.out.println("[RECEIVE direct] " + packet);
-			if (getProxy().getLocalConnection().getChannel().isOpen())
+			if (getProxy().getLocalConnection().getChannel().isOpen()) try {
 				((SocketChannel) getProxy().getLocalConnection().getChannel()).write(ByteBuffer.wrap(packet.getBytes()));
+			} catch (IOException e) {
+				LOGGER.error(e);
+				proxy.shutdown();
+			}
 			return true;
 		}
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isBot() throws IOException {
+	public boolean isBot() {
 		return !isMitm();
 	}
 
-	private void transmit(Packet pkt) throws IOException {
+	private void transmit(Packet pkt) {
 		if (isBot()) return;
-		if (proxy.getLocalConnection().getChannel().isOpen())
+		if (proxy.getLocalConnection().getChannel().isOpen()) try {
 			proxy.getLocalConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private void sendPkt(Packet pkt) throws IOException {
-		if (getClient().getConnection().getChannel().isOpen())
+	private void sendPkt(Packet pkt) {
+		if (getClient().getConnection().getChannel().isOpen()) try {
 			getClient().getConnection().send(pkt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private void event(Event event) throws IOException {
+	private void event(Event event) {
 		if (client == null) throw new NullPointerException("The client cannot be null !");
 		event.send();
 	}
 
-	protected void log(Packet pkt) throws IOException {
+	protected void log(Packet pkt) {
 		if (getPerso() == null) LOGGER.info("[RCV:]< " + pkt);
 		else LOGGER.info("[" + getPerso().getPseudo() + ":RCV:]< " + pkt);
 	}
 
 	@Override
-	public void register(DofusConnection<?> connection) throws IOException {
+	public void register(DofusConnection<?> connection) {
 	}
 
 	@Override
-	public void handle(HelloConnectionPacket pkt) throws IOException {
+	public void handle(HelloConnectionPacket pkt) {
 		log(pkt);
 		this.hc = pkt.getHashKey();
 		if (isBot()) {
@@ -220,21 +229,21 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(HelloGamePacket pkt) throws IOException {
+	public void handle(HelloGamePacket pkt) {
 		log(pkt);
 		if (isBot()) sendPkt(new AccountTicketPacket().setTicket(ticket));
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountKeyPacket pkt) throws IOException {
+	public void handle(AccountKeyPacket pkt) {
 		log(pkt);
 		if (isBot()) sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(FriendListPacket pkt) throws IOException {
+	public void handle(FriendListPacket pkt) {
 		log(pkt);
 		getPerso().setOfflineFriends(pkt.getOfflineFriends());
 		getPerso().setOnlineFriends(pkt.getOnlineFriends());
@@ -246,7 +255,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountRegionalVersionPacket pkt) throws IOException {
+	public void handle(AccountRegionalVersionPacket pkt) {
 		log(pkt);
 		if (isBot()) {
 			sendPkt(new AccountGetGiftsPacket().setLanguage("fr"));
@@ -257,7 +266,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ChatMessageOkPacket pkt) throws IOException {
+	public void handle(ChatMessageOkPacket pkt) {
 		log(pkt);
 		ChatMsgEvent event = new ChatMsgEvent(client, pkt.getChat(), pkt.getPlayerId(), pkt.getPseudo(), pkt.getMsg());
 		event.send();
@@ -269,7 +278,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ChatSubscribeChannelPacket pkt) throws IOException {
+	public void handle(ChatSubscribeChannelPacket pkt) {
 		log(pkt);
 		Arrays.stream(pkt.getChannels()).forEach(c -> getPerso().getChannels().put(c, pkt.isAdd()));
 		if (pkt.isAdd()) {
@@ -285,14 +294,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ZaapLeavePacket pkt) throws IOException {
+	public void handle(ZaapLeavePacket pkt) {
 		log(pkt);
 		new ZaapGuiLeaveEvent(client).send();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountCharactersListPacket pkt) throws IOException {
+	public void handle(AccountCharactersListPacket pkt) {
 		log(pkt);
 		if (pkt.getCharacters() != null && pkt.getCharacters().length != 0) this.current = Server.fromId(pkt.getCharacters()[0].getServerId());
 		if (isBot())
@@ -319,13 +328,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountCommunityPacket pkt) throws IOException {
+	public void handle(AccountCommunityPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountHostPacket pkt) throws IOException {
+	public void handle(AccountHostPacket pkt) {
 		log(pkt);
 		for (DofusServer s : pkt.getServers())
 			if (s.getId() == Server.ERATZ.getId()) {
@@ -341,7 +350,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountLoginErrPacket pkt) throws IOException {
+	public void handle(AccountLoginErrPacket pkt) {
 		log(pkt);
 		LoginErrorEvent event = new LoginErrorEvent(client, pkt.getErr(), pkt.getTime(), pkt.getVersion());
 		event.send();
@@ -352,33 +361,27 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountLoginOkPacket pkt) throws IOException {
+	public void handle(AccountLoginOkPacket pkt) {
 		log(pkt);
 		pkt.setAdmin(true);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountPseudoPacket pkt) throws IOException {
+	public void handle(AccountPseudoPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountQuestionPacket pkt) throws IOException {
+	public void handle(AccountQuestionPacket pkt) {
 		log(pkt);
-		if (isBot()) Executors.SCHEDULED.schedule(() -> {
-			try {
-				sendPkt(new AccountListServersPacket());
-			} catch (IOException e) {
-				e.printStackTrace(); // FIXME
-			}
-		}, 2, TimeUnit.SECONDS);
+		if (isBot()) Executors.SCHEDULED.schedule(() -> sendPkt(new AccountListServersPacket()), 2, TimeUnit.SECONDS);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountQueuePosition pkt) throws IOException {
+	public void handle(AccountQueuePosition pkt) {
 		log(pkt);
 		RealmQueuePositionEvent event = new RealmQueuePositionEvent(client, pkt.getPosition(), pkt.getTotalSubscriber(), pkt.getTotalNoSubscribed(), pkt.getPositionInQueue(), pkt.isSubscribed());
 		event.send();
@@ -391,13 +394,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountRestrictionsPacket pkt) throws IOException {
+	public void handle(AccountRestrictionsPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountSelectCharacterOkPacket pkt) throws IOException {
+	public void handle(AccountSelectCharacterOkPacket pkt) {
 		log(pkt);
 		if (isMitm()) {
 			if (client.getPerso() == null) {
@@ -421,13 +424,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountServerEncryptedHostPacket pkt) throws IOException {
+	public void handle(AccountServerEncryptedHostPacket pkt) {
 		log(pkt);
 		this.ticket = pkt.getTicketKey();
 		try {
 			if (isBot()) {
 				client.getConnection().closeConnection();
-				client.setConnection(new DofusConnection<>(getPerso().getPseudo(), SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort())), this, ProtocolRegistry.Bound.SERVER));
+				SocketChannel socket = SocketChannel.open(new InetSocketAddress(pkt.getIp(), pkt.getPort()));
+				client.setConnection(new DofusConnection<>(getPerso().getPseudo(), socket, this, ProtocolRegistry.Bound.SERVER));
 				Executors.FIXED.execute(() -> {
 					try {
 						client.getConnection().start();
@@ -446,10 +450,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 				}
 				int localPort = SERVER_SOCKET.socket().getLocalPort();
 				getProxy().getLocalConnection().send(new AccountServerHostPacket().setIp(Variables.PASSERELLE_IP).setPort(localPort).setTicketKey(pkt.getTicketKey()));
-				getProxy().changeConnection(new DofusConnection<>("Local", SERVER_SOCKET.accept(), getProxy().getLocalHandler(), Bound.CLIENT),
+				SocketChannel client = SERVER_SOCKET.accept();
+				getProxy().changeConnection(new DofusConnection<>("Local", client, getProxy().getLocalHandler(), Bound.CLIENT),
 						ProxyConnectionType.LOCAL);
+				SocketChannel server = SocketChannel.open(new InetSocketAddress(ip, pkt.getPort()));
+				Manchou.SOCKETS.add(new Pair<SocketChannel, SocketChannel>(client, server));
 				getProxy().changeConnection(
-						new DofusConnection<>("Remote", SocketChannel.open(new InetSocketAddress(ip, pkt.getPort())), getProxy().getRemoteHandler(), Bound.SERVER),
+						new DofusConnection<>("Remote", server, getProxy().getRemoteHandler(), Bound.SERVER),
 						ProxyConnectionType.REMOTE);
 			}
 		} catch (Exception e) {
@@ -458,14 +465,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountServerHostPacket pkt) throws IOException {
+	public void handle(AccountServerHostPacket pkt) {
 		log(pkt);
 		this.ticket = pkt.getTicketKey();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(AccountServerListPacket pkt) throws IOException {
+	public void handle(AccountServerListPacket pkt) {
 		log(pkt);
 		SubscriptionAndPersoNumberEvent event = new SubscriptionAndPersoNumberEvent(client, pkt.getSubscriptionDuration(), pkt.getCharacters());
 		event.send();
@@ -476,7 +483,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountTicketOkPacket pkt) throws IOException {
+	public void handle(AccountTicketOkPacket pkt) {
 		log(pkt);
 		if (isBot()) {
 			sendPkt(new AccountKeyPacket().setKey(pkt.getKey()).setData(pkt.getData()));
@@ -486,13 +493,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountTicketPacket pkt) throws IOException {
+	public void handle(AccountTicketPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(ExchangeCreatePacket pkt) throws IOException {
+	public void handle(ExchangeCreatePacket pkt) {
 		log(pkt);
 		getPerso().setCurrentInv(pkt.getType());
 		ExchangeCreateEvent event = new ExchangeCreateEvent(client, pkt.getType(), pkt.getData(), pkt.isSuccess());
@@ -504,7 +511,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeListPacket pkt) throws IOException {
+	public void handle(ExchangeListPacket pkt) {
 		log(pkt);
 		switch (pkt.getInvType()) {
 			case BANK:
@@ -523,20 +530,20 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(BasicConfirmPacket pkt) throws IOException {
+	public void handle(BasicConfirmPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 		// useless
 	}
 
 	@Override
-	public void handle(Aks0MessagePacket pkt) throws IOException {
+	public void handle(Aks0MessagePacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GuildStatPacket pkt) throws IOException {
+	public void handle(GuildStatPacket pkt) {
 		log(pkt);
 		GuildStatsEvent event = new GuildStatsEvent(client, pkt.getGuild());
 		event.send();
@@ -545,7 +552,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(InfoMessagePacket pkt) throws IOException {
+	public void handle(InfoMessagePacket pkt) {
 		log(pkt);
 		ManchouMap fight = (ManchouMap) getPerso().getMap();
 		if (pkt.getMessage() != null) {
@@ -595,7 +602,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(MountXpPacket pkt) throws IOException {
+	public void handle(MountXpPacket pkt) {
 		log(pkt);
 		MountXpEvent event = new MountXpEvent(client, pkt.getPercent());
 		event.send();
@@ -604,7 +611,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SpecializationSetPacket pkt) throws IOException {
+	public void handle(SpecializationSetPacket pkt) {
 		log(pkt);
 		SpecializationEvent event = new SpecializationEvent(client, pkt.getSpecialization());
 		event.send();
@@ -613,7 +620,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SpellChangeOptionPacket pkt) throws IOException {
+	public void handle(SpellChangeOptionPacket pkt) {
 		log(pkt);
 		SpellOptionEvent event = new SpellOptionEvent(client, pkt.canUseAllSpell());
 		event.send();
@@ -622,7 +629,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SpellListPacket pkt) throws IOException {
+	public void handle(SpellListPacket pkt) {
 		log(pkt);
 		pkt.getSpells().forEach(s -> {
 			Spells type = Spells.valueOf(s.getId());
@@ -635,7 +642,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SubareaListPacket pkt) throws IOException {
+	public void handle(SubareaListPacket pkt) {
 		log(pkt);
 		SubareaEvent event = new SubareaEvent(client, pkt.getSubareas());
 		event.send();
@@ -644,8 +651,9 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ZaapCreatePacket pkt) throws IOException {
+	public void handle(ZaapCreatePacket pkt) {
 		log(pkt);
+		getPerso().getZaaps().addAll(Arrays.stream(pkt.getWaypoints()).map(w -> Zaap.getWithMap(w.getId())).collect(Collectors.toList()));
 		ZaapGuiOpenEvent event = new ZaapGuiOpenEvent(client, pkt.getRespawnWaypoint(), pkt.getWaypoints());
 		event.send();
 		pkt.setRespawnWaypoint(event.getRespawnWaypoint());
@@ -654,14 +662,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ZaapUseErrorPacket pkt) throws IOException {
+	public void handle(ZaapUseErrorPacket pkt) {
 		log(pkt);
 		new ZaapUseErrorEvent(client).send();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameActionFinishPacket pkt) throws IOException {
+	public void handle(GameActionFinishPacket pkt) {
 		log(pkt);
 		LOGGER.debug(AnsiColor.RED + "ACTION FINISH " + pkt.getCharacterId() + " ack:" + pkt.getAckId());
 		if (isBot()) sendPkt(new GameActionACKPacket().setActionId(pkt.getAckId()));
@@ -669,14 +677,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameActionStartPacket pkt) throws IOException {
+	public void handle(GameActionStartPacket pkt) {
 		log(pkt);
 		LOGGER.debug(AnsiColor.RED + "ACTION START " + pkt.getCharacterId());
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameEffectPacket pkt) throws IOException {
+	public void handle(GameEffectPacket pkt) {
 		log(pkt);
 		Set<Entity> ents = new HashSet<>();
 		for (Entity e : getPerso().getMap().getEntities().values()) {
@@ -692,7 +700,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameEndPacket pkt) throws IOException {
+	public void handle(GameEndPacket pkt) {
 		log(pkt);
 		getPerso().getMap().getEntities().clear();
 		getPerso().getSpells().values().forEach(s -> ((ManchouSpell) s).setRelance(0));
@@ -707,7 +715,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameFightChallengePacket pkt) throws IOException {
+	public void handle(GameFightChallengePacket pkt) {
 		log(pkt);
 		FightChallengeEvent event = new FightChallengeEvent(client, pkt.getChallenge());
 		event.send();
@@ -716,7 +724,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameJoinPacket pkt) throws IOException {
+	public void handle(GameJoinPacket pkt) {
 		log(pkt);
 		ManchouMap map = getPerso().getMap();
 		map.getEntities().clear();
@@ -740,7 +748,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameMapDataPacket pkt) throws IOException {
+	public void handle(GameMapDataPacket pkt) {
 		log(pkt);
 		DofusMap m = null;
 		try {
@@ -759,7 +767,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameMapFramePacket pkt) throws IOException {
+	public void handle(GameMapFramePacket pkt) {
 		log(pkt);
 		pkt.getFrames().forEach((id, frame) -> {
 			ManchouCell cell = getPerso().getMap().getCells()[id];
@@ -771,7 +779,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameMovementPacket pkt) throws IOException {
+	public void handle(GameMovementPacket pkt) {
 		log(pkt);
 		if (pkt.getType() == GameMovementType.REMOVE) {
 			pkt.getActors().forEach(v -> {
@@ -831,7 +839,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GamePositionsPacket pkt) throws IOException {
+	public void handle(GamePositionsPacket pkt) {
 		log(pkt);
 		pkt.getPositions().forEach(p -> {
 			Entity entity = p.getEntityId() == getPerso().getUUID() ? getPerso() : getPerso().getMap().getEntities().get(p.getEntityId());
@@ -842,7 +850,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GamePositionStartPacket pkt) throws IOException {
+	public void handle(GamePositionStartPacket pkt) {
 		log(pkt);
 		ManchouMap map = getPerso().getMap();
 		map.setTeam0Places(pkt.getPlacesTeam0());
@@ -855,7 +863,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameServerActionPacket pkt) throws IOException {
+	public void handle(GameServerActionPacket pkt) {
 		log(pkt);
 		boolean transmit = true;
 		if (pkt.getLastAction() != -1 && pkt.getEntityId() == getPerso().getUUID()) getPerso().setLastAction(pkt.getLastAction());
@@ -1052,7 +1060,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameServerReadyPacket pkt) throws IOException {
+	public void handle(GameServerReadyPacket pkt) {
 		log(pkt);
 		Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
 		if (entity == null) {
@@ -1067,14 +1075,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameStartToPlayPacket pkt) throws IOException {
+	public void handle(GameStartToPlayPacket pkt) {
 		log(pkt);
 		new FightStartEvent(client).send();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameTurnFinishPacket pkt) throws IOException {
+	public void handle(GameTurnFinishPacket pkt) {
 		log(pkt);
 		Entity entity = getPerso().getMap().getEntities().get(pkt.getEntityId());
 		if (entity == null) {
@@ -1088,7 +1096,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameTurnListPacket pkt) throws IOException {
+	public void handle(GameTurnListPacket pkt) {
 		log(pkt);
 		FightTurnOrderReceiveEvent event = new FightTurnOrderReceiveEvent(client, Arrays.stream(pkt.getTurns()).mapToObj(getPerso().getMap().getEntities()::get).toArray(Entity[]::new));
 		event.send();
@@ -1097,7 +1105,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameTurnMiddlePacket pkt) throws IOException {
+	public void handle(GameTurnMiddlePacket pkt) {
 		log(pkt);
 		for (FightEntity e : pkt.getEntities()) {
 			Entity ent = getPerso().getMap().getEntities().get(e.getId());
@@ -1129,14 +1137,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameTurnReadyPacket pkt) throws IOException {
+	public void handle(GameTurnReadyPacket pkt) {
 		log(pkt);
 		if (isBot()) sendPkt(new GameTurnOkPacket());
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameTurnStartPacket pkt) throws IOException {
+	public void handle(GameTurnStartPacket pkt) {
 		log(pkt);
 		Entity e = getPerso().getMap().getEntities().get(pkt.getCharacterId());
 		if (e == null) {
@@ -1152,7 +1160,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeRequestOkPacket pkt) throws IOException {
+	public void handle(ExchangeRequestOkPacket pkt) {
 		log(pkt);
 		ManchouMap map = getPerso().getMap();
 		Entity player = map.getEntities().get(pkt.getPlayerId());
@@ -1167,14 +1175,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(DialogLeavePacket pkt) throws IOException {
+	public void handle(DialogLeavePacket pkt) {
 		log(pkt);
 		new DialogLeaveEvent(client).send();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(DialogCreateOkPacket pkt) throws IOException {
+	public void handle(DialogCreateOkPacket pkt) {
 		log(pkt);
 		DialogCreateEvent event = new DialogCreateEvent(client, (Npc) getPerso().getMap().getEntities().get(pkt.getNpcId()));
 		event.send();
@@ -1183,7 +1191,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(DialogQuestionPacket pkt) throws IOException {
+	public void handle(DialogQuestionPacket pkt) {
 		log(pkt);
 		DialogQuestionReceiveEvent event = new DialogQuestionReceiveEvent(client, pkt.getQuestion(), pkt.getResponse(), pkt.getQuestionParam());
 		event.send();
@@ -1194,19 +1202,19 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(DialogPausePacket pkt) throws IOException {
+	public void handle(DialogPausePacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(ExchangeReadyPacket pkt) throws IOException {
+	public void handle(ExchangeReadyPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(ItemAddOkPacket pkt) throws IOException {
+	public void handle(ItemAddOkPacket pkt) {
 		log(pkt);
 		Set<ManchouItem> collect = pkt.getItems().stream().map(ManchouItem::fromProtocolItem).collect(Collectors.toSet());
 		getPerso().getInventory().addContent(pkt.getItems());
@@ -1217,7 +1225,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemAddErrorPacket pkt) throws IOException {
+	public void handle(ItemAddErrorPacket pkt) {
 		log(pkt);
 		ItemAddErrorEvent event = new ItemAddErrorEvent(client, pkt.getResult());
 		event.send();
@@ -1226,7 +1234,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemDropErrorPacket pkt) throws IOException {
+	public void handle(ItemDropErrorPacket pkt) {
 		log(pkt);
 		ItemDropErrorEvent event = new ItemDropErrorEvent(client, pkt.getResult());
 		event.send();
@@ -1235,7 +1243,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemRemovePacket pkt) throws IOException {
+	public void handle(ItemRemovePacket pkt) {
 		log(pkt);
 		fr.aresrpg.tofumanchou.domain.data.item.Item removed = getPerso().getInventory().getContents().remove(pkt.getItemuid());
 		ItemRemovedEvent event = new ItemRemovedEvent(client, removed);
@@ -1245,7 +1253,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemQuantityUpdatePacket pkt) throws IOException {
+	public void handle(ItemQuantityUpdatePacket pkt) {
 		log(pkt);
 		fr.aresrpg.tofumanchou.domain.data.item.Item item = getPerso().getInventory().getItem(pkt.getItemUid());
 		int lastQ = item.getAmount();
@@ -1258,7 +1266,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemMovementConfirmPacket pkt) throws IOException {
+	public void handle(ItemMovementConfirmPacket pkt) {
 		log(pkt);
 		ManchouItem item = (ManchouItem) getPerso().getInventory().getItem(pkt.getItemUid());
 		item.setPosition(pkt.getPosition());
@@ -1270,7 +1278,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemToolPacket pkt) throws IOException {
+	public void handle(ItemToolPacket pkt) {
 		log(pkt);
 		getPerso().updateJob(pkt.getJobId());
 		JobItemEquipEvent event = new JobItemEquipEvent(client, pkt.getJobId());
@@ -1280,7 +1288,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ItemWeightPacket pkt) throws IOException {
+	public void handle(ItemWeightPacket pkt) {
 		log(pkt);
 		getPerso().setPods(pkt.getCurrentWeight());
 		getPerso().setMaxPods(pkt.getMaxWeight());
@@ -1292,13 +1300,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountStatsPacket pkt) throws IOException {
+	public void handle(AccountStatsPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 		ManchouPerso s = getPerso();
-		int xp = pkt.getXp();
-		int xpLow = pkt.getXpLow();
-		int xpHight = pkt.getXpHigh();
+		long xp = pkt.getXp();
+		long xpLow = pkt.getXpLow();
+		long xpHight = pkt.getXpHigh();
 		int kamas = pkt.getKama();
 		int bonuspts = pkt.getBonusPoints();
 		int spellpts = pkt.getBonusPointsSpell();
@@ -1330,7 +1338,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountNewLevelPacket pkt) throws IOException {
+	public void handle(AccountNewLevelPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 		getPerso().setLvl(pkt.getNewlvl());
@@ -1338,14 +1346,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(AccountServerQueuePacket pkt) throws IOException {
+	public void handle(AccountServerQueuePacket pkt) {
 		log(pkt);
 		transmit(pkt);
 		new ServerQueuePositionEvent(client, pkt.getPosition());
 	}
 
 	@Override
-	public void handle(ExchangeCraftPacket pkt) throws IOException {
+	public void handle(ExchangeCraftPacket pkt) {
 		log(pkt);
 		CraftResultEvent event = new CraftResultEvent(client, pkt.getResult());
 		event.send();
@@ -1354,7 +1362,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeLocalMovePacket pkt) throws IOException {
+	public void handle(ExchangeLocalMovePacket pkt) {
 		log(pkt);
 		ExchangeLocalMoveEvent event = new ExchangeLocalMoveEvent(client, pkt.getItemType(), pkt.getItemAmount(), pkt.getLocalKama(), pkt.isAdd());
 		event.send();
@@ -1366,7 +1374,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeDistantMovePacket pkt) throws IOException {
+	public void handle(ExchangeDistantMovePacket pkt) {
 		log(pkt);
 		ManchouItem item = ManchouItem.fromProtocolItem(pkt.getMoved());
 		ExchangeDistantMoveEvent event = new ExchangeDistantMoveEvent(client, item, pkt.isAdd(), pkt.getRemainingHours(), pkt.getKamas());
@@ -1379,7 +1387,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCoopMovePacket pkt) throws IOException {
+	public void handle(ExchangeCoopMovePacket pkt) {
 		log(pkt);
 		ManchouItem item = ManchouItem.fromProtocolItem(pkt.getMoved());
 		ExchangeCoopMoveEvent event = new ExchangeCoopMoveEvent(client, item, pkt.getKamas(), pkt.isAdd());
@@ -1391,7 +1399,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeStorageMovePacket pkt) throws IOException {
+	public void handle(ExchangeStorageMovePacket pkt) {
 		log(pkt);
 		switch (getPerso().getCurrentInv()) {
 			case BANK:
@@ -1419,7 +1427,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeShopMovePacket pkt) throws IOException {
+	public void handle(ExchangeShopMovePacket pkt) {
 		log(pkt);
 		ExchangeShopMoveEvent event = new ExchangeShopMoveEvent(client, ManchouItem.fromProtocolItem(pkt.getMoved()), pkt.isAdd());
 		event.send();
@@ -1429,13 +1437,13 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCraftPublicPacket pkt) throws IOException {
+	public void handle(ExchangeCraftPublicPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(ExchangeSellToNpcResultPacket pkt) throws IOException {
+	public void handle(ExchangeSellToNpcResultPacket pkt) {
 		log(pkt);
 		SellItemToNpcResultEvent event = new SellItemToNpcResultEvent(client, pkt.isSuccess());
 		event.send();
@@ -1444,7 +1452,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeBuyToNpcResultPacket pkt) throws IOException {
+	public void handle(ExchangeBuyToNpcResultPacket pkt) {
 		log(pkt);
 		BuyItemToNpcResultEvent event = new BuyItemToNpcResultEvent(client, pkt.isSuccess());
 		event.send();
@@ -1453,7 +1461,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCraftLoopPacket pkt) throws IOException {
+	public void handle(ExchangeCraftLoopPacket pkt) {
 		log(pkt);
 		CraftLoopIndexEvent event = new CraftLoopIndexEvent(client, pkt.getIndex());
 		event.send();
@@ -1462,7 +1470,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeCraftLoopEndPacket pkt) throws IOException {
+	public void handle(ExchangeCraftLoopEndPacket pkt) {
 		log(pkt);
 		CraftLoopEndEvent event = new CraftLoopEndEvent(client, pkt.getResult());
 		event.send();
@@ -1471,7 +1479,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeLeaveResultPacket pkt) throws IOException {
+	public void handle(ExchangeLeaveResultPacket pkt) {
 		log(pkt);
 		ExchangeResultEvent event = new ExchangeResultEvent(client, pkt.isSuccess());
 		event.send();
@@ -1480,7 +1488,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyRefusePacket pkt) throws IOException {
+	public void handle(PartyRefusePacket pkt) {
 		log(pkt);
 		new PlayerRefuseGroupInvitationEvent(client).send();
 		if (isMitm() && !balking.receive(PartyRefusePacket.class).overflow(10))
@@ -1488,7 +1496,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyInviteRequestOkPacket pkt) throws IOException {
+	public void handle(PartyInviteRequestOkPacket pkt) {
 		log(pkt);
 		if (pkt.getInvited().equalsIgnoreCase(getPerso().getPseudo())) getPerso().setInvitedGrp(true);
 		GroupInvitationAcceptedEvent event = new GroupInvitationAcceptedEvent(client, pkt.getInviter(), pkt.getInvited());
@@ -1500,7 +1508,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyInviteRequestErrorPacket pkt) throws IOException {
+	public void handle(PartyInviteRequestErrorPacket pkt) {
 		log(pkt);
 		GroupInviteErrorEvent event = new GroupInviteErrorEvent(client, pkt.getReason());
 		event.send();
@@ -1510,7 +1518,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyLeaderPacket pkt) throws IOException {
+	public void handle(PartyLeaderPacket pkt) {
 		log(pkt);
 		GroupLeaderUpdateEvent event = new GroupLeaderUpdateEvent(client, pkt.getLeaderId());
 		event.send();
@@ -1519,14 +1527,14 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyCreateOkPacket pkt) throws IOException {
+	public void handle(PartyCreateOkPacket pkt) {
 		log(pkt);
 		new GroupCreatedEvent(client).send();
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(PartyCreateErrorPacket pkt) throws IOException {
+	public void handle(PartyCreateErrorPacket pkt) {
 		log(pkt);
 		GroupCreateErrorEvent event = new GroupCreateErrorEvent(client, pkt.getReason());
 		event.send();
@@ -1535,7 +1543,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyPlayerLeavePacket pkt) throws IOException {
+	public void handle(PartyPlayerLeavePacket pkt) {
 		log(pkt);
 		PlayerLeaveGroupEvent event = new PlayerLeaveGroupEvent(client, pkt.getPlayer());
 		event.send();
@@ -1544,7 +1552,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyFollowReceivePacket pkt) throws IOException {
+	public void handle(PartyFollowReceivePacket pkt) {
 		log(pkt);
 		if (pkt.isSuccess()) {
 			GroupPlayerFollowEvent event = new GroupPlayerFollowEvent(client, pkt.getFollowed());
@@ -1559,7 +1567,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(PartyMovementPacket pkt) throws IOException {
+	public void handle(PartyMovementPacket pkt) {
 		log(pkt);
 		ManchouPlayerEntity[] array = Arrays.stream(pkt.getMembers()).map(m -> {
 			ManchouPlayerEntity p = new ManchouPlayerEntity();
@@ -1585,7 +1593,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameTeamPacket pkt) throws IOException {
+	public void handle(GameTeamPacket pkt) {
 		log(pkt);
 		FightTeamEvent event = new FightTeamEvent(client, pkt.getFirstId(), pkt.getEntities());
 		event.send();
@@ -1595,7 +1603,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(JobSkillsPacket pkt) throws IOException {
+	public void handle(JobSkillsPacket pkt) {
 		log(pkt);
 		for (Job j : pkt.getJobs())
 			getPerso().getJobs().put(j.getType(), new ManchouJob(j.getType()));
@@ -1605,7 +1613,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(JobXpPacket pkt) throws IOException {
+	public void handle(JobXpPacket pkt) {
 		log(pkt);
 		for (JobInfo j : pkt.getInfos())
 			for (fr.aresrpg.tofumanchou.domain.data.Job jjob : getPerso().getJobs().values()) {
@@ -1624,7 +1632,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(JobLevelPacket pkt) throws IOException {
+	public void handle(JobLevelPacket pkt) {
 		log(pkt);
 		for (fr.aresrpg.tofumanchou.domain.data.Job j : getPerso().getJobs().values())
 			if (j.getType() == pkt.getJob()) ((ManchouJob) j).setLvl(pkt.getLvl());
@@ -1636,7 +1644,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(GameSpawnPacket pkt) throws IOException {
+	public void handle(GameSpawnPacket pkt) {
 		log(pkt);
 		if (pkt.isCreated()) {
 			getPerso().getMap().getFightsOnMap().add(pkt.getFight());
@@ -1653,7 +1661,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(FightCountPacket pkt) throws IOException {
+	public void handle(FightCountPacket pkt) {
 		log(pkt);
 		FightCountEvent event = new FightCountEvent(client, pkt.getCount());
 		event.send();
@@ -1662,7 +1670,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(FightListPacket pkt) throws IOException {
+	public void handle(FightListPacket pkt) {
 		log(pkt);
 		FightListEvent event = new FightListEvent(client, pkt.getFights());
 		event.send();
@@ -1671,7 +1679,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(FightDetailsPacket pkt) throws IOException {
+	public void handle(FightDetailsPacket pkt) {
 		log(pkt);
 		FightDetailsEvent event = new FightDetailsEvent(client, pkt.getDetailsId(), pkt.getT0(), pkt.getT1());
 		event.send();
@@ -1682,7 +1690,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(InfoCompassPacket pkt) throws IOException {
+	public void handle(InfoCompassPacket pkt) {
 		log(pkt);
 		CompassCoordinatesEvent event = new CompassCoordinatesEvent(client, pkt.getX(), pkt.getY());
 		event.send();
@@ -1692,7 +1700,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(InfoCoordinatePacket pkt) throws IOException {
+	public void handle(InfoCoordinatePacket pkt) {
 		log(pkt);
 		GroupMembersPositionsEvent event = new GroupMembersPositionsEvent(client, pkt.getPlayers());
 		event.send();
@@ -1701,19 +1709,19 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SubwayLeavePacket pkt) throws IOException {
+	public void handle(SubwayLeavePacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameCellObjectPacket pkt) throws IOException { // TODO faire packet
+	public void handle(GameCellObjectPacket pkt) { // TODO faire packet
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GameCellUpdatePacket pkt) throws IOException { // TODO creer event
+	public void handle(GameCellUpdatePacket pkt) { // TODO creer event
 		log(pkt);
 		DofusMap map = getPerso().getMap().serialize();
 		pkt.updateCells(map);
@@ -1722,20 +1730,20 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(ChatServerMessagePacket pkt) throws IOException { // TODO creer event
+	public void handle(ChatServerMessagePacket pkt) { // TODO creer event
 		log(pkt);
 		transmit(pkt);
 	}
 
 	@Override
-	public void handle(GuildJoinErrorPacket pkt) throws IOException {
+	public void handle(GuildJoinErrorPacket pkt) {
 		log(pkt);
 		if (isMitm() && !balking.receive(pkt.getError().getClass()).overflow(10))
 			transmit(pkt);
 	}
 
 	@Override
-	public void handle(GuildInvitedPacket pkt) throws IOException {
+	public void handle(GuildInvitedPacket pkt) {
 		log(pkt);
 		getPerso().setInvitedGuild(true, pkt.getSprite());
 		GuildInvitedEvent event = new GuildInvitedEvent(client, pkt.getPlayer(), pkt.getGuild());
@@ -1746,7 +1754,7 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 	}
 
 	@Override
-	public void handle(SubwayCreatePacket pkt) throws IOException {
+	public void handle(SubwayCreatePacket pkt) {
 		log(pkt);
 		ZaapiGuiOpenEvent event = new ZaapiGuiOpenEvent(client, pkt.getCurrent(), pkt.getWaypoints());
 		event.send();

@@ -19,9 +19,9 @@ public class PersoStatsEvent implements Event<PersoStatsEvent> {
 
 	private static final EventBus<PersoStatsEvent> BUS = new EventBus<>(PersoStatsEvent.class);
 	private Account client;
-	private int xp;
-	private int xpMin;
-	private int xpMax;
+	private long xp;
+	private long xpMin;
+	private long xpMax;
 	private int kamas;
 	private int statsPoints;
 	private int spellsPoints;
@@ -57,7 +57,8 @@ public class PersoStatsEvent implements Event<PersoStatsEvent> {
 	 * @param stats
 	 * @param extradatas
 	 */
-	public PersoStatsEvent(Account client, int xp, int xpMin, int xpMax, int kamas, int statsPoints, int spellsPoints, Alignement alignment, Alignement fakeAlignment, Rank rank, int life, int lifeMax,
+	public PersoStatsEvent(Account client, long xp, long xpMin, long xpMax, int kamas, int statsPoints, int spellsPoints, Alignement alignment, Alignement fakeAlignment, Rank rank, int life,
+		int lifeMax,
 		int energy, int energyMax, int initiative, int prospection, Map<Stat, StatValue> stats, String extradatas) {
 		this.client = client;
 		this.xp = xp;
@@ -243,21 +244,21 @@ public class PersoStatsEvent implements Event<PersoStatsEvent> {
 	/**
 	 * @return the xp
 	 */
-	public int getXp() {
+	public long getXp() {
 		return xp;
 	}
 
 	/**
 	 * @return the xpMin
 	 */
-	public int getXpMin() {
+	public long getXpMin() {
 		return xpMin;
 	}
 
 	/**
 	 * @return the xpMax
 	 */
-	public int getXpMax() {
+	public long getXpMax() {
 		return xpMax;
 	}
 
