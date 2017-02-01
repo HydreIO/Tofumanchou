@@ -135,9 +135,9 @@ public interface Perso extends Player {
 
 	void npcBuyChoice(int itemId, int quantity);
 
-	void useZaap(int cell, Zaap destination);
+	void useZaap(Zaap destination);
 
-	void useZaapi(int cell, Zaapi destination);
+	void useZaapi(Zaapi destination);
 
 	void moveItem(MovedItem items);
 

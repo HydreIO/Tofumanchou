@@ -1322,7 +1322,7 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void useZaap(int cell, Zaap destination) {
+	public void useZaap(Zaap destination) {
 		ZaapUsePacket pkt = new ZaapUsePacket();
 		pkt.setWaypointId(destination.getMapId());
 		LOGGER.debug("Want to use zaap to go to " + destination);
@@ -1330,7 +1330,7 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void useZaapi(int cell, Zaapi destination) {
+	public void useZaapi(Zaapi destination) {
 		SubwayUsePacket subwayUsePacket = new SubwayUsePacket();
 		subwayUsePacket.setMapid(destination.getMapid());
 		sendPacketToServer(subwayUsePacket);
