@@ -141,7 +141,7 @@ public interface Perso extends Player {
 
 	void moveItem(MovedItem items);
 
-	void moveKama(int amount);
+	void moveKama(long amount);
 
 	void destroyItem(long uid, int amount);
 

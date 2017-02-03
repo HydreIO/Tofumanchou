@@ -8,10 +8,15 @@ import fr.aresrpg.commons.domain.event.Listener;
 import fr.aresrpg.commons.domain.log.AnsiColors.AnsiColor;
 import fr.aresrpg.commons.domain.log.Logger;
 import fr.aresrpg.commons.domain.log.LoggerBuilder;
+import fr.aresrpg.commons.domain.serialization.adapters.EnumAdapter;
+import fr.aresrpg.commons.domain.serialization.adapters.ListAdapter;
+import fr.aresrpg.commons.domain.serialization.factory.SerializationFactory;
 import fr.aresrpg.commons.infra.database.mongodb.MongoDBDatabase;
 import fr.aresrpg.dofus.structures.server.*;
 import fr.aresrpg.dofus.util.Pair;
 import fr.aresrpg.tofumanchou.domain.command.Command;
+import fr.aresrpg.tofumanchou.domain.data.adapters.*;
+import fr.aresrpg.tofumanchou.domain.data.enums.Element;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
 import fr.aresrpg.tofumanchou.infra.config.Configurations;
@@ -41,6 +46,7 @@ public class Manchou {
 	public static final DofusServer HENUAL = new DofusServer(Server.HENUAL.getId(), ServerState.ONLINE, -1, true);
 	public static final List<Pair<SocketChannel, SocketChannel>> SOCKETS = new ArrayList<>();
 	public static ServerSocketChannel SOCKET_SERVER;
+	public static SerializationFactory FACTORY;
 	private static Database database;
 	private static final Map<String, Command> commands = new HashMap<>();
 	private static Set<ManchouPlugin> plugins;
@@ -109,6 +115,12 @@ public class Manchou {
 	private void initDb() {
 		try {
 			database = new MongoDBDatabase(Variables.DB_NAME);
+			FACTORY = ((MongoDBDatabase) database).getFactory();
+			FACTORY.addAdapter(ListAdapter.INSTANCE);
+			FACTORY.addAdapter(new EnumAdapter<>(Element.class));
+			FACTORY.addAdapter(ZoneEffectAdapter.INSTANCE);
+			FACTORY.addAdapter(EffectAdapter.INSTANCE);
+			FACTORY.addAdapter(LangSpellPropertyAdapter.INSTANCE);
 			database.connect(Variables.MONGO_IP, Variables.MONGO_PORT, Variables.MONGO_USER, Variables.MONGO_PASS);
 		} catch (Exception e) {
 			LOGGER.warning("Unable to use the database ! CustomLangs disabled.");

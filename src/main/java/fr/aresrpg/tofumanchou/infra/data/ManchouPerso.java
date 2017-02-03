@@ -1363,7 +1363,7 @@ public class ManchouPerso implements Perso {
 	}
 
 	@Override
-	public void moveKama(int amount) {
+	public void moveKama(long amount) {
 		ExchangeMoveKamasPacket pkt = new ExchangeMoveKamasPacket(amount);
 		sendPacketToServer(pkt);
 	}

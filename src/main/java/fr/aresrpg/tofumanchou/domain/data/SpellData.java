@@ -391,7 +391,7 @@ public class SpellData {
 
 	public static class ZoneEffect {
 		private Effect effect;
-		private String element;
+		private Element element;
 		private int shape, zone;
 
 		/**
@@ -402,7 +402,7 @@ public class SpellData {
 		 */
 		public ZoneEffect(Effect effect, Element element, int shape, int zone) {
 			this.effect = effect;
-			this.element = element == null ? null : element.name();
+			this.element = element;
 			this.shape = shape;
 			this.zone = zone;
 		}
@@ -422,7 +422,7 @@ public class SpellData {
 		 * @return the element
 		 */
 		public Element getElement() {
-			return Element.valueOf(element);
+			return element;
 		}
 
 		/**
