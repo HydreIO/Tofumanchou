@@ -15,7 +15,6 @@ import fr.aresrpg.commons.infra.database.mongodb.MongoDBDatabase;
 import fr.aresrpg.dofus.structures.server.*;
 import fr.aresrpg.dofus.util.Pair;
 import fr.aresrpg.tofumanchou.domain.command.Command;
-import fr.aresrpg.tofumanchou.domain.data.adapters.*;
 import fr.aresrpg.tofumanchou.domain.data.enums.Element;
 import fr.aresrpg.tofumanchou.domain.plugin.ManchouPlugin;
 import fr.aresrpg.tofumanchou.domain.util.concurrent.Executors;
@@ -118,9 +117,6 @@ public class Manchou {
 			FACTORY = ((MongoDBDatabase) database).getFactory();
 			FACTORY.addAdapter(ListAdapter.INSTANCE);
 			FACTORY.addAdapter(new EnumAdapter<>(Element.class));
-			FACTORY.addAdapter(ZoneEffectAdapter.INSTANCE);
-			FACTORY.addAdapter(EffectAdapter.INSTANCE);
-			FACTORY.addAdapter(LangSpellPropertyAdapter.INSTANCE);
 			database.connect(Variables.MONGO_IP, Variables.MONGO_PORT, Variables.MONGO_USER, Variables.MONGO_PASS);
 		} catch (Exception e) {
 			LOGGER.warning("Unable to use the database ! CustomLangs disabled.");

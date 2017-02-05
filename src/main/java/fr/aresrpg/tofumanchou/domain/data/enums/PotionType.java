@@ -1,5 +1,7 @@
 package fr.aresrpg.tofumanchou.domain.data.enums;
 
+import fr.aresrpg.dofus.structures.item.DofusItems;
+
 /**
  * 
  * @since

@@ -39,7 +39,7 @@ public class BootStrap {
 		LOGGER.info("Effects initialized ! (" + t4.getAsLong() + "ms)");
 		LOGGER.info("Initialising Spells..");
 		BenchTime t5 = new BenchTime();
-		SpellData.getInstance().init(!Variables.CUSTOM_LANGS);
+		SpellData.getInstance().init(Variables.CUSTOM_LANGS);
 		LOGGER.info("Spells initialized ! (" + t5.getAsLong() + "ms)");
 		Set<ManchouPlugin> plugins = Manchou.getPlugins();
 		if (plugins != null) plugins.forEach(p -> {

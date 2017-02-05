@@ -42,6 +42,7 @@ import fr.aresrpg.dofus.protocol.spell.client.SpellBoostPacket;
 import fr.aresrpg.dofus.protocol.spell.client.SpellMoveToUsedPacket;
 import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
 import fr.aresrpg.dofus.protocol.subway.client.SubwayUsePacket;
+import fr.aresrpg.dofus.protocol.tutorial.client.TutorialQuitPacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.client.ZaapUsePacket;
 import fr.aresrpg.dofus.structures.Chat;
@@ -701,6 +702,12 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 
 	@Override
 	public void handle(GuildRefuseInvitPacket pkt) {
+		log(pkt);
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(TutorialQuitPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 	}

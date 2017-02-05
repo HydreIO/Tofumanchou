@@ -31,12 +31,9 @@ public class Lifetimer implements Scheduled {
 	public void checkOnline() {
 		ByteBuffer buffer = ByteBuffer.allocate(128);
 		buffer.put(("BN\n\0").getBytes());
-		System.out.println("=================");
 		Manchou.SOCKETS.removeIf(pair -> {
-			LOGGER.debug("-> Trying socket ! ");
 			try {
 				int read = pair.getFirst().read(buffer);
-				System.out.println(" read = " + read);
 				if (read == -1) {
 					pair.getFirst().close();
 					pair.getSecond().close();

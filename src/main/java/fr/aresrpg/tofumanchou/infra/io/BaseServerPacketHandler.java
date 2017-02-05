@@ -51,6 +51,7 @@ import fr.aresrpg.dofus.protocol.spell.server.SpellListPacket;
 import fr.aresrpg.dofus.protocol.subarea.server.SubareaListPacket;
 import fr.aresrpg.dofus.protocol.subway.SubwayLeavePacket;
 import fr.aresrpg.dofus.protocol.subway.server.SubwayCreatePacket;
+import fr.aresrpg.dofus.protocol.tutorial.server.TutorialCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.ZaapLeavePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapCreatePacket;
 import fr.aresrpg.dofus.protocol.waypoint.server.ZaapUseErrorPacket;
@@ -1760,6 +1761,16 @@ public class BaseServerPacketHandler implements ServerPacketHandler {
 		event.send();
 		pkt.setCurrent(event.getCurrent());
 		pkt.setWaypoints(event.getWaypoints());
+		transmit(pkt);
+	}
+
+	@Override
+	public void handle(TutorialCreatePacket pkt) {
+		log(pkt);
+		TutorialCreatedEvent event = new TutorialCreatedEvent(client, pkt.getTutoId(), pkt.getLongid());
+		event.send();
+		pkt.setTutoId(event.getTutoId());
+		pkt.setLongid(event.getLongId());
 		transmit(pkt);
 	}
 
