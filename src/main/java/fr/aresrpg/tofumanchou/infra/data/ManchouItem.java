@@ -20,12 +20,12 @@ public class ManchouItem implements Item {
 	private int amount;
 	private int position;
 	private Effect[] effects;
-	private int price;
+	private long price;
 	private int skin;
 	private int remainingHours;
 	private int pods;
 
-	private ManchouItem(long uuid, String name, String desc, ItemCategory category, int typeId, int amount, int position, Effect[] effects, int price, int skin, int remainingHours, int pods) {
+	private ManchouItem(long uuid, String name, String desc, ItemCategory category, int typeId, int amount, int position, Effect[] effects, long price, int skin, int remainingHours, int pods) {
 		this.uuid = uuid;
 		this.name = name;
 		this.desc = desc;
@@ -222,7 +222,7 @@ public class ManchouItem implements Item {
 	}
 
 	@Override
-	public int getPrice() {
+	public long getPrice() {
 		return price;
 	}
 

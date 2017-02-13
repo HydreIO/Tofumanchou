@@ -441,7 +441,7 @@ public class BaseClientPacketHandler implements ClientPacketHandler {
 	}
 
 	@Override
-	public void handle(ExchangeHdvPacket pkt) {
+	public void handle(ExchangeHdvRequestPacket pkt) {
 		log(pkt);
 		transmit(pkt);
 

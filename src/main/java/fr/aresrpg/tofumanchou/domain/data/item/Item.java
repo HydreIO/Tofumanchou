@@ -27,7 +27,7 @@ public interface Item {
 
 	Effect[] getEffects();
 
-	int getPrice();
+	long getPrice();
 
 	int getSkin();
 
